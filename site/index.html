@@ -28,6 +28,13 @@
     button { border: 0; border-radius: 12px; padding: 11px 15px; font-weight: 800; cursor: pointer; background: #79e6c1; color: #061a14; }
     button.secondary { background: #222d4b; color: #eef2ff; }
     .output { white-space: pre-wrap; min-height: 180px; color: #b9c3dd; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .83rem; line-height: 1.55; }
+    .controls { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 18px; }
+    .control { display: grid; gap: 7px; }
+    .control label { color: #b9c3dd; font-size: .8rem; font-weight: 700; }
+    input[type=range] { width: 100%; accent-color: #79e6c1; }
+    select { width: 100%; border: 1px solid #283454; border-radius: 10px; background: #0d1428; color: #eef2ff; padding: 10px; }
+    .control-value { color: #79e6c1; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85rem; }
+    @media (max-width: 600px) { .controls { grid-template-columns: 1fr; } }
     .matrix { display: grid; grid-template-columns: 1.1fr repeat(2, .65fr); gap: 0; margin-top: 14px; border: 1px solid #283454; border-radius: 16px; overflow: hidden; }
     .matrix > div { padding: 12px; border-right: 1px solid #283454; border-bottom: 1px solid #283454; }
     .matrix > div:nth-child(3n) { border-right: 0; }
@@ -47,13 +54,24 @@
       <div class="card"><div class="eyebrow">02 · blocked</div><h2>Over the cap</h2><p class="muted">The Agent asks for 10 USDC against a 2 USDC per-charge limit.</p><button class="secondary" onclick="run('blocked')">Run check</button></div>
       <div class="card"><div class="eyebrow">03 · frozen</div><h2>Merchant changed</h2><p class="muted">The destination no longer matches the authorized merchant.</p><button class="secondary" onclick="run('frozen')">Run check</button></div>
     </section>
-    <section class="card" style="margin-top:14px"><div class="row"><span><strong>Browser Evidence Verification</strong><br><span class="muted">This replay is SIMULATED. A real Android MWA wallet and Devnet Memo proof are now recorded separately; the browser replay never disguises simulated receipts as settlement.</span></span><button class="secondary" onclick="revoke()">Revoke allowance</button></div><div id="output" class="output">Choose a scenario above to produce a receipt.</div></section>
+    <section class="card" style="margin-top:14px"><div class="row"><span><strong>Browser Evidence Verification</strong><br><span class="muted">This replay is SIMULATED. A real Android MWA wallet and Devnet Memo proof are now recorded separately; the browser replay never disguises simulated receipts as settlement.</span></span><button class="secondary" onclick="revoke()">Revoke allowance</button></div>
+      <div class="controls">
+        <div class="control"><label for="amount">Requested amount <span id="amountValue" class="control-value">1.0 USDC</span></label><input id="amount" type="range" min="0.5" max="12" step="0.5" value="1" oninput="syncControls()"></div>
+        <div class="control"><label for="spent">Already spent this period <span id="spentValue" class="control-value">0.0 / 8.0 USDC</span></label><input id="spent" type="range" min="0" max="8" step="0.5" value="0" oninput="syncControls()"></div>
+        <div class="control"><label for="merchant">Merchant identity</label><select id="merchant" onchange="evaluateDynamic()"><option value="trusted">merchant:researchpulse</option><option value="mismatch">merchant:lookalike</option></select></div>
+        <div class="control"><label for="evidence">Result evidence</label><select id="evidence" onchange="evaluateDynamic()"><option value="present">Evidence hash present</option><option value="missing">Evidence missing</option></select></div>
+      </div>
+      <button style="margin-top:16px" onclick="evaluateDynamic()">Run policy pre-flight</button>
+      <div id="output" class="output">Choose a scenario above to produce a receipt.</div>
+    </section>
     <section class="card" style="margin-top:14px"><div class="eyebrow">Native mobile readiness</div><h2>One policy, two honest device modes.</h2><div class="matrix"><div class="muted">Capability</div><div class="muted">Android + Phantom</div><div class="muted">Seeker</div><div>Mobile Wallet Adapter</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Devnet signing</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Seed Vault</div><div class="limited">SEEKER ONLY</div><div class="ok">AVAILABLE</div><div>Genesis Token</div><div class="limited">NOT AVAILABLE</div><div class="ok">AVAILABLE</div></div><p class="muted">Local build: 8 TypeScript tests + 4 Android tests + 2 Rust tests. No simulated hash is presented as a chain transaction.</p></section>
   </main>
   <script>
     const base = { allowanceId: 'allowance-researchpulse-001', merchant: 'merchant:researchpulse', token: 'USDC', program: 'program:allowance-os-devnet' };
     const output = document.querySelector('#output');
-    function run(kind) { const data = { ...base, amount: kind === 'blocked' ? 10 : 2, merchant: kind === 'frozen' ? 'merchant:lookalike' : base.merchant, state: kind.toUpperCase(), checks: { merchantMatches: kind !== 'frozen', perChargeWithinPolicy: kind !== 'blocked', periodCapWithinPolicy: kind !== 'blocked', programAllowed: true, evidenceBound: true }, evidenceHash: 'demo-' + kind + '-evidence' }; output.textContent = JSON.stringify({ receiptVersion: '1', ...data, txHash: kind === 'verified' ? 'simulated:demo-receipt' : undefined, nextAction: kind === 'verified' ? 'settle_charge' : kind === 'blocked' ? 'reject_before_broadcast' : 'freeze_and_revoke' }, null, 2); }
+    function syncControls() { document.querySelector('#amountValue').textContent = Number(document.querySelector('#amount').value).toFixed(1) + ' USDC'; document.querySelector('#spentValue').textContent = Number(document.querySelector('#spent').value).toFixed(1) + ' / 8.0 USDC'; }
+    function evaluateDynamic() { syncControls(); const amount = Number(document.querySelector('#amount').value); const spent = Number(document.querySelector('#spent').value); const merchantMatches = document.querySelector('#merchant').value === 'trusted'; const evidenceBound = document.querySelector('#evidence').value === 'present'; const perChargeWithinPolicy = amount <= 2; const periodCapWithinPolicy = spent + amount <= 8; const frozen = !merchantMatches || !evidenceBound; const state = frozen ? 'FROZEN' : (perChargeWithinPolicy && periodCapWithinPolicy ? 'VERIFIED' : 'BLOCKED'); const reasons = []; if (!merchantMatches) reasons.push('merchant_identity_mismatch'); if (!evidenceBound) reasons.push('evidence_not_bound'); if (!perChargeWithinPolicy) reasons.push('per_charge_limit_exceeded'); if (!periodCapWithinPolicy) reasons.push('period_cap_exceeded'); const data = { ...base, amount, spentInPeriod: spent, merchant: merchantMatches ? base.merchant : 'merchant:lookalike', state, checks: { merchantMatches, evidenceBound, perChargeWithinPolicy, periodCapWithinPolicy, programAllowed: true }, evidenceHash: evidenceBound ? 'demo-' + state.toLowerCase() + '-evidence' : undefined, receiptType: 'SIMULATED', reasons, nextAction: state === 'VERIFIED' ? 'open_wallet_then_settle' : state === 'BLOCKED' ? 'reject_before_broadcast' : 'freeze_and_revoke' }; output.textContent = JSON.stringify({ receiptVersion: '1', ...data, txHash: state === 'VERIFIED' ? 'simulated:demo-receipt' : undefined }, null, 2); }
+    function run(kind) { document.querySelector('#amount').value = kind === 'blocked' ? 10 : 1; document.querySelector('#spent').value = kind === 'blocked' ? 1.5 : 0; document.querySelector('#merchant').value = kind === 'frozen' ? 'mismatch' : 'trusted'; document.querySelector('#evidence').value = 'present'; evaluateDynamic(); }
     function revoke() { output.textContent = JSON.stringify({ action: 'REVOKE_ALLOWANCE', allowanceId: base.allowanceId, state: 'REVOKED', nextAction: 'deauthorize_via_mwa_and_seed_vault' }, null, 2); }
   </script>
 </body>

@@ -18,6 +18,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.bitcoinj.base.Base58
+import java.security.MessageDigest
+
+data class AuditEvent(
+    val createdAt: Long,
+    val kind: String,
+    val state: AllowanceState,
+    val amount: Double = 0.0,
+    val message: String,
+    val signature: String = "",
+)
 
 data class AllowanceUiState(
     val loading: Boolean = false,
@@ -29,8 +39,10 @@ data class AllowanceUiState(
     val signature: String = "",
     val error: String = "",
     val requestedAmount: Double = 1.0,
+    val periodSpent: Double = 0.0,
     val merchantTrusted: Boolean = true,
     val evidencePresent: Boolean = true,
+    val auditEvents: List<AuditEvent> = emptyList(),
 )
 
 class AllowanceViewModel(application: Application) : AndroidViewModel(application) {
@@ -54,6 +66,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         AllowanceUiState(
             walletAddress = preferences.getString(KEY_PUBLIC_KEY, "").orEmpty(),
             walletLabel = preferences.getString(KEY_ACCOUNT_LABEL, "").orEmpty(),
+            auditEvents = loadEvents(),
         ),
     )
     val state: StateFlow<AllowanceUiState> = _state
@@ -80,10 +93,11 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                             decisionReason = "MWA authorization succeeded on Solana Devnet.",
                         )
                     }
+                    logEvent("WALLET_CONNECTED", AllowanceState.IDLE, message = "MWA wallet authorization succeeded")
                 }
 
-                is TransactionResult.NoWalletFound -> fail(result.message)
-                is TransactionResult.Failure -> fail(result.message)
+                is TransactionResult.NoWalletFound -> fail(result.message, "WALLET_ERROR")
+                is TransactionResult.Failure -> fail(result.message, "WALLET_ERROR")
             }
         }
     }
@@ -106,14 +120,21 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         evidence = "research-report-sha256",
     )
 
-    fun evaluateCustom(amount: Double, merchantTrusted: Boolean, evidencePresent: Boolean) = evaluate(
+    fun runJudgeDemo() {
+        evaluate(1.0, policy.merchant, "research-report-sha256", 1.5)
+        evaluate(10.0, policy.merchant, "research-report-sha256", 1.5)
+        evaluate(1.0, "merchant:lookalike", "research-report-sha256", 1.5)
+    }
+
+    fun evaluateCustom(amount: Double, merchantTrusted: Boolean, evidencePresent: Boolean, periodSpent: Double = 0.0) = evaluate(
         amount = amount,
         merchant = if (merchantTrusted) policy.merchant else "merchant:lookalike",
         evidence = if (evidencePresent) "research-report-sha256" else "",
+        periodSpent = periodSpent,
     )
 
-    private fun evaluate(amount: Double, merchant: String, evidence: String) {
-        val decision = PolicyEngine.evaluate(policy, amount, merchant, evidence)
+    private fun evaluate(amount: Double, merchant: String, evidence: String, periodSpent: Double = 0.0) {
+        val decision = PolicyEngine.evaluate(policy, amount, merchant, evidence, periodSpent)
         _state.update {
             it.copy(
                 allowanceState = decision.state,
@@ -121,10 +142,12 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                 signature = "",
                 error = "",
                 requestedAmount = amount,
+                periodSpent = periodSpent,
                 merchantTrusted = merchant == policy.merchant,
                 evidencePresent = evidence.isNotBlank(),
             )
         }
+        logEvent("POLICY_DECISION", decision.state, amount, decision.reason)
     }
 
     fun refreshBalance() {
@@ -136,19 +159,22 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                 .onSuccess { balance ->
                     _state.update { it.copy(loading = false, solBalance = balance, error = "") }
                 }
-                .onFailure { error -> fail(error.message ?: "Unable to refresh Devnet balance") }
+                .onFailure { error -> fail(error.message ?: "Unable to refresh Devnet balance", "BALANCE_ERROR") }
         }
     }
 
     fun publishDevnetProof(sender: ActivityResultSender) {
+        val current = _state.value
         val preflight = PolicyEngine.evaluate(
             policy = policy,
-            amount = 1.0,
-            merchant = policy.merchant,
-            evidence = "research-report-sha256",
+            amount = current.requestedAmount,
+            merchant = if (current.merchantTrusted) policy.merchant else "merchant:lookalike",
+            evidence = if (current.evidencePresent) "research-report-sha256" else "",
+            periodSpent = current.periodSpent,
         )
         if (preflight.state != AllowanceState.VERIFIED) {
-            _state.update { it.copy(allowanceState = preflight.state, decisionReason = preflight.reason) }
+            _state.update { it.copy(allowanceState = preflight.state, decisionReason = preflight.reason, signature = "") }
+            logEvent("POLICY_DECISION", preflight.state, current.requestedAmount, preflight.reason)
             return
         }
 
@@ -162,6 +188,8 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                     policy.allowanceId,
                     "policy=$policyHash",
                     "merchant=${policy.merchant}",
+                    "amount=${current.requestedAmount}",
+                    "periodSpent=${current.periodSpent}",
                     "cap=${policy.perChargeCap}-${policy.token}",
                 ).joinToString("|")
 
@@ -194,10 +222,11 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                             error = "",
                         )
                     }
+                    logEvent("DEVNET_MEMO_BROADCAST", AllowanceState.VERIFIED, current.requestedAmount, "Real Devnet Memo authorization proof", result.payload)
                 }
 
-                is TransactionResult.NoWalletFound -> fail(result.message)
-                is TransactionResult.Failure -> fail(result.message)
+                is TransactionResult.NoWalletFound -> fail(result.message, "WALLET_ERROR")
+                is TransactionResult.Failure -> fail(result.message, "WALLET_ERROR")
             }
         }
     }
@@ -211,11 +240,13 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                     _state.value = AllowanceUiState(
                         allowanceState = AllowanceState.REVOKED,
                         decisionReason = "Wallet authorization was deauthorized through MWA.",
+                        auditEvents = loadEvents(),
                     )
+                    logEvent("MWA_REVOKED", AllowanceState.REVOKED, message = "MWA authorization deauthorized")
                 }
 
-                is TransactionResult.NoWalletFound -> fail(result.message)
-                is TransactionResult.Failure -> fail(result.message)
+                is TransactionResult.NoWalletFound -> fail(result.message, "WALLET_ERROR")
+                is TransactionResult.Failure -> fail(result.message, "WALLET_ERROR")
             }
         }
     }
@@ -225,7 +256,9 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         _state.value = AllowanceUiState(
             allowanceState = AllowanceState.IDLE,
             decisionReason = "Local wallet session cleared. Connect your MWA wallet again.",
+            auditEvents = loadEvents(),
         )
+        logEvent("LOCAL_SESSION_CLEARED", AllowanceState.IDLE, message = "Local wallet session forgotten")
     }
 
     private fun setLoading(reason: String? = null) {
@@ -238,8 +271,9 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    private fun fail(message: String) {
+    private fun fail(message: String, kind: String = "ERROR") {
         _state.update { it.copy(loading = false, error = message) }
+        logEvent(kind, AllowanceState.IDLE, message = message)
     }
 
     private fun persistConnection(publicKey: String, accountLabel: String, authToken: String) {
@@ -252,13 +286,71 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     private fun clearConnection() {
-        preferences.edit().clear().apply()
+        preferences.edit()
+            .remove(KEY_PUBLIC_KEY)
+            .remove(KEY_ACCOUNT_LABEL)
+            .remove(KEY_AUTH_TOKEN)
+            .apply()
         walletAdapter.authToken = null
     }
+
+    fun clearAuditEvents() {
+        preferences.edit().remove(KEY_EVENTS).apply()
+        _state.update { it.copy(auditEvents = emptyList()) }
+    }
+
+    fun receiptSummary(): String {
+        val current = _state.value
+        val checks = listOf(
+            "\"merchantMatches\": ${current.merchantTrusted}",
+            "\"evidencePresent\": ${current.evidencePresent}",
+            "\"perChargeWithinPolicy\": ${current.requestedAmount <= policy.perChargeCap}",
+            "\"periodCapWithinPolicy\": ${current.periodSpent + current.requestedAmount <= policy.periodCap}",
+        ).joinToString(",")
+        return """
+            {
+              "receiptVersion": "1",
+              "allowanceId": "${policy.allowanceId}",
+              "state": "${current.allowanceState.name}",
+              "amount": ${current.requestedAmount},
+              "periodSpentBefore": ${current.periodSpent},
+              "token": "${policy.token}",
+              "merchant": "${if (current.merchantTrusted) policy.merchant else "merchant:lookalike"}",
+              "policyHash": "$policyHash",
+              "checks": {$checks},
+              "signature": "${current.signature}",
+              "evidenceLevel": "${if (current.signature.isBlank()) "SIMULATED" else "LIVE_DEVNET_PROOF"}"
+            }
+        """.trimIndent()
+    }
+
+    fun receiptFingerprint(): String = MessageDigest.getInstance("SHA-256")
+        .digest(receiptSummary().encodeToByteArray())
+        .joinToString("") { "%02x".format(it) }
+
+    private fun logEvent(kind: String, state: AllowanceState, amount: Double = 0.0, message: String, signature: String = "") {
+        val event = AuditEvent(System.currentTimeMillis(), kind, state, amount, message.replace("|", "/"), signature.replace("|", "/"))
+        val events = (listOf(event) + loadEvents()).distinctBy { Triple(it.createdAt, it.kind, it.message) }.take(50)
+        preferences.edit().putStringSet(KEY_EVENTS, events.map { encode(it) }.toSet()).apply()
+        _state.update { it.copy(auditEvents = events) }
+    }
+
+    private fun loadEvents(): List<AuditEvent> = preferences.getStringSet(KEY_EVENTS, emptySet())
+        .orEmpty().mapNotNull(::decode).sortedByDescending { it.createdAt }.take(50)
+
+    private fun encode(event: AuditEvent): String = listOf(
+        event.createdAt, event.kind, event.state.name, event.amount, event.signature, event.message,
+    ).joinToString("|")
+
+    private fun decode(value: String): AuditEvent? = runCatching {
+        val parts = value.split("|", limit = 6)
+        AuditEvent(parts[0].toLong(), parts[1], AllowanceState.valueOf(parts[2]), parts[3].toDouble(), parts[5], parts[4])
+    }.getOrNull()
 
     companion object {
         private const val KEY_PUBLIC_KEY = "public_key"
         private const val KEY_ACCOUNT_LABEL = "account_label"
         private const val KEY_AUTH_TOKEN = "auth_token"
+        private const val KEY_EVENTS = "audit_events"
     }
 }

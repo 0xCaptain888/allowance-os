@@ -48,7 +48,7 @@ internal val White = Color(0xFFF4F7FB)
 internal val Muted = Color(0xFF8E9AB0)
 internal val Line = Color(0xFF263146)
 
-internal enum class AppPage { OVERVIEW, POLICY, EVIDENCE }
+internal enum class AppPage { OVERVIEW, POLICY, ACTIVITY, EVIDENCE }
 
 @Composable
 internal fun PageColumn(content: @Composable ColumnScope.() -> Unit) {
@@ -284,6 +284,7 @@ internal fun BottomBar(page: AppPage, chinese: Boolean, onSelect: (AppPage) -> U
     ) {
         BottomItem(Modifier.weight(1f), t("总览", "Overview", chinese), page == AppPage.OVERVIEW) { onSelect(AppPage.OVERVIEW) }
         BottomItem(Modifier.weight(1f), t("策略", "Policy", chinese), page == AppPage.POLICY) { onSelect(AppPage.POLICY) }
+        BottomItem(Modifier.weight(1f), t("活动", "Activity", chinese), page == AppPage.ACTIVITY) { onSelect(AppPage.ACTIVITY) }
         BottomItem(Modifier.weight(1f), t("证据", "Evidence", chinese), page == AppPage.EVIDENCE) { onSelect(AppPage.EVIDENCE) }
     }
 }

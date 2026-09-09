@@ -11,7 +11,7 @@ Allowance OS is a Solana Mobile control center for safe on-chain subscriptions a
 | Surface | What it proves | Status |
 | --- | --- | --- |
 | [Public Judge Demo](https://0xcaptain888.github.io/allowance-os/) | Instant `VERIFIED` / `BLOCKED` / `FROZEN` policy replay | GitHub Pages deployment |
-| `mobile/android` | Bilingual native Android control center, adjustable policy studio, MWA authorization, and Devnet evidence flow | v0.3.1 compiled and unit-tested |
+| `mobile/android` | Bilingual native Android control center, adjustable policy studio, period-cap enforcement, persistent activity audit, MWA authorization, and Devnet evidence flow | v0.5.0 source upgrade; APK build pending |
 | `program/` | Native Solana create / charge / revoke instruction logic | Compiled; 2 tests passed |
 | Solana Explorer | Connected Devnet wallet and wallet-broadcast authorization proof | Live signature captured |
 | Deployed allowance program | Program-enforced SPL-token settlement | Not yet deployed |
@@ -40,13 +40,17 @@ User policy
 The Android app is not a mockup. It uses Solana Mobile's official `mobile-wallet-adapter-clientlib-ktx:2.0.7` and implements:
 
 - Chinese and English product interfaces with an in-app language switch;
-- three judge-ready surfaces: Overview, Policy Studio, and Evidence Center;
+- four judge-ready surfaces: Overview, Policy Studio, Activity Log, and Evidence Center;
+- persistent Activity Log with decision counts, wallet events, and error history;
 - `Connect Phantom / MWA Wallet`;
 - reconnect, balance refresh, address copy, and safe local-session reset;
 - Solana Devnet authorization;
 - wallet public-key and SOL-balance display;
 - deterministic policy hash;
-- adjustable amount, merchant identity, and evidence inputs;
+- adjustable amount, current-period spend, merchant identity, and evidence inputs;
+- period-cap enforcement that blocks a request when `spentInPeriod + amount` would exceed the allowance;
+- one-tap judge mode that records VERIFIED, BLOCKED, and FROZEN decisions in the local activity trail;
+- portable JSON receipt with a SHA-256 fingerprint for cross-surface evidence binding;
 - `VERIFIED`, `BLOCKED`, and `FROZEN` policy replay before wallet invocation;
 - real `signAndSendTransactions` for a Devnet Memo authorization proof;
 - Solana Explorer evidence link;
@@ -109,4 +113,4 @@ The Rust program ID is currently a placeholder. It must not be presented as depl
 | Genesis Token | Not available | Available |
 | `SEEKER VERIFIED` label | Never shown | Requires real validation |
 
-This allows meaningful real-device testing now without pretending that a standard Android handset supplies Seeker hardware capabilities.
+This allows meaningful real-device testing now without pretending that a standard Android handset supplies Seeker hardware capabilities. The Android app also exposes a portable receipt: its `SIMULATED` or `LIVE_DEVNET_PROOF` label and SHA-256 fingerprint make the evidence boundary explicit when a judge copies results out of the app.

@@ -27,12 +27,14 @@ Build or install the Android app from `mobile/android`:
 
 1. Use the header switch to inspect the complete Chinese or English interface.
 2. On **Overview**, tap **Connect Phantom / MWA Wallet** and approve Solana Devnet authorization.
-3. On **Policy**, change the requested amount, merchant identity, and evidence availability.
-4. Run `BLOCKED` or `FROZEN` and confirm Phantom is not opened.
-5. Run `VERIFIED`, then publish the real Devnet authorization proof.
-6. Approve the transaction in Phantom.
-7. On **Evidence**, inspect the four-layer verification pipeline and open the signature in Solana Explorer.
-8. Test **Reconnect**, **Forget local wallet session**, and **Revoke & deauthorize** without exposing a wallet key.
+3. Tap **Judge mode** to generate the three policy outcomes and open **Activity**; the audit trail should contain VERIFIED, BLOCKED, and FROZEN decisions.
+4. On **Policy**, change the requested amount, current-period spend, merchant identity, and evidence availability.
+5. Run `BLOCKED` or `FROZEN` and confirm Phantom is not opened.
+6. Run `VERIFIED`, then publish the real Devnet authorization proof.
+7. Approve the transaction in Phantom.
+8. On **Evidence**, copy the portable JSON receipt and its SHA-256 fingerprint, then open the signature in Solana Explorer.
+9. Open **Activity** to inspect the persistent local audit trail and decision counters.
+10. Test **Reconnect**, **Forget local wallet session**, and **Revoke & deauthorize** without exposing a wallet key.
 
 ## Evidence labels
 

@@ -20,6 +20,18 @@ class AllowancePolicyTest {
     }
 
     @Test
+    fun periodCapIsEnforcedBeforeWalletInvocation() {
+        val decision = PolicyEngine.evaluate(policy, 1.5, policy.merchant, "evidence", periodSpent = 7.0)
+        assertEquals(AllowanceState.BLOCKED, decision.state)
+    }
+
+    @Test
+    fun exactRemainingPeriodBudgetIsVerified() {
+        val decision = PolicyEngine.evaluate(policy, 1.0, policy.merchant, "evidence", periodSpent = 7.0)
+        assertEquals(AllowanceState.VERIFIED, decision.state)
+    }
+
+    @Test
     fun merchantMismatchIsFrozen() {
         val decision = PolicyEngine.evaluate(policy, 1.0, "merchant:lookalike", "evidence")
         assertEquals(AllowanceState.FROZEN, decision.state)

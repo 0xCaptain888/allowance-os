@@ -30,6 +30,7 @@ object PolicyEngine {
         amount: Double,
         merchant: String,
         evidence: String,
+        periodSpent: Double = 0.0,
     ): PolicyDecision = when {
         merchant != policy.merchant -> PolicyDecision(
             AllowanceState.FROZEN,
@@ -44,6 +45,11 @@ object PolicyEngine {
         amount > policy.perChargeCap -> PolicyDecision(
             AllowanceState.BLOCKED,
             "Charge exceeds the ${policy.perChargeCap} ${policy.token} per-charge limit.",
+        )
+
+        periodSpent + amount > policy.periodCap -> PolicyDecision(
+            AllowanceState.BLOCKED,
+            "Charge would exceed the ${policy.periodCap} ${policy.token} period cap (${periodSpent} already spent).",
         )
 
         else -> PolicyDecision(

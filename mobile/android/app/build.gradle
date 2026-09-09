@@ -16,8 +16,8 @@ android {
         applicationId 'com.captain.allowanceos'
         minSdk 27
         targetSdk 37
-        versionCode 3
-        versionName '0.3.1'
+        versionCode 5
+        versionName '0.5.0'
 
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }

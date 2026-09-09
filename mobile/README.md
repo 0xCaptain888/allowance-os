@@ -10,8 +10,10 @@ Verified locally on September 9, 2026:
 ./gradlew testDebugUnitTest assembleDebug
 BUILD SUCCESSFUL
 4 Android policy tests passed
-APK SHA-256: 0964730f20cd551483d946ab419fd8ee6952095a7afcc0f0decc7e1354f83e98
+APK SHA-256 (v0.4.0): b3d7d1119bcf4919af70fbae424cac252fa02cc7b2e82e51848c59eea14acb0b
 ```
+
+v0.5.0 adds period-cap enforcement, judge mode, persistent decision activity, and portable receipt export. The checksum above belongs to the previous v0.4.0 build and will be replaced after the new build completes.
 
 The checksum belongs to the local debug build and may change after any source or dependency update.
 

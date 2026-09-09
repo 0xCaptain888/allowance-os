@@ -80,6 +80,7 @@ private fun AllowanceApp(viewModel: AllowanceViewModel, sender: ActivityResultSe
                 when (page) {
                     AppPage.OVERVIEW -> OverviewPage(state, viewModel, sender, chinese) { page = it }
                     AppPage.POLICY -> PolicyPage(state, viewModel, sender, chinese)
+                    AppPage.ACTIVITY -> ActivityPage(state, viewModel, chinese)
                     AppPage.EVIDENCE -> EvidencePage(state, viewModel, chinese)
                 }
             }
@@ -110,7 +111,7 @@ private fun AppHeader(chinese: Boolean, onLanguageToggle: () -> Unit) {
         ) { Text("A", color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Black) }
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text("Allowance OS · v0.3.1", color = White, fontSize = 18.sp, fontWeight = FontWeight.Black)
+            Text("Allowance OS · v0.5.0", color = White, fontSize = 18.sp, fontWeight = FontWeight.Black)
             Text(t("链上周期支出控制", "Onchain recurring spend control", chinese), color = Muted, fontSize = 11.sp)
         }
         Row(
@@ -188,6 +189,18 @@ private fun OverviewPage(
         }
 
         ProductCard {
+            SectionTitle(t("风险概览", "RISK SNAPSHOT", chinese), t("可审计", "AUDITABLE", chinese))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                MetricCard(Modifier.weight(1f), "${state.auditEvents.count { it.state == AllowanceState.VERIFIED }}", "PASS", t("已通过", "VERIFIED", chinese), Mint)
+                MetricCard(Modifier.weight(1f), "${state.auditEvents.count { it.state == AllowanceState.BLOCKED }}", "STOP", t("已拦截", "BLOCKED", chinese), Amber)
+                MetricCard(Modifier.weight(1f), "${state.auditEvents.count { it.state == AllowanceState.FROZEN }}", "HOLD", t("已冻结", "FROZEN", chinese), Rose)
+            }
+            TextButton(onClick = { navigate(AppPage.ACTIVITY) }, contentPadding = PaddingValues(0.dp)) {
+                Text(t("查看完整活动记录  →", "View full activity log  →", chinese), color = Mint, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        ProductCard {
             SectionTitle(t("活跃授权", "ACTIVE ALLOWANCE", chinese), t("可撤销", "REVOCABLE", chinese))
             Text("ResearchPulse Agent", color = White, fontSize = 21.sp, fontWeight = FontWeight.Black)
             Text("merchant:researchpulse", color = Muted, fontSize = 13.sp)
@@ -218,6 +231,10 @@ private fun OverviewPage(
                 StateAction(Modifier.weight(1f), "BLOCKED", Amber) { viewModel.runBlocked() }
                 StateAction(Modifier.weight(1f), "FROZEN", Rose) { viewModel.runFrozen() }
             }
+            SecondaryButton(Modifier.fillMaxWidth(), t("评委模式：一次生成三种结果", "Judge mode: generate all three outcomes", chinese)) {
+                viewModel.runJudgeDemo()
+                navigate(AppPage.ACTIVITY)
+            }
             DecisionCard(state, chinese)
         }
         Spacer(Modifier.height(12.dp))
@@ -227,6 +244,7 @@ private fun OverviewPage(
 @Composable
 private fun PolicyPage(state: AllowanceUiState, viewModel: AllowanceViewModel, sender: ActivityResultSender, chinese: Boolean) {
     var amount by rememberSaveable { mutableStateOf(state.requestedAmount.toFloat()) }
+    var periodSpent by rememberSaveable { mutableStateOf(state.periodSpent.toFloat()) }
     var trustedMerchant by rememberSaveable { mutableStateOf(state.merchantTrusted) }
     var evidencePresent by rememberSaveable { mutableStateOf(state.evidencePresent) }
 
@@ -249,20 +267,44 @@ private fun PolicyPage(state: AllowanceUiState, viewModel: AllowanceViewModel, s
             )
             ValueRow(t("允许上限", "Allowed maximum", chinese), "2.0 USDC")
             Divider(color = Line)
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(t("本周期已使用", "Spent this period", chinese), modifier = Modifier.weight(1f), color = Muted)
+                Text("${"%.1f".format(periodSpent)} / 8.0 USDC", color = White, fontSize = 18.sp, fontWeight = FontWeight.Black)
+            }
+            Slider(
+                value = periodSpent,
+                onValueChange = { periodSpent = it },
+                valueRange = 0f..8f,
+                steps = 15,
+                colors = SliderDefaults.colors(thumbColor = Blue, activeTrackColor = Blue, inactiveTrackColor = Line),
+            )
+            LinearProgressIndicator(
+                progress = ((periodSpent + amount) / 8f).coerceIn(0f, 1f),
+                modifier = Modifier.fillMaxWidth().height(7.dp).clip(RoundedCornerShape(8.dp)),
+                color = if (periodSpent + amount <= 8f) Mint else Rose,
+                backgroundColor = Line,
+            )
+            Text(
+                t("执行后预计：", "Projected after request: ", chinese) + "${"%.1f".format(periodSpent + amount)} / 8.0 USDC",
+                color = if (periodSpent + amount <= 8f) Muted else Rose,
+                fontSize = 12.sp,
+            )
+            Divider(color = Line)
             ToggleRow(t("商户身份", "Merchant identity", chinese), t("可信", "TRUSTED", chinese), t("不匹配", "MISMATCH", chinese), trustedMerchant) { trustedMerchant = it }
             ToggleRow(t("结果证据", "Result evidence", chinese), t("已提供", "PRESENT", chinese), t("缺失", "MISSING", chinese), evidencePresent) { evidencePresent = it }
             PrimaryButton(t("运行策略预检", "Run policy pre-flight", chinese)) {
-                viewModel.evaluateCustom(amount.toDouble(), trustedMerchant, evidencePresent)
+                viewModel.evaluateCustom(amount.toDouble(), trustedMerchant, evidencePresent, periodSpent.toDouble())
             }
         }
 
         DecisionCard(state, chinese)
 
         ProductCard {
-            SectionTitle(t("执行边界", "ENFORCEMENT BOUNDARIES", chinese), "3 CHECKS")
+            SectionTitle(t("执行边界", "ENFORCEMENT BOUNDARIES", chinese), "4 CHECKS")
             CheckRow(t("商户绑定", "Merchant binding", chinese), trustedMerchant, t("身份变化即冻结", "Freeze on identity drift", chinese))
             CheckRow(t("证据完整性", "Evidence integrity", chinese), evidencePresent, t("缺少证明即冻结", "Freeze when proof is missing", chinese))
             CheckRow(t("单笔预算", "Per-charge budget", chinese), amount <= 2f, t("超额在签名前拦截", "Block overspend before signing", chinese))
+            CheckRow(t("周期预算", "Period budget", chinese), periodSpent + amount <= 8f, t("累计支出不会突破周期上限", "Cumulative spend cannot exceed the period cap", chinese))
         }
 
         ProductCard {
@@ -314,6 +356,20 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
         }
 
         ProductCard {
+            SectionTitle(t("可移植收据", "PORTABLE RECEIPT", chinese), "SHA-256")
+            Text(
+                t("当前策略决定可导出为结构化收据；哈希可用于把前端结果与链上证明绑定。", "Export the current policy decision as a structured receipt. Its hash binds the UI result to external or onchain evidence.", chinese),
+                color = Muted,
+                fontSize = 13.sp,
+            )
+            ValueRow(t("收据指纹", "Receipt fingerprint", chinese), short(viewModel.receiptFingerprint()))
+            Text(viewModel.receiptSummary(), color = Muted, fontSize = 10.sp, maxLines = 10, overflow = TextOverflow.Ellipsis)
+            SecondaryButton(Modifier.fillMaxWidth(), t("复制完整收据", "Copy full receipt", chinese)) {
+                clipboard.setText(AnnotatedString(viewModel.receiptSummary()))
+            }
+        }
+
+        ProductCard {
             SectionTitle(t("真实性边界", "TRUTH BOUNDARY", chinese), t("透明披露", "HONEST DISCLOSURE", chinese))
             BoundaryRow("SIMULATED", t("策略参数回放与三态矩阵", "Policy replay and three-state matrix", chinese), Blue)
             BoundaryRow("LIVE DEVNET PROOF", t("真实 MWA 钱包授权 + Memo 签名", "Real MWA wallet authorization + Memo signature", chinese), Mint)
@@ -321,4 +377,69 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
         }
         Spacer(Modifier.height(12.dp))
     }
+}
+
+@Composable
+private fun ActivityPage(state: AllowanceUiState, viewModel: AllowanceViewModel, chinese: Boolean) {
+    PageColumn {
+        Row(verticalAlignment = Alignment.Bottom) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(t("活动记录", "Activity log", chinese), color = White, fontSize = 30.sp, fontWeight = FontWeight.Black)
+                Text(t("每一次决策、授权和错误都留下本地可审计记录。", "Every decision, authorization, and error leaves a local audit trail.", chinese), color = Muted)
+            }
+            TextButton(onClick = { viewModel.clearAuditEvents() }) {
+                Text(t("清空", "Clear", chinese), color = Rose, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        if (state.auditEvents.isEmpty()) {
+            ProductCard {
+                EmptyProof(chinese)
+                Text(t("点击策略页的预检按钮后，这里会出现活动记录。", "Run a policy pre-flight to start building the audit trail.", chinese), color = Muted, fontSize = 12.sp)
+            }
+        } else {
+            ProductCard {
+                SectionTitle(t("最近事件", "RECENT EVENTS", chinese), "LOCAL AUDIT")
+                state.auditEvents.forEachIndexed { index, event ->
+                    AuditEventRow(event, chinese)
+                    if (index < state.auditEvents.lastIndex) Divider(color = Line)
+                }
+            }
+        }
+
+        ProductCard {
+            SectionTitle(t("审计说明", "AUDIT NOTES", chinese), t("设备本地", "DEVICE LOCAL", chinese))
+            Text(t("活动记录保存在本机，仅用于演示可审计性；它不会伪装成链上事件。", "Activity entries are stored on-device for auditability and are never presented as onchain events.", chinese), color = Muted, fontSize = 13.sp)
+            BoundaryRow("LOCAL AUDIT", t("策略判断、MWA 状态和错误回放", "Policy decisions, MWA state, and error replay", chinese), Blue)
+            BoundaryRow("CHAIN EVIDENCE", t("只有真实交易签名才进入公开证据层", "Only a real transaction signature enters the public evidence layer", chinese), Mint)
+        }
+        Spacer(Modifier.height(12.dp))
+    }
+}
+
+@Composable
+private fun AuditEventRow(event: AuditEvent, chinese: Boolean) {
+    val date = java.text.SimpleDateFormat("MM-dd HH:mm", java.util.Locale.US).format(java.util.Date(event.createdAt))
+    Row(verticalAlignment = Alignment.Top) {
+        StatusPill(event.state)
+        Spacer(Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(eventTitle(event.kind, chinese), color = White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            Text(event.message, color = Muted, fontSize = 11.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            if (event.amount > 0.0) Text("${"%.1f".format(event.amount)} USDC", color = White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            if (event.signature.isNotBlank()) Text(short(event.signature), color = Mint, fontSize = 10.sp, maxLines = 1)
+        }
+        Text(date, color = Muted, fontSize = 10.sp)
+    }
+}
+
+private fun eventTitle(kind: String, chinese: Boolean): String = when (kind) {
+    "POLICY_DECISION" -> t("策略预检", "Policy pre-flight", chinese)
+    "WALLET_CONNECTED" -> t("钱包已连接", "Wallet connected", chinese)
+    "DEVNET_MEMO_BROADCAST" -> t("Devnet 证明已广播", "Devnet proof broadcast", chinese)
+    "MWA_REVOKED" -> t("MWA 授权已撤销", "MWA authorization revoked", chinese)
+    "LOCAL_SESSION_CLEARED" -> t("本地会话已清除", "Local session cleared", chinese)
+    "WALLET_ERROR" -> t("钱包连接错误", "Wallet connection error", chinese)
+    "BALANCE_ERROR" -> t("余额刷新错误", "Balance refresh error", chinese)
+    else -> kind
 }
