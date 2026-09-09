@@ -12,8 +12,8 @@ jobs:
       run:
         working-directory: .
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -27,7 +27,7 @@ jobs:
       run:
         working-directory: program
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo fmt -- --check
       - run: cargo test
@@ -38,16 +38,16 @@ jobs:
       run:
         working-directory: mobile/android
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 21
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
       - run: sdkmanager "platforms;android-37.0" "build-tools;35.0.0"
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
       - run: ./gradlew testDebugUnitTest assembleDebug --no-daemon
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: allowance-os-debug-apk
           path: mobile/android/app/build/outputs/apk/debug/*.apk
