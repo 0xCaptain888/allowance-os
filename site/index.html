@@ -6,7 +6,12 @@
   <title>Allowance OS — Seeker Spending Control</title>
   <style>
     :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #0b1020; color: #eef2ff; }
-    body { max-width: 1120px; margin: 0 auto; padding: 28px 18px 64px; }
+    body { max-width: 1120px; margin: 0 auto; padding: 20px 18px 64px; }
+    nav { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 32px; }
+    nav strong { letter-spacing: -.02em; }
+    .links { display: flex; gap: 10px; flex-wrap: wrap; }
+    a { color: #79e6c1; text-decoration: none; font-weight: 750; }
+    .nav-link { border: 1px solid #283454; border-radius: 999px; padding: 8px 12px; font-size: .82rem; }
     .hero { display: grid; grid-template-columns: 1.3fr .7fr; gap: 24px; align-items: end; }
     h1 { font-size: clamp(2.6rem, 7vw, 5.6rem); line-height: .94; margin: 12px 0; letter-spacing: -.06em; }
     .eyebrow { color: #79e6c1; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; font-size: .75rem; }
@@ -23,11 +28,16 @@
     button { border: 0; border-radius: 12px; padding: 11px 15px; font-weight: 800; cursor: pointer; background: #79e6c1; color: #061a14; }
     button.secondary { background: #222d4b; color: #eef2ff; }
     .output { white-space: pre-wrap; min-height: 180px; color: #b9c3dd; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .83rem; line-height: 1.55; }
+    .matrix { display: grid; grid-template-columns: 1.1fr repeat(2, .65fr); gap: 0; margin-top: 14px; border: 1px solid #283454; border-radius: 16px; overflow: hidden; }
+    .matrix > div { padding: 12px; border-right: 1px solid #283454; border-bottom: 1px solid #283454; }
+    .matrix > div:nth-child(3n) { border-right: 0; }
+    .ok { color: #79e6c1; font-weight: 800; } .limited { color: #ffc86b; font-weight: 800; }
     @media (max-width: 800px) { .hero, .grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <main>
+    <nav><strong>Allowance OS</strong><div class="links"><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os">GitHub</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/tree/main/mobile/android">Android MWA</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/docs/judge-guide.md">Judge Guide</a></div></nav>
     <section class="hero">
       <div><div class="eyebrow">Seeker-native spending control</div><h1>Allowance OS</h1><p class="lede">The mobile control center for safe on-chain subscriptions and agent spending. Approve once. Enforce every charge. Revoke anytime.</p></div>
       <div class="card policy"><div class="row"><span class="muted">Subscriber</span><span class="value">alice.skr</span></div><div class="row"><span class="muted">Merchant</span><span class="value">ResearchPulse</span></div><div class="row"><span class="muted">Allowance</span><span class="value">2 USDC / week</span></div><div class="row"><span class="muted">Monthly cap</span><span class="value">8 USDC</span></div><div class="row"><span class="muted">Status</span><span class="pill verified">ACTIVE</span></div></div>
@@ -37,7 +47,8 @@
       <div class="card"><div class="eyebrow">02 · blocked</div><h2>Over the cap</h2><p class="muted">The Agent asks for 10 USDC against a 2 USDC per-charge limit.</p><button class="secondary" onclick="run('blocked')">Run check</button></div>
       <div class="card"><div class="eyebrow">03 · frozen</div><h2>Merchant changed</h2><p class="muted">The destination no longer matches the authorized merchant.</p><button class="secondary" onclick="run('frozen')">Run check</button></div>
     </section>
-    <section class="card" style="margin-top:14px"><div class="row"><span><strong>Browser Evidence Verification</strong><br><span class="muted">This is the judge-facing simulator. Solana adapter is intentionally marked as the next layer.</span></span><button class="secondary" onclick="revoke()">Revoke allowance</button></div><div id="output" class="output">Choose a scenario above to produce a receipt.</div></section>
+    <section class="card" style="margin-top:14px"><div class="row"><span><strong>Browser Evidence Verification</strong><br><span class="muted">This replay is SIMULATED. The native Android client now implements real MWA authorize, signAndSendTransactions, Explorer evidence, and deauthorize; its first public Devnet signature awaits phone approval.</span></span><button class="secondary" onclick="revoke()">Revoke allowance</button></div><div id="output" class="output">Choose a scenario above to produce a receipt.</div></section>
+    <section class="card" style="margin-top:14px"><div class="eyebrow">Native mobile readiness</div><h2>One policy, two honest device modes.</h2><div class="matrix"><div class="muted">Capability</div><div class="muted">Android + Phantom</div><div class="muted">Seeker</div><div>Mobile Wallet Adapter</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Devnet signing</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Seed Vault</div><div class="limited">SEEKER ONLY</div><div class="ok">AVAILABLE</div><div>Genesis Token</div><div class="limited">NOT AVAILABLE</div><div class="ok">AVAILABLE</div></div><p class="muted">Local build: 8 TypeScript tests + 4 Android tests + 2 Rust tests. No simulated hash is presented as a chain transaction.</p></section>
   </main>
   <script>
     const base = { allowanceId: 'allowance-researchpulse-001', merchant: 'merchant:researchpulse', token: 'USDC', program: 'program:allowance-os-devnet' };

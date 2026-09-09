@@ -2,13 +2,15 @@
 
 > Approve once. Enforce every charge. Revoke anytime.
 
+**[Open the public Judge Demo](https://0xcaptain888.github.io/allowance-os/)** · **[Android MWA client](mobile/android)** · **[Two-minute judge guide](docs/judge-guide.md)**
+
 Allowance OS is a Solana Mobile control center for safe on-chain subscriptions and autonomous-agent spending. It turns an open-ended wallet approval into a human-readable allowance with merchant, token, program, per-charge, period, expiry, and evidence boundaries.
 
 ## Judge path
 
 | Surface | What it proves | Status |
 | --- | --- | --- |
-| `site/index.html` | Instant `VERIFIED` / `BLOCKED` / `FROZEN` policy replay | Working simulator |
+| [Public Judge Demo](https://0xcaptain888.github.io/allowance-os/) | Instant `VERIFIED` / `BLOCKED` / `FROZEN` policy replay | GitHub Pages deployment |
 | `mobile/android` | Native Android MWA authorization and Devnet transaction flow | Compiled and unit-tested |
 | `program/` | Native Solana create / charge / revoke instruction logic | Compiled; 2 tests passed |
 | Solana Explorer | Wallet-broadcast Devnet authorization proof | Pending phone approval |
