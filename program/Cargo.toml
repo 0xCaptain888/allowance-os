@@ -1,0 +1,19 @@
+[package]
+name = "allowance-os-program"
+version = "0.1.0"
+edition = "2021"
+description = "Native Solana allowance enforcement program for Allowance OS"
+license = "Apache-2.0"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+no-entrypoint = []
+custom-heap = []
+custom-panic = []
+
+[dependencies]
+borsh = "0.10.3"
+borsh-derive = "0.10.3"
+solana-program = "1.18.9"

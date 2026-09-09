@@ -1,0 +1,19 @@
+{
+  "name": "allowance-os",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A Seeker-native control center for safe on-chain subscriptions and agent spending.",
+  "type": "module",
+  "scripts": {
+    "demo": "tsx src/demo.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts",
+    "serve:site": "node scripts/serve-site.mjs",
+    "preflight": "node scripts/preflight.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
