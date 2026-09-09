@@ -6,10 +6,10 @@
   "result": "BUILD_SUCCESSFUL",
   "testCount": 6,
   "testFailures": 0,
-  "versionCode": 6,
-  "versionName": "0.6.0",
-  "artifact": "mobile/android/app/build/outputs/apk/debug/allowance-os-0.6.0-debug.apk",
+  "versionCode": 7,
+  "versionName": "0.7.0",
+  "artifact": "mobile/android/app/build/outputs/apk/debug/allowance-os-0.7.0-debug.apk",
   "artifactSize": "18 MB",
-  "sha256": "dc4737acebf2f12c00b4664d63b4719e1ca11ad13a8d9e1240aba6dfcdf58370",
+  "sha256": "0d0b0553d671f90884f5c99028ce33c46f8e7a95558cb059eecefd101be76e2c",
   "truthBoundary": "This proves a local Android build. It is not a Solana transaction or deployed-program receipt."
 }

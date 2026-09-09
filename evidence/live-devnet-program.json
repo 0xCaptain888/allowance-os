@@ -1,0 +1,44 @@
+{
+  "capturedAt": "2026-09-09T21:23:00Z",
+  "network": "solana-devnet",
+  "evidenceLevel": "PROGRAM_ENFORCED_STATE_TRANSITIONS",
+  "programId": "DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE",
+  "deployment": {
+    "signature": "51oSUwd4bXDVp45Yg22TmrqGACHEX8Z6Ax3eCwS5r8JCjuqwRfJWMGs1vD2bxqUnqTEZyS8YQPrYiGXASwRzotPc",
+    "freezeUpgradeSignature": "2PwkFBvhBbTHUqRV5URUHsPmCVnUMGQe7QTds3wFz6ud12u6xFmRBDVpShEmtqTHVhreZBDAJPmfz4UVVtT5C6Uw",
+    "lastDeployedSlot": 495816283,
+    "authority": "ETJL7fK6CkaYsjrfXm6NhyNcztes8PcZKJ6jK3xGgMXF"
+  },
+  "allowanceAccount": "4AzXfvZ6Ks2QFZFPTyAAzLL3vUWjzqUJguBvNUeoed9E",
+  "policyHash": "c179bf13d17fc2cc659ac9739757f5344879d7257d0261173d565f5a4daacffb",
+  "requiredEvidenceHash": "ea53c034a455fa2dee2eed8de3e402cc64ce1a84af8372deededfadcb79ba2b3",
+  "transactions": {
+    "create": "okfc2Z9S2ehRgLxtVrRKwZoB3KPJJWTJf7Zz6xDdTkwMvneCfJ3qzV42p4hWUeZ3NTQzwoZaS4MLeUtgy5K2bTQ",
+    "verified": "4fMAWn5T4gAjJz5ragh66eaNjk7hXfxWhjdSx2ojkDK4GAwNWhaZoNNdGKsvwngJXcz3LHN7HEWAnQWsP7f9JNfJ",
+    "blocked": "5r8Cd9ajUmWoSmVsMar5S5wdxrNL6C8aFfQ58GBpCGqJEGJGQUdhDLbKBPUqsURbQF92UWM3DmRR5Lnb1KA77QV5",
+    "frozen": "3qHEpGrhwoVFkJfQj3ndr5bvKmebnTtJCE86bP5SHZo1Xx7wzMis8XNcb5dHYb7FWm8tajFaGrGG8ygmVWcJvcWF",
+    "revoke": "5gVQm2depgBZrMrMZc84ZGdvVVGfuwmmYeSyh5G9q1PbzTsNhfxoXyEdQ7ZsNGdcFAaWyPzcdesrQkYmSbT9CBr7"
+  },
+  "verifiedState": {
+    "spentInPeriod": "1000000",
+    "frozen": false,
+    "revoked": false
+  },
+  "blockedState": {
+    "programError": 6,
+    "meaning": "PerChargeLimitExceeded",
+    "spentInPeriodAfter": "1000000"
+  },
+  "frozenState": {
+    "spentInPeriod": "1000000",
+    "frozen": true,
+    "revoked": false,
+    "mismatchedEvidenceHash": "7819bd76bb7612506357beef0da09f925e47e7c07052713729b2481ec00c498d"
+  },
+  "revokedState": {
+    "spentInPeriod": "1000000",
+    "frozen": true,
+    "revoked": true
+  },
+  "settlementDisclosure": "These transactions prove program-enforced allowance state transitions. No SPL token transfer occurs in this version."
+}

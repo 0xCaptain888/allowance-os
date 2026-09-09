@@ -6,6 +6,10 @@ import { join } from 'node:path';
 const adbPath = process.env.ANDROID_HOME
   ? join(process.env.ANDROID_HOME, 'platform-tools', 'adb')
   : join(homedir(), 'Library', 'Android', 'sdk', 'platform-tools', 'adb');
+const solanaPath = process.env.SOLANA_BIN
+  ?? join(homedir(), '.local', 'share', 'solana', 'install', 'active_release', 'bin', 'solana');
+const cargoBuildSbfPath = process.env.CARGO_BUILD_SBF_BIN
+  ?? join(homedir(), '.local', 'share', 'solana', 'install', 'active_release', 'bin', 'cargo-build-sbf');
 
 const checks = [
   ['typescript sources', existsSync('src/engine.ts')],
@@ -16,9 +20,10 @@ const checks = [
   ['Android MWA client', existsSync('mobile/android/app/src/main/java/com/captain/allowanceos/AllowanceViewModel.kt')],
   ['Android Gradle wrapper', existsSync('mobile/android/gradlew')],
   ['Solana program lockfile', existsSync('program/Cargo.lock')],
+  ['Live Devnet Program evidence', existsSync('evidence/live-devnet-program.json')],
   ['Device capability boundary', existsSync('mobile/README.md')],
-  ['Solana CLI', Boolean(command('solana', ['--version']))],
-  ['cargo-build-sbf', Boolean(command('cargo-build-sbf', ['--version']))],
+  ['Solana CLI', Boolean(command('solana', ['--version']) || command(solanaPath, ['--version']))],
+  ['cargo-build-sbf', Boolean(command('cargo-build-sbf', ['--version']) || command(cargoBuildSbfPath, ['--version']))],
   ['ADB', existsSync(adbPath) && Boolean(command(adbPath, ['version']))],
   ['Git remote configured', Boolean(command('git', ['remote', 'get-url', 'origin']))],
 ];

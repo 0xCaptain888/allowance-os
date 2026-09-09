@@ -10,11 +10,11 @@ Verified locally on September 9, 2026:
 ./gradlew testDebugUnitTest assembleDebug
 BUILD SUCCESSFUL
 6 Android policy tests passed
-Artifact: app/build/outputs/apk/debug/allowance-os-0.6.0-debug.apk
-APK SHA-256: dc4737acebf2f12c00b4664d63b4719e1ca11ad13a8d9e1240aba6dfcdf58370
+Artifact: app/build/outputs/apk/debug/allowance-os-0.7.0-debug.apk
+APK SHA-256: 0d0b0553d671f90884f5c99028ce33c46f8e7a95558cb059eecefd101be76e2c
 ```
 
-v0.6.0 adds period-cap enforcement, judge mode, persistent decision activity, portable receipt export, signature persistence, and direct Solana RPC proof verification.
+v0.7.0 adds the deployed Program evidence boundary, an in-app five-transaction matrix verifier, and direct links to the real Devnet enforcement path, while retaining period-cap enforcement, judge mode, persistent activity, portable receipts, and RPC proof verification.
 
 The checksum belongs to the local debug build and may change after any source or dependency update.
 
@@ -49,7 +49,7 @@ JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home" \
 
 ```bash
 ~/Library/Android/sdk/platform-tools/adb install -r \
-  app/build/outputs/apk/debug/allowance-os-0.6.0-debug.apk
+  app/build/outputs/apk/debug/allowance-os-0.7.0-debug.apk
 ```
 
 7. Open **Allowance OS** on the phone.

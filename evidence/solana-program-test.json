@@ -5,9 +5,9 @@
   "command": "cargo test --manifest-path program/Cargo.toml",
   "result": "PASS",
   "tests": {
-    "passed": 2,
+    "passed": 5,
     "failed": 0
   },
   "solanaProgramVersion": "1.18.26",
-  "truthBoundary": "This proves native Rust compilation and unit tests. It is not a deployed Solana program or live transaction."
+  "truthBoundary": "This file proves native Rust compilation and unit tests. Deployment and live state-transition evidence are recorded separately in evidence/live-devnet-program.json."
 }

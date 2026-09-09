@@ -111,7 +111,7 @@ private fun AppHeader(chinese: Boolean, onLanguageToggle: () -> Unit) {
         ) { Text("A", color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Black) }
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text("Allowance OS · v0.6.0", color = White, fontSize = 18.sp, fontWeight = FontWeight.Black)
+            Text("Allowance OS · v0.7.0", color = White, fontSize = 18.sp, fontWeight = FontWeight.Black)
             Text(t("链上周期支出控制", "Onchain recurring spend control", chinese), color = Muted, fontSize = 11.sp)
         }
         Row(
@@ -348,11 +348,15 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
         }
 
         ProductCard {
-            SectionTitle(t("验证流水线", "VERIFICATION PIPELINE", chinese), "4 LAYERS")
+            SectionTitle(t("验证流水线", "VERIFICATION PIPELINE", chinese), "5 LAYERS")
             TimelineStep("01", t("策略预检", "Policy pre-flight", chinese), t("金额、商户和证据在本地确定结果", "Amount, merchant, and evidence determine the local outcome", chinese), true)
             TimelineStep("02", t("MWA 用户授权", "MWA user authorization", chinese), t("钱包密钥始终留在 Phantom", "Wallet keys remain inside Phantom", chinese), state.walletAddress.isNotBlank())
             TimelineStep("03", t("Devnet 广播", "Devnet broadcast", chinese), t("签名后的 Memo 形成公开授权证据", "Signed Memo creates public authorization evidence", chinese), state.signature.isNotBlank())
-            TimelineStep("04", t("Program 结算", "Program settlement", chinese), t("尚未部署，明确标记为下一阶段", "Not deployed and explicitly marked as the next phase", chinese), false)
+            TimelineStep("04", t("Program 强制执行", "Program enforcement", chinese), t("Devnet 已部署，并有真实 VERIFIED / BLOCKED / FROZEN / REVOKED 证明", "Deployed on Devnet with real VERIFIED / BLOCKED / FROZEN / REVOKED proof", chinese), true)
+            TimelineStep("05", t("SPL 代币结算", "SPL-token settlement", chinese), t("尚未接入 CPI，明确标记为下一阶段", "CPI transfer is not connected and remains the next phase", chinese), false)
+            SecondaryButton(Modifier.fillMaxWidth(), t("打开 Devnet Program", "Open Devnet Program", chinese)) {
+                uriHandler.openUri("https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet")
+            }
         }
 
         ProductCard {
@@ -405,10 +409,36 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
         }
 
         ProductCard {
+            SectionTitle(t("链上三态矩阵", "ONCHAIN STATE MATRIX", chinese), "PROGRAM")
+            Text(
+                t("直接读取五笔公开交易和最终 allowance 账户，验证 Program 是否真的拒绝超额、持久化冻结并完成撤销。", "Read five public transactions and the final allowance account to verify that the Program rejected overspend, persisted the freeze, and recorded revocation.", chinese),
+                color = Muted,
+                fontSize = 13.sp,
+            )
+            when (state.programCheckPassed) {
+                true -> Notice(t("Program 三态链路核验成功。", "Program state-transition matrix verified.", chinese), Mint)
+                false -> Notice(state.programCheckMessage, Rose)
+                null -> if (state.programCheckMessage.isNotBlank()) Notice(state.programCheckMessage, Blue)
+            }
+            ValueRow("BLOCKED", if (state.programBlockedRejected) t("链上拒绝", "REJECTED ONCHAIN", chinese) else "—")
+            ValueRow("FROZEN", if (state.programFrozenPersisted) t("已持久化", "PERSISTED", chinese) else "—")
+            ValueRow("REVOKED", if (state.programRevokedPersisted) t("已持久化", "PERSISTED", chinese) else "—")
+            ValueRow(t("周期已用", "Period spent", chinese), state.programSpentInPeriod.toString())
+            PrimaryButton(
+                if (state.programCheckLoading) t("正在读取 Devnet…", "Reading Devnet…", chinese)
+                else t("验证完整链上矩阵", "Verify full onchain matrix", chinese),
+            ) { if (!state.programCheckLoading) viewModel.verifyProgramMatrix() }
+            SecondaryButton(Modifier.fillMaxWidth(), t("打开 allowance 账户", "Open allowance account", chinese)) {
+                uriHandler.openUri("https://explorer.solana.com/address/${DevnetRpc.ALLOWANCE_ACCOUNT}?cluster=devnet")
+            }
+        }
+
+        ProductCard {
             SectionTitle(t("真实性边界", "TRUTH BOUNDARY", chinese), t("透明披露", "HONEST DISCLOSURE", chinese))
             BoundaryRow("SIMULATED", t("策略参数回放与三态矩阵", "Policy replay and three-state matrix", chinese), Blue)
             BoundaryRow("LIVE DEVNET PROOF", t("真实 MWA 钱包授权 + Memo 签名", "Real MWA wallet authorization + Memo signature", chinese), Mint)
-            BoundaryRow("PROGRAM SETTLEMENT", t("Rust Program 尚未部署，不能宣称真实扣款", "Rust program is not deployed and is never claimed as a real charge", chinese), Amber)
+            BoundaryRow("PROGRAM ENFORCEMENT", t("真实链上状态变更：通过、拒绝、冻结和撤销", "Real onchain state transitions: verify, reject, freeze, and revoke", chinese), Mint)
+            BoundaryRow("SPL TOKEN SETTLEMENT", t("尚未发生代币转账，绝不与状态证明混淆", "No token transfer yet; never conflated with state proof", chinese), Amber)
         }
         Spacer(Modifier.height(12.dp))
     }

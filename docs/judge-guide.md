@@ -19,7 +19,7 @@ Open `site/index.html` and run:
 - `FROZEN`: merchant identity or evidence changed after authorization;
 - `REVOKED`: the user terminates future authorization.
 
-Every browser hash is visibly labelled as simulated.
+Every browser replay is visibly labelled as simulated. Then scroll to **Program-enforced evidence** and click **Verify the full matrix via Solana RPC**. The page independently checks five public signatures plus the final allowance account.
 
 ## 3. Verify the native path in 60 seconds
 
@@ -37,12 +37,25 @@ Build or install the Android app from `mobile/android`:
 10. Open **Activity** to inspect the persistent local audit trail and decision counters.
 11. Test **Reconnect**, **Forget local wallet session**, and **Revoke & deauthorize** without exposing a wallet key.
 
+## 4. Inspect the real Program path
+
+The deployed Devnet Program is [`DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`](https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet).
+
+| State | Transaction | Expected verification |
+| --- | --- | --- |
+| CREATED | [`okfc…2bTQ`](https://explorer.solana.com/tx/okfc2Z9S2ehRgLxtVrRKwZoB3KPJJWTJf7Zz6xDdTkwMvneCfJ3qzV42p4hWUeZ3NTQzwoZaS4MLeUtgy5K2bTQ?cluster=devnet) | Policy and required evidence hash stored |
+| VERIFIED | [`4fMA…JNfJ`](https://explorer.solana.com/tx/4fMAWn5T4gAjJz5ragh66eaNjk7hXfxWhjdSx2ojkDK4GAwNWhaZoNNdGKsvwngJXcz3LHN7HEWAnQWsP7f9JNfJ?cluster=devnet) | Spend advances to `1,000,000` |
+| BLOCKED | [`5r8C…7QV5`](https://explorer.solana.com/tx/5r8Cd9ajUmWoSmVsMar5S5wdxrNL6C8aFfQ58GBpCGqJEGJGQUdhDLbKBPUqsURbQF92UWM3DmRR5Lnb1KA77QV5?cluster=devnet) | Transaction fails with Custom Error `6`; spend does not change |
+| FROZEN | [`3qHE…vcWF`](https://explorer.solana.com/tx/3qHEpGrhwoVFkJfQj3ndr5bvKmebnTtJCE86bP5SHZo1Xx7wzMis8XNcb5dHYb7FWm8tajFaGrGG8ygmVWcJvcWF?cluster=devnet) | Mismatched evidence persists `frozen = true` |
+| REVOKED | [`5gVQ…CBr7`](https://explorer.solana.com/tx/5gVQm2depgBZrMrMZc84ZGdvVVGfuwmmYeSyh5G9q1PbzTsNhfxoXyEdQ7ZsNGdcFAaWyPzcdesrQkYmSbT9CBr7?cluster=devnet) | Authority persists `revoked = true` |
+
 ## Evidence labels
 
 | Label | Meaning |
 | --- | --- |
 | SIMULATED | Deterministic local policy replay |
 | LIVE DEVNET PROOF | Real wallet-broadcast Memo authorization evidence |
-| PROGRAM SETTLEMENT | Only after the Rust program is deployed and executes a token charge |
+| PROGRAM ENFORCEMENT | Real deployed Program and state transitions, without token movement |
+| SPL TOKEN SETTLEMENT | Only after an explicit token-transfer CPI is added |
 
 The current submission does not conflate these levels.

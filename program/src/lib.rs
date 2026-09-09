@@ -1,8 +1,9 @@
-//! Minimal native Solana program boundary for Allowance OS.
+//! Native Solana policy boundary for Allowance OS.
 //!
-//! This program enforces the spending policy on-chain. The first version records
-//! allowance state and rejects invalid charges. SPL-USDC transfer CPI is kept as
-//! a separate adapter step so the policy cannot silently become a UI-only check.
+//! The program stores an allowance, rejects budget violations, freezes an
+//! allowance when submitted evidence does not match the committed evidence,
+//! and lets the authority revoke it. SPL-token transfer CPI remains a separate
+//! adapter step so policy enforcement is never confused with settlement.
 
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
@@ -16,11 +17,11 @@ use solana_program::{
     sysvar::Sysvar,
 };
 
-// Placeholder Devnet program id. Replace it with the generated deploy keypair
-// before deployment; no live address is claimed by the repository yet.
-solana_program::declare_id!("9q4QgGtd4ZHo4dpca8hFDTAAque2ykqhiyziUcgGaiKQ");
+// Devnet program id derived from the local deployment keypair. The matching
+// explorer address and deployment transaction are recorded after deployment.
+solana_program::declare_id!("DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE");
 
-const STATE_SIZE: usize = 8 + 32 + 32 + 32 + 32 + 8 + 8 + 8 + 8 + 1 + 32;
+pub const STATE_SIZE: usize = 1 + (32 * 4) + (8 * 3) + 8 + 1 + 1 + (32 * 3);
 
 #[derive(Debug, borsh_derive::BorshSerialize, borsh_derive::BorshDeserialize, PartialEq, Eq)]
 pub struct AllowanceState {
@@ -34,7 +35,10 @@ pub struct AllowanceState {
     pub spent_in_period: u64,
     pub expires_at: i64,
     pub revoked: bool,
+    pub frozen: bool,
     pub policy_hash: [u8; 32],
+    pub required_evidence_hash: [u8; 32],
+    pub last_evidence_hash: [u8; 32],
 }
 
 #[derive(Debug, borsh_derive::BorshSerialize, borsh_derive::BorshDeserialize, PartialEq, Eq)]
@@ -47,6 +51,7 @@ pub enum AllowanceInstruction {
         period_cap: u64,
         expires_at: i64,
         policy_hash: [u8; 32],
+        required_evidence_hash: [u8; 32],
     },
     Charge {
         amount: u64,
@@ -66,6 +71,7 @@ pub enum AllowanceError {
     PeriodCapExceeded,
     InvalidAccountOwner,
     EvidenceMissing,
+    Frozen,
 }
 
 impl From<AllowanceError> for ProgramError {
@@ -80,8 +86,49 @@ impl From<AllowanceError> for ProgramError {
             AllowanceError::PeriodCapExceeded => 7,
             AllowanceError::InvalidAccountOwner => 8,
             AllowanceError::EvidenceMissing => 9,
+            AllowanceError::Frozen => 10,
         })
     }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum ChargeOutcome {
+    Accepted { spent_after: u64 },
+    FreezeEvidenceMismatch,
+}
+
+fn evaluate_charge(
+    state: &AllowanceState,
+    now: i64,
+    amount: u64,
+    evidence_hash: [u8; 32],
+) -> Result<ChargeOutcome, AllowanceError> {
+    if state.revoked {
+        return Err(AllowanceError::Revoked);
+    }
+    if state.frozen {
+        return Err(AllowanceError::Frozen);
+    }
+    if state.expires_at <= now {
+        return Err(AllowanceError::Expired);
+    }
+    if amount == 0 || amount > state.per_charge {
+        return Err(AllowanceError::PerChargeLimitExceeded);
+    }
+    let spent_after = state
+        .spent_in_period
+        .checked_add(amount)
+        .ok_or(AllowanceError::PeriodCapExceeded)?;
+    if spent_after > state.period_cap {
+        return Err(AllowanceError::PeriodCapExceeded);
+    }
+    if evidence_hash == [0; 32] {
+        return Err(AllowanceError::EvidenceMissing);
+    }
+    if evidence_hash != state.required_evidence_hash {
+        return Ok(ChargeOutcome::FreezeEvidenceMismatch);
+    }
+    Ok(ChargeOutcome::Accepted { spent_after })
 }
 
 entrypoint!(process_instruction);
@@ -113,11 +160,13 @@ pub fn process_instruction(
             period_cap,
             expires_at,
             policy_hash,
+            required_evidence_hash,
         } => {
             if per_charge == 0
                 || period_cap < per_charge
                 || expires_at <= Clock::get()?.unix_timestamp
                 || policy_hash == [0; 32]
+                || required_evidence_hash == [0; 32]
             {
                 return Err(AllowanceError::InvalidPolicy.into());
             }
@@ -139,7 +188,10 @@ pub fn process_instruction(
                 spent_in_period: 0,
                 expires_at,
                 revoked: false,
+                frozen: false,
                 policy_hash,
+                required_evidence_hash,
+                last_evidence_hash: [0; 32],
             };
             write_state(allowance, &state)?;
             msg!("Allowance created");
@@ -152,32 +204,20 @@ pub fn process_instruction(
             if state.authority != *authority.key {
                 return Err(AllowanceError::InvalidAuthority.into());
             }
-            if state.revoked {
-                return Err(AllowanceError::Revoked.into());
+            match evaluate_charge(&state, Clock::get()?.unix_timestamp, amount, evidence_hash)? {
+                ChargeOutcome::Accepted { spent_after } => {
+                    state.spent_in_period = spent_after;
+                    state.last_evidence_hash = evidence_hash;
+                    write_state(allowance, &state)?;
+                    msg!("Allowance charge VERIFIED; settlement remains adapter-owned");
+                }
+                ChargeOutcome::FreezeEvidenceMismatch => {
+                    state.frozen = true;
+                    state.last_evidence_hash = evidence_hash;
+                    write_state(allowance, &state)?;
+                    msg!("Allowance FROZEN: evidence hash mismatch");
+                }
             }
-            if state.expires_at <= Clock::get()?.unix_timestamp {
-                return Err(AllowanceError::Expired.into());
-            }
-            if amount == 0 || amount > state.per_charge {
-                return Err(AllowanceError::PerChargeLimitExceeded.into());
-            }
-            if state
-                .spent_in_period
-                .checked_add(amount)
-                .ok_or(AllowanceError::PeriodCapExceeded)?
-                > state.period_cap
-            {
-                return Err(AllowanceError::PeriodCapExceeded.into());
-            }
-            if evidence_hash == [0; 32] {
-                return Err(AllowanceError::EvidenceMissing.into());
-            }
-            state.spent_in_period = state
-                .spent_in_period
-                .checked_add(amount)
-                .ok_or(AllowanceError::PeriodCapExceeded)?;
-            write_state(allowance, &state)?;
-            msg!("Allowance charge accepted; payment CPI is adapter-owned");
         }
         AllowanceInstruction::Revoke => {
             let mut state = read_state(allowance)?;
@@ -218,6 +258,51 @@ mod tests {
         assert_eq!(
             AllowanceInstruction::try_from_slice(&encoded).unwrap(),
             instruction
+        );
+    }
+
+    fn active_state() -> AllowanceState {
+        AllowanceState {
+            version: 1,
+            authority: Pubkey::new_unique(),
+            merchant: Pubkey::new_unique(),
+            token_mint: Pubkey::new_unique(),
+            allowed_program: Pubkey::new_unique(),
+            per_charge: 2_000_000,
+            period_cap: 8_000_000,
+            spent_in_period: 1_000_000,
+            expires_at: 2_000_000_000,
+            revoked: false,
+            frozen: false,
+            policy_hash: [3; 32],
+            required_evidence_hash: [7; 32],
+            last_evidence_hash: [0; 32],
+        }
+    }
+
+    #[test]
+    fn matching_evidence_is_verified() {
+        assert_eq!(
+            evaluate_charge(&active_state(), 1_900_000_000, 1_000_000, [7; 32]),
+            Ok(ChargeOutcome::Accepted {
+                spent_after: 2_000_000
+            })
+        );
+    }
+
+    #[test]
+    fn mismatched_evidence_freezes_without_spending() {
+        assert_eq!(
+            evaluate_charge(&active_state(), 1_900_000_000, 1_000_000, [9; 32]),
+            Ok(ChargeOutcome::FreezeEvidenceMismatch)
+        );
+    }
+
+    #[test]
+    fn excessive_charge_is_blocked_before_evidence_handling() {
+        assert_eq!(
+            evaluate_charge(&active_state(), 1_900_000_000, 3_000_000, [9; 32]),
+            Err(AllowanceError::PerChargeLimitExceeded)
         );
     }
 }

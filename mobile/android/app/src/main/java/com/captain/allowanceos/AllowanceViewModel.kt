@@ -49,6 +49,13 @@ data class AllowanceUiState(
     val proofCheckConfirmation: String = "",
     val proofCheckedSignature: String = "",
     val proofCheckMessage: String = "",
+    val programCheckLoading: Boolean = false,
+    val programCheckPassed: Boolean? = null,
+    val programCheckMessage: String = "",
+    val programSpentInPeriod: ULong = 0uL,
+    val programBlockedRejected: Boolean = false,
+    val programFrozenPersisted: Boolean = false,
+    val programRevokedPersisted: Boolean = false,
 )
 
 class AllowanceViewModel(application: Application) : AndroidViewModel(application) {
@@ -349,6 +356,46 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                         )
                     }
                     logEvent("PROOF_RPC_ERROR", AllowanceState.IDLE, message = message, signature = signature)
+                }
+        }
+    }
+
+    fun verifyProgramMatrix() {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    programCheckLoading = true,
+                    programCheckPassed = null,
+                    programCheckMessage = "Reading Program transactions and allowance state…",
+                )
+            }
+            runCatching { rpc.programMatrix() }
+                .onSuccess { matrix ->
+                    _state.update {
+                        it.copy(
+                            programCheckLoading = false,
+                            programCheckPassed = matrix.passed,
+                            programCheckMessage = matrix.message,
+                            programSpentInPeriod = matrix.spentInPeriod,
+                            programBlockedRejected = matrix.blockedRejected,
+                            programFrozenPersisted = matrix.frozenPersisted,
+                            programRevokedPersisted = matrix.revokedPersisted,
+                        )
+                    }
+                    logEvent(
+                        "PROGRAM_MATRIX_VERIFIED",
+                        if (matrix.passed) AllowanceState.VERIFIED else AllowanceState.FROZEN,
+                        message = matrix.message,
+                    )
+                }
+                .onFailure { error ->
+                    _state.update {
+                        it.copy(
+                            programCheckLoading = false,
+                            programCheckPassed = false,
+                            programCheckMessage = error.message ?: "Unable to verify Program evidence",
+                        )
+                    }
                 }
         }
     }

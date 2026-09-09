@@ -2,7 +2,7 @@
 
 ## Product boundary
 
-Allowance OS is a mobile control plane for delegated spending. It does not custody keys and it does not silently submit live transactions. The first slice models the policy and receipt boundary; the Solana adapter is a separate integration.
+Allowance OS is a mobile control plane for delegated spending. It does not custody keys and it does not silently submit live transactions. The policy engine, wallet authorization, deployed Program enforcement, and future token settlement are separate, auditable layers.
 
 ```text
 Seeker Android App
@@ -20,9 +20,11 @@ Allowance Policy Engine
   ├─ expiry / revoke
   └─ evidence binding
           │
-          ├── VERIFIED → submit through Solana allowance program
-          ├── BLOCKED  → reject before broadcast
-          └── FROZEN   → stop settlement and require review
+          ├── VERIFIED → Program records matching evidence and spend
+          ├── BLOCKED  → local preflight or Program rejects the request
+          └── FROZEN   → Program persists evidence mismatch for containment
+                              │
+                              └── REVOKED → authority terminates the allowance
 ```
 
 ## Receipt contract
@@ -31,14 +33,17 @@ Every decision emits a receipt containing the allowance ID, policy hash, evidenc
 
 The local demo deliberately uses `simulated:` hashes. It must never present them as live chain evidence.
 
-## Planned Solana adapter
+## Deployed Solana adapter
 
 The adapter will be implemented behind the current engine with three explicit calls:
 
 ```text
-authorizeAllowance(policy)  → MWA / Seed Vault signature
-executeCharge(request)      → allowance program instruction
-revokeAllowance(allowance)  → on-chain deauthorize / revoke instruction
+authorizeAllowance(policy)  → MWA signature and wallet-broadcast evidence
+createAllowance(policy)     → deployed Program commits policy + evidence hash
+executeCharge(request)      → VERIFIED, BLOCKED, or persistent FROZEN state
+revokeAllowance(allowance)  → authority persists REVOKED state
 ```
 
-The same policy hash must be checked by the program and the independent verifier. A UI-only cap is not considered a security boundary.
+Program ID: `DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE` on Solana Devnet.
+
+The same policy hash is exposed to the independent verifier. A UI-only cap is not considered a security boundary. SPL-token transfer CPI remains deliberately separate and is not claimed by the current evidence.
