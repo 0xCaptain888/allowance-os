@@ -1,0 +1,8 @@
+{
+  "status": "LIVE_DEVNET_WALLET_AUTHORIZATION",
+  "network": "solana-devnet",
+  "walletAddress": "D3XJqkeFiPNtuwKkyeJfVG1Gjvi88AV6fiNs29ukjKm6",
+  "explorerUrl": "https://explorer.solana.com/address/D3XJqkeFiPNtuwKkyeJfVG1Gjvi88AV6fiNs29ukjKm6?cluster=devnet",
+  "observedAt": "2026-09-09",
+  "note": "The wallet address is publicly verifiable. A transaction signature must be recorded separately after the Devnet Memo is broadcast; this address page is not presented as a transaction receipt."
+}
