@@ -6,6 +6,7 @@ coverage/
 !.env.example
 *.log
 .gradle/
+.gradle-local/
 **/build/
 **/target/
 **/local.properties
