@@ -11,7 +11,7 @@ Allowance OS is a Solana Mobile control center for safe on-chain subscriptions a
 | Surface | What it proves | Status |
 | --- | --- | --- |
 | [Public Judge Demo](https://0xcaptain888.github.io/allowance-os/) | Instant `VERIFIED` / `BLOCKED` / `FROZEN` policy replay | GitHub Pages deployment |
-| `mobile/android` | Native Android MWA authorization and Devnet transaction flow | Compiled and unit-tested |
+| `mobile/android` | Bilingual native Android control center, adjustable policy studio, MWA authorization, and Devnet evidence flow | v0.3.0 compiled and unit-tested |
 | `program/` | Native Solana create / charge / revoke instruction logic | Compiled; 2 tests passed |
 | Solana Explorer | Wallet-broadcast Devnet authorization proof | Pending phone approval |
 | Deployed allowance program | Program-enforced SPL-token settlement | Not yet deployed |
@@ -39,11 +39,15 @@ User policy
 
 The Android app is not a mockup. It uses Solana Mobile's official `mobile-wallet-adapter-clientlib-ktx:2.0.7` and implements:
 
+- Chinese and English product interfaces with an in-app language switch;
+- three judge-ready surfaces: Overview, Policy Studio, and Evidence Center;
 - `Connect Phantom / MWA Wallet`;
+- reconnect, balance refresh, address copy, and safe local-session reset;
 - Solana Devnet authorization;
 - wallet public-key and SOL-balance display;
 - deterministic policy hash;
-- `VERIFIED`, `BLOCKED`, and `FROZEN` policy replay;
+- adjustable amount, merchant identity, and evidence inputs;
+- `VERIFIED`, `BLOCKED`, and `FROZEN` policy replay before wallet invocation;
 - real `signAndSendTransactions` for a Devnet Memo authorization proof;
 - Solana Explorer evidence link;
 - `deauthorize` and `REVOKED` state;

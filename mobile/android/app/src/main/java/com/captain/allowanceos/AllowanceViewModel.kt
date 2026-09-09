@@ -28,6 +28,9 @@ data class AllowanceUiState(
     val decisionReason: String = "Connect a Devnet wallet or replay a policy outcome.",
     val signature: String = "",
     val error: String = "",
+    val requestedAmount: Double = 1.0,
+    val merchantTrusted: Boolean = true,
+    val evidencePresent: Boolean = true,
 )
 
 class AllowanceViewModel(application: Application) : AndroidViewModel(application) {
@@ -103,6 +106,12 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         evidence = "research-report-sha256",
     )
 
+    fun evaluateCustom(amount: Double, merchantTrusted: Boolean, evidencePresent: Boolean) = evaluate(
+        amount = amount,
+        merchant = if (merchantTrusted) policy.merchant else "merchant:lookalike",
+        evidence = if (evidencePresent) "research-report-sha256" else "",
+    )
+
     private fun evaluate(amount: Double, merchant: String, evidence: String) {
         val decision = PolicyEngine.evaluate(policy, amount, merchant, evidence)
         _state.update {
@@ -111,7 +120,23 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                 decisionReason = decision.reason,
                 signature = "",
                 error = "",
+                requestedAmount = amount,
+                merchantTrusted = merchant == policy.merchant,
+                evidencePresent = evidence.isNotBlank(),
             )
+        }
+    }
+
+    fun refreshBalance() {
+        val address = _state.value.walletAddress
+        if (address.isBlank()) return
+        viewModelScope.launch {
+            setLoading("Refreshing Devnet balance…")
+            runCatching { rpc.balance(SolanaPublicKey(Base58.decode(address))) }
+                .onSuccess { balance ->
+                    _state.update { it.copy(loading = false, solBalance = balance, error = "") }
+                }
+                .onFailure { error -> fail(error.message ?: "Unable to refresh Devnet balance") }
         }
     }
 
@@ -193,6 +218,14 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                 is TransactionResult.Failure -> fail(result.message)
             }
         }
+    }
+
+    fun forgetLocalConnection() {
+        clearConnection()
+        _state.value = AllowanceUiState(
+            allowanceState = AllowanceState.IDLE,
+            decisionReason = "Local wallet session cleared. Connect your MWA wallet again.",
+        )
     }
 
     private fun setLoading(reason: String? = null) {

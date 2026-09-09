@@ -25,13 +25,14 @@ Every browser hash is visibly labelled as simulated.
 
 Build or install the Android app from `mobile/android`:
 
-1. Tap **Connect Phantom / MWA Wallet**.
-2. Approve Solana Devnet authorization.
-3. Run `BLOCKED` and confirm Phantom is not opened.
-4. Run `VERIFIED` and publish the Devnet authorization proof.
-5. Approve the transaction in Phantom.
-6. Tap **Open in Solana Explorer** and inspect the returned signature.
-7. Tap **Revoke & deauthorize**.
+1. Use the header switch to inspect the complete Chinese or English interface.
+2. On **Overview**, tap **Connect Phantom / MWA Wallet** and approve Solana Devnet authorization.
+3. On **Policy**, change the requested amount, merchant identity, and evidence availability.
+4. Run `BLOCKED` or `FROZEN` and confirm Phantom is not opened.
+5. Run `VERIFIED`, then publish the real Devnet authorization proof.
+6. Approve the transaction in Phantom.
+7. On **Evidence**, inspect the four-layer verification pipeline and open the signature in Solana Explorer.
+8. Test **Reconnect**, **Forget local wallet session**, and **Revoke & deauthorize** without exposing a wallet key.
 
 ## Evidence labels
 
