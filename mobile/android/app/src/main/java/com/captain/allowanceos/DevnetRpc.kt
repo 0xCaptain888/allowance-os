@@ -18,7 +18,10 @@ data class DevnetProgramMatrix(
     val blockedRejected: Boolean,
     val frozenPersisted: Boolean,
     val revokedPersisted: Boolean,
+    val settlementVerified: Boolean,
     val spentInPeriod: ULong,
+    val sourceTokenRaw: ULong,
+    val merchantTokenRaw: ULong,
     val message: String,
 )
 
@@ -88,21 +91,40 @@ class DevnetRpc {
         val revokedPersisted = data[REVOKED_OFFSET].toInt() == 1
         val frozenPersisted = data[FROZEN_OFFSET].toInt() == 1
         val ownerMatches = account.owner.base58() == PROGRAM_ID
+
+        val sourceToken = tokenAccount(SOURCE_TOKEN_ACCOUNT, SOURCE_OWNER)
+        val merchantToken = tokenAccount(MERCHANT_TOKEN_ACCOUNT, MERCHANT_OWNER)
+        val settlementVerified = sourceToken == 19_000_000uL && merchantToken == 1_000_000uL
         val passed = createdSucceeded && verifiedSucceeded && blockedRejected && frozenSucceeded &&
-            revokedSucceeded && frozenPersisted && revokedPersisted && spentInPeriod == 1_000_000uL && ownerMatches
+            revokedSucceeded && frozenPersisted && revokedPersisted && spentInPeriod == 1_000_000uL &&
+            ownerMatches && settlementVerified
 
         DevnetProgramMatrix(
             passed = passed,
             blockedRejected = blockedRejected,
             frozenPersisted = frozenPersisted,
             revokedPersisted = revokedPersisted,
+            settlementVerified = settlementVerified,
             spentInPeriod = spentInPeriod,
+            sourceTokenRaw = sourceToken,
+            merchantTokenRaw = merchantToken,
             message = if (passed) {
-                "Five public transactions and the final allowance account match the expected Program state."
+                "Five public transactions, the final allowance state, and the SPL-token settlement balances match."
             } else {
-                "The Program evidence exists, but one or more expected state checks did not match."
+                "The evidence exists, but one or more Program state or token-settlement checks did not match."
             },
         )
+    }
+
+    private suspend fun tokenAccount(address: String, expectedOwner: String): ULong {
+        val response = client.getAccountInfo(SolanaPublicKey(Base58.decode(address)))
+        val account = response.result ?: error(response.error?.message ?: "Token account was not found")
+        val data = account.data ?: error("Token account contains no data")
+        if (data.size < TOKEN_ACCOUNT_SIZE) error("Token account data is shorter than expected")
+        if (account.owner.base58() != TOKEN_PROGRAM_ID) error("Account is not owned by the SPL Token Program")
+        if (Base58.encode(data.copyOfRange(0, 32)) != TOKEN_MINT) error("Token mint does not match the policy")
+        if (Base58.encode(data.copyOfRange(32, 64)) != expectedOwner) error("Token owner does not match the policy")
+        return data.readU64Le(TOKEN_AMOUNT_OFFSET)
     }
 
     private fun ByteArray.readU64Le(offset: Int): ULong {
@@ -115,13 +137,21 @@ class DevnetRpc {
 
     companion object {
         const val PROGRAM_ID = "DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE"
-        const val ALLOWANCE_ACCOUNT = "4AzXfvZ6Ks2QFZFPTyAAzLL3vUWjzqUJguBvNUeoed9E"
-        const val CREATED_SIGNATURE = "okfc2Z9S2ehRgLxtVrRKwZoB3KPJJWTJf7Zz6xDdTkwMvneCfJ3qzV42p4hWUeZ3NTQzwoZaS4MLeUtgy5K2bTQ"
-        const val VERIFIED_SIGNATURE = "4fMAWn5T4gAjJz5ragh66eaNjk7hXfxWhjdSx2ojkDK4GAwNWhaZoNNdGKsvwngJXcz3LHN7HEWAnQWsP7f9JNfJ"
-        const val BLOCKED_SIGNATURE = "5r8Cd9ajUmWoSmVsMar5S5wdxrNL6C8aFfQ58GBpCGqJEGJGQUdhDLbKBPUqsURbQF92UWM3DmRR5Lnb1KA77QV5"
-        const val FROZEN_SIGNATURE = "3qHEpGrhwoVFkJfQj3ndr5bvKmebnTtJCE86bP5SHZo1Xx7wzMis8XNcb5dHYb7FWm8tajFaGrGG8ygmVWcJvcWF"
-        const val REVOKED_SIGNATURE = "5gVQm2depgBZrMrMZc84ZGdvVVGfuwmmYeSyh5G9q1PbzTsNhfxoXyEdQ7ZsNGdcFAaWyPzcdesrQkYmSbT9CBr7"
+        const val ALLOWANCE_ACCOUNT = "BRqgbZzdZPrueoWEcjusZ49etotWfNGtu2Bs1HiQ7E5x"
+        const val TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        const val TOKEN_MINT = "3KVq4nkUnb7GS7DjYCaGR7JJGAhDG1YPsz84xxThn5de"
+        const val SOURCE_OWNER = "ETJL7fK6CkaYsjrfXm6NhyNcztes8PcZKJ6jK3xGgMXF"
+        const val MERCHANT_OWNER = "D3XJqkeFiPNtuwKkyeJfVG1Gjvi88AV6fiNs29ukjKm6"
+        const val SOURCE_TOKEN_ACCOUNT = "9JxQGW1dMBtpq2qoWubS24QKkfYxtySvavgtnzSGf4i7"
+        const val MERCHANT_TOKEN_ACCOUNT = "56UFXEt2H4wLNCDuWjwaeRJYuJE5r52ohmjjG35BSbbb"
+        const val CREATED_SIGNATURE = "kmeiVR39tEkX1Rgo4pkNHz784anFvi3eX1J3YYeyry6pAPHKwvJNsEMaxqSLo1grJkZ5fSrNmKoQrMiVdTnrHYH"
+        const val VERIFIED_SIGNATURE = "22xKvkfk2YwEV6mVQXmhGeGFWSSTfvE9FGPLGJ7McSf93DpxuntZYLE8mjdv7SugEmMoo3rvswKa7eMfzf9nSPUU"
+        const val BLOCKED_SIGNATURE = "EU6bUcBTdpxCMu9rRBhDqQjPwnvPLtGmDtKepZnRZK5rKnRdeiWGqVvpKerPRAheddBgkhmpQgNdcTVZCCgvted"
+        const val FROZEN_SIGNATURE = "5REqbiziiN5bAWPDYDMSq7TgS3rvMVUeW9UmqfMdzpfCPxYctWxeQa83beR14tHbSSdTRWg1P7jbWasE5U37MLpu"
+        const val REVOKED_SIGNATURE = "5MpttoR2mfpDXhWq1B3nr6AWHC9AFCTsQ7626EXDEka6nWzgF3GdJGZnTxk9BmU4sBxiLjAAbbES9GXheGCqqysu"
         private const val STATE_SIZE = 259
+        private const val TOKEN_ACCOUNT_SIZE = 165
+        private const val TOKEN_AMOUNT_OFFSET = 64
         private const val SPENT_OFFSET = 145
         private const val REVOKED_OFFSET = 161
         private const val FROZEN_OFFSET = 162

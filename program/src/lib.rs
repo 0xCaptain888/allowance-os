@@ -2,8 +2,8 @@
 //!
 //! The program stores an allowance, rejects budget violations, freezes an
 //! allowance when submitted evidence does not match the committed evidence,
-//! and lets the authority revoke it. SPL-token transfer CPI remains a separate
-//! adapter step so policy enforcement is never confused with settlement.
+//! and lets the authority revoke it. A VERIFIED charge transfers the configured
+//! SPL token through CPI only after every enforced policy and evidence check.
 
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
@@ -12,10 +12,13 @@ use solana_program::{
     entrypoint,
     entrypoint::ProgramResult,
     msg,
+    program::invoke,
     program_error::ProgramError,
+    program_pack::Pack,
     pubkey::Pubkey,
     sysvar::Sysvar,
 };
+use spl_token::state::Account as TokenAccount;
 
 // Devnet program id derived from the local deployment keypair. The matching
 // explorer address and deployment transaction are recorded after deployment.
@@ -72,6 +75,9 @@ pub enum AllowanceError {
     InvalidAccountOwner,
     EvidenceMissing,
     Frozen,
+    InvalidTokenProgram,
+    InvalidTokenAccount,
+    InvalidMerchantAccount,
 }
 
 impl From<AllowanceError> for ProgramError {
@@ -87,6 +93,9 @@ impl From<AllowanceError> for ProgramError {
             AllowanceError::InvalidAccountOwner => 8,
             AllowanceError::EvidenceMissing => 9,
             AllowanceError::Frozen => 10,
+            AllowanceError::InvalidTokenProgram => 11,
+            AllowanceError::InvalidTokenAccount => 12,
+            AllowanceError::InvalidMerchantAccount => 13,
         })
     }
 }
@@ -200,16 +209,56 @@ pub fn process_instruction(
             amount,
             evidence_hash,
         } => {
+            let source_token = next_account_info(account_info_iter)?;
+            let merchant_token = next_account_info(account_info_iter)?;
+            let token_program = next_account_info(account_info_iter)?;
             let mut state = read_state(allowance)?;
             if state.authority != *authority.key {
                 return Err(AllowanceError::InvalidAuthority.into());
             }
+            if token_program.key != &spl_token::id() {
+                return Err(AllowanceError::InvalidTokenProgram.into());
+            }
+            if source_token.owner != token_program.key || merchant_token.owner != token_program.key
+            {
+                return Err(AllowanceError::InvalidTokenAccount.into());
+            }
+            let source_state = TokenAccount::unpack(&source_token.data.borrow())
+                .map_err(|_| AllowanceError::InvalidTokenAccount)?;
+            let merchant_state = TokenAccount::unpack(&merchant_token.data.borrow())
+                .map_err(|_| AllowanceError::InvalidTokenAccount)?;
+            if source_state.owner != *authority.key
+                || source_state.mint != state.token_mint
+                || merchant_state.mint != state.token_mint
+            {
+                return Err(AllowanceError::InvalidTokenAccount.into());
+            }
+            if merchant_state.owner != state.merchant {
+                return Err(AllowanceError::InvalidMerchantAccount.into());
+            }
             match evaluate_charge(&state, Clock::get()?.unix_timestamp, amount, evidence_hash)? {
                 ChargeOutcome::Accepted { spent_after } => {
+                    let transfer = spl_token::instruction::transfer(
+                        token_program.key,
+                        source_token.key,
+                        merchant_token.key,
+                        authority.key,
+                        &[],
+                        amount,
+                    )?;
+                    invoke(
+                        &transfer,
+                        &[
+                            source_token.clone(),
+                            merchant_token.clone(),
+                            authority.clone(),
+                            token_program.clone(),
+                        ],
+                    )?;
                     state.spent_in_period = spent_after;
                     state.last_evidence_hash = evidence_hash;
                     write_state(allowance, &state)?;
-                    msg!("Allowance charge VERIFIED; settlement remains adapter-owned");
+                    msg!("Allowance charge VERIFIED; SPL token transfer completed");
                 }
                 ChargeOutcome::FreezeEvidenceMismatch => {
                     state.frozen = true;

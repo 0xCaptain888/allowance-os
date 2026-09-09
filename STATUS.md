@@ -5,7 +5,7 @@
 - TypeScript policy engine and independent verifier.
 - `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED` flows.
 - Browser judge replay.
-- Native Solana instruction source for create, charge, evidence freeze, and revoke.
+- Native Solana instruction source for create, SPL-token CPI charge, evidence freeze, and revoke.
 - Policy schema and SDK-facing instruction model.
 - Explicit standard Android and Seeker capability profiles.
 - Native Kotlin/Compose Android client.
@@ -22,23 +22,25 @@
 - Native Solana program compiled with five passing Rust tests.
 - Upgradeable Program deployed to Solana Devnet at `DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`.
 - Real Devnet allowance account with public `CREATED`, `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED` evidence.
+- VERIFIED transfers exactly `1,000,000` raw SPL-token units through CPI; source balance changes `20 → 19`, merchant `0 → 1`.
+- BLOCKED fails before CPI with Custom Error `6`; FROZEN and REVOKED persist without moving tokens.
+- Local and deployed Program binaries independently matched at SHA-256 `456f803ffa64b8f37954e973bc1fedef8d0cfa070ba2d54cbe34c4a19cc37346`.
 - Onchain evidence mismatch persists `frozen = true`; revoke persists `revoked = true`.
 - Rust formatting and multi-job CI workflow.
 
-## Verified Android v0.7.0 build
+## Android v0.8.0 build
 
 ```text
-Artifact: mobile/android/app/build/outputs/apk/debug/allowance-os-0.7.0-debug.apk
+Artifact: mobile/android/app/build/outputs/apk/debug/allowance-os-0.8.0-debug.apk
 Size: 18 MB
-Version code: 7
-Version name: 0.7.0
+Version code: 8
+Version name: 0.8.0
 Android tests: 6 passed, 0 failed
-SHA-256: 0d0b0553d671f90884f5c99028ce33c46f8e7a95558cb059eecefd101be76e2c
+SHA-256: ae5d36a631046b80093230bb101e956ae70d2c65c2626791d815fee5554ce8c2
 ```
 
-## External steps still required
+## External hardware step still required
 
-- Add SPL-token CPI settlement and record create, charge, and revoke transactions.
 - Test Seed Vault and Genesis Token on actual compatible Solana Mobile hardware.
 
-The wallet/Memo evidence is recorded separately from program enforcement. Program deployment and its real state transitions are recorded in `evidence/live-devnet-program.json`. SPL-token settlement remains intentionally pending and is never claimed by the repository.
+The wallet/Memo evidence is recorded separately from program enforcement. Program deployment, real state transitions, and the SPL-token CPI settlement are recorded in `evidence/live-devnet-program.json`. The token is a project-created Devnet test mint and is not presented as canonical USDC.

@@ -11,11 +11,11 @@ Allowance OS is a Solana Mobile control center for safe on-chain subscriptions a
 | Surface | What it proves | Status |
 | --- | --- | --- |
 | [Public Judge Demo](https://0xcaptain888.github.io/allowance-os/) | Instant `VERIFIED` / `BLOCKED` / `FROZEN` policy replay | GitHub Pages deployment |
-| `mobile/android` | Bilingual native Android control center, adjustable policy studio, period-cap enforcement, persistent activity audit, MWA authorization, and direct Devnet RPC verification | v0.7.0 compiled; 6 Android tests passed |
-| `program/` | Native Solana create / charge / evidence-freeze / revoke logic | Deployed on Devnet; 5 Rust tests passed |
+| `mobile/android` | Bilingual native Android control center, adjustable policy studio, period-cap enforcement, persistent activity audit, MWA authorization, and direct Devnet RPC verification | v0.8.0; SPL settlement verification added |
+| `program/` | Native Solana create / SPL-token charge / evidence-freeze / revoke logic | Deployed on Devnet; 5 Rust tests passed |
 | Solana Explorer | Connected Devnet wallet and wallet-broadcast authorization proof | Live signature captured |
-| [Deployed allowance program](https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet) | Program-enforced state transitions | Live `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED` evidence |
-| SPL-token settlement | Token movement through CPI | Not yet implemented; never claimed |
+| [Deployed allowance program](https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet) | Program-enforced state transitions and settlement | Live `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED` evidence |
+| SPL-token settlement | Token movement through CPI | Live Devnet transfer with independently readable pre/post balances |
 
 The repository never labels a simulated receipt as a real transaction. The Android client only shows a Solana Explorer link after a wallet returns an actual Devnet signature. Program-enforced transitions and token settlement are also disclosed as separate evidence levels.
 
@@ -23,17 +23,19 @@ The repository never labels a simulated receipt as a real transaction. The Andro
 
 Program: [`DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`](https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet)
 
-Allowance account: [`4AzXfvZ6Ks2QFZFPTyAAzLL3vUWjzqUJguBvNUeoed9E`](https://explorer.solana.com/address/4AzXfvZ6Ks2QFZFPTyAAzLL3vUWjzqUJguBvNUeoed9E?cluster=devnet)
+Allowance account: [`BRqgbZzdZPrueoWEcjusZ49etotWfNGtu2Bs1HiQ7E5x`](https://explorer.solana.com/address/BRqgbZzdZPrueoWEcjusZ49etotWfNGtu2Bs1HiQ7E5x?cluster=devnet)
+
+Devnet test mint: [`3KVq4nkUnb7GS7DjYCaGR7JJGAhDG1YPsz84xxThn5de`](https://explorer.solana.com/address/3KVq4nkUnb7GS7DjYCaGR7JJGAhDG1YPsz84xxThn5de?cluster=devnet) (6 decimals; project-created test token, not canonical USDC)
 
 | Outcome | Public proof | What changed |
 | --- | --- | --- |
-| CREATED | [`okfc…2bTQ`](https://explorer.solana.com/tx/okfc2Z9S2ehRgLxtVrRKwZoB3KPJJWTJf7Zz6xDdTkwMvneCfJ3qzV42p4hWUeZ3NTQzwoZaS4MLeUtgy5K2bTQ?cluster=devnet) | Policy and required evidence hash committed onchain |
-| VERIFIED | [`4fMA…JNfJ`](https://explorer.solana.com/tx/4fMAWn5T4gAjJz5ragh66eaNjk7hXfxWhjdSx2ojkDK4GAwNWhaZoNNdGKsvwngJXcz3LHN7HEWAnQWsP7f9JNfJ?cluster=devnet) | Matching evidence increments `spentInPeriod` to `1,000,000` |
-| BLOCKED | [`5r8C…7QV5`](https://explorer.solana.com/tx/5r8Cd9ajUmWoSmVsMar5S5wdxrNL6C8aFfQ58GBpCGqJEGJGQUdhDLbKBPUqsURbQF92UWM3DmRR5Lnb1KA77QV5?cluster=devnet) | Over-cap request fails with Program Custom Error `6`; spend is unchanged |
-| FROZEN | [`3qHE…vcWF`](https://explorer.solana.com/tx/3qHEpGrhwoVFkJfQj3ndr5bvKmebnTtJCE86bP5SHZo1Xx7wzMis8XNcb5dHYb7FWm8tajFaGrGG8ygmVWcJvcWF?cluster=devnet) | Evidence mismatch persists `frozen = true`; spend is unchanged |
-| REVOKED | [`5gVQ…CBr7`](https://explorer.solana.com/tx/5gVQm2depgBZrMrMZc84ZGdvVVGfuwmmYeSyh5G9q1PbzTsNhfxoXyEdQ7ZsNGdcFAaWyPzcdesrQkYmSbT9CBr7?cluster=devnet) | Authority persists `revoked = true` after containment |
+| CREATED | [`kmei…rHYH`](https://explorer.solana.com/tx/kmeiVR39tEkX1Rgo4pkNHz784anFvi3eX1J3YYeyry6pAPHKwvJNsEMaxqSLo1grJkZ5fSrNmKoQrMiVdTnrHYH?cluster=devnet) | Policy, mint, merchant, and required evidence hash committed onchain |
+| VERIFIED | [`22xK…SPUU`](https://explorer.solana.com/tx/22xKvkfk2YwEV6mVQXmhGeGFWSSTfvE9FGPLGJ7McSf93DpxuntZYLE8mjdv7SugEmMoo3rvswKa7eMfzf9nSPUU?cluster=devnet) | Matching evidence invokes SPL Token CPI; source `20 → 19`, merchant `0 → 1` |
+| BLOCKED | [`EU6b…vted`](https://explorer.solana.com/tx/EU6bUcBTdpxCMu9rRBhDqQjPwnvPLtGmDtKepZnRZK5rKnRdeiWGqVvpKerPRAheddBgkhmpQgNdcTVZCCgvted?cluster=devnet) | Over-cap request fails with Program Custom Error `6`; both token balances remain unchanged |
+| FROZEN | [`5REq…MLpu`](https://explorer.solana.com/tx/5REqbiziiN5bAWPDYDMSq7TgS3rvMVUeW9UmqfMdzpfCPxYctWxeQa83beR14tHbSSdTRWg1P7jbWasE5U37MLpu?cluster=devnet) | Evidence mismatch persists `frozen = true`; both token balances remain unchanged |
+| REVOKED | [`5Mpt…qysu`](https://explorer.solana.com/tx/5MpttoR2mfpDXhWq1B3nr6AWHC9AFCTsQ7626EXDEka6nWzgF3GdJGZnTxk9BmU4sBxiLjAAbbES9GXheGCqqysu?cluster=devnet) | Authority persists `revoked = true`; no token movement |
 
-The complete machine-readable record is [`evidence/live-devnet-program.json`](evidence/live-devnet-program.json). These transactions prove policy state transitions, not an SPL-token transfer.
+The complete machine-readable record is [`evidence/live-devnet-program.json`](evidence/live-devnet-program.json). The VERIFIED transaction contains the SPL Token Program inner instruction and public pre/post token balances; BLOCKED and FROZEN move zero tokens.
 
 ## Why this matters
 
@@ -89,10 +91,10 @@ cd mobile/android
 The resulting APK is:
 
 ```text
-mobile/android/app/build/outputs/apk/debug/allowance-os-0.7.0-debug.apk
+mobile/android/app/build/outputs/apk/debug/allowance-os-0.8.0-debug.apk
 ```
 
-SHA-256: `0d0b0553d671f90884f5c99028ce33c46f8e7a95558cb059eecefd101be76e2c`
+SHA-256: `ae5d36a631046b80093230bb101e956ae70d2c65c2626791d815fee5554ce8c2`
 
 See [`mobile/README.md`](mobile/README.md) for phone setup and [`docs/judge-guide.md`](docs/judge-guide.md) for the two-minute evaluation path.
 
@@ -102,7 +104,7 @@ See [`mobile/README.md`](mobile/README.md) for phone setup and [`docs/judge-guid
 - Per-charge and period caps.
 - Merchant, token, program, expiry, allowance-ID, and evidence checks.
 - Human-readable receipts for `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED`.
-- Native Solana instruction source for create, charge, evidence freeze, and revoke.
+- Native Solana instruction source for create, SPL-token CPI charge, evidence freeze, and revoke.
 - Reproducible Rust dependency lockfile and five passing native program tests.
 - Standard Android and Seeker device profiles.
 
@@ -115,20 +117,24 @@ npm test
 npm run demo
 ```
 
-Reproduce the live Devnet state-transition run with a funded test keypair:
+Reproduce the live Devnet settlement run with a funded test keypair and compatible token accounts:
 
 ```bash
-SOLANA_KEYPAIR=/absolute/path/to/devnet-keypair.json npm run devnet:live
+SOLANA_KEYPAIR=/absolute/path/to/devnet-keypair.json \
+TOKEN_MINT=<devnet-mint> \
+SOURCE_TOKEN_ACCOUNT=<authority-owned-token-account> \
+MERCHANT_TOKEN_ACCOUNT=<merchant-owned-token-account> \
+npm run devnet:live
 ```
 
 ## Truth boundary
 
-There are three intentionally separate evidence levels:
+There are four intentionally separate evidence levels:
 
 1. **SIMULATED** — browser and TypeScript policy replay; never a chain claim.
 2. **WALLET-BROADCAST DEVNET PROOF** — real MWA authorization and Memo transaction returned by Phantom; the browser and Android app can independently query its Devnet confirmation status and slot.
 3. **PROGRAM-ENFORCED STATE TRANSITIONS** — deployed Rust Program with public create, verified, blocked, frozen, and revoke evidence.
-4. **SPL-TOKEN SETTLEMENT** — token transfer through CPI; still pending and never implied by state-transition evidence.
+4. **SPL-TOKEN SETTLEMENT** — the VERIFIED transaction invokes the SPL Token Program and transfers exactly `1,000,000` raw units; BLOCKED and FROZEN are publicly shown to transfer zero.
 
 The deployed Rust Program ID is `DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`. Its upgrade authority remains the deployment wallet for hackathon iteration; this is disclosed rather than presented as immutable production infrastructure.
 

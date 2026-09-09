@@ -1,44 +1,70 @@
 {
-  "capturedAt": "2026-09-09T21:23:00Z",
+  "capturedAt": "2026-09-09T22:25:02Z",
   "network": "solana-devnet",
-  "evidenceLevel": "PROGRAM_ENFORCED_STATE_TRANSITIONS",
+  "evidenceLevel": "PROGRAM_ENFORCED_SPL_TOKEN_SETTLEMENT",
   "programId": "DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE",
   "deployment": {
-    "signature": "51oSUwd4bXDVp45Yg22TmrqGACHEX8Z6Ax3eCwS5r8JCjuqwRfJWMGs1vD2bxqUnqTEZyS8YQPrYiGXASwRzotPc",
+    "initialSignature": "51oSUwd4bXDVp45Yg22TmrqGACHEX8Z6Ax3eCwS5r8JCjuqwRfJWMGs1vD2bxqUnqTEZyS8YQPrYiGXASwRzotPc",
     "freezeUpgradeSignature": "2PwkFBvhBbTHUqRV5URUHsPmCVnUMGQe7QTds3wFz6ud12u6xFmRBDVpShEmtqTHVhreZBDAJPmfz4UVVtT5C6Uw",
-    "lastDeployedSlot": 495816283,
-    "authority": "ETJL7fK6CkaYsjrfXm6NhyNcztes8PcZKJ6jK3xGgMXF"
+    "splSettlementUpgradeSignature": "2MVFn6HnTm3XK6gZBsGBjKzMLP2GJGF5tNcpSEUMX58DE2DVhq9WzHvMejgP212j5UgBz1iQgvPrycnGU2CTep2d",
+    "lastDeployedSlot": 495840580,
+    "authority": "ETJL7fK6CkaYsjrfXm6NhyNcztes8PcZKJ6jK3xGgMXF",
+    "localAndOnchainBinarySha256": "456f803ffa64b8f37954e973bc1fedef8d0cfa070ba2d54cbe34c4a19cc37346"
   },
-  "allowanceAccount": "4AzXfvZ6Ks2QFZFPTyAAzLL3vUWjzqUJguBvNUeoed9E",
-  "policyHash": "c179bf13d17fc2cc659ac9739757f5344879d7257d0261173d565f5a4daacffb",
+  "allowanceAccount": "BRqgbZzdZPrueoWEcjusZ49etotWfNGtu2Bs1HiQ7E5x",
+  "policyHash": "c86f6b781801b1a82b5b62cdbe58e0e0924934fc207d12bf4cb8ec4f15534463",
   "requiredEvidenceHash": "ea53c034a455fa2dee2eed8de3e402cc64ce1a84af8372deededfadcb79ba2b3",
+  "tokenSettlement": {
+    "mint": "3KVq4nkUnb7GS7DjYCaGR7JJGAhDG1YPsz84xxThn5de",
+    "decimals": 6,
+    "mintCreationSignature": "5n9RnboxgLb7YUnLtuj7bz8BkA7bgaJKDhodMmfpLZqcR4dMvW9aMs8cLtViTaDyNatJn9x3duV7tPiQnP1pnzze",
+    "sourceAtaCreationSignature": "26NepwjUspUNRFkHCaXirHAzgzzK6Cyv2Wptgx6fLtrpZVoHb3eCWXbh6UfhX6gb6cmF72xXWgkzzpUkybnkP2mo",
+    "merchantAtaCreationSignature": "7Wunr4Kmmd2Ug8YEtG3eYJYaiWRNzss7exGiD6zNNK5jYcy6ajH8Qe6aPnvmCMPcWYZ2QckuJjgbhvkpxZN2Z4h",
+    "initialMintSignature": "Hy8LtMJURM4ZvVy1q1fPiSHSgWZ5oBXPm5iDyJEVKPxP75Q4k9LhteecXy23FW1hxsmBEDP3WW4FHgroXi6QzJZ",
+    "sourceOwner": "ETJL7fK6CkaYsjrfXm6NhyNcztes8PcZKJ6jK3xGgMXF",
+    "sourceTokenAccount": "9JxQGW1dMBtpq2qoWubS24QKkfYxtySvavgtnzSGf4i7",
+    "merchantOwner": "D3XJqkeFiPNtuwKkyeJfVG1Gjvi88AV6fiNs29ukjKm6",
+    "merchantTokenAccount": "56UFXEt2H4wLNCDuWjwaeRJYuJE5r52ohmjjG35BSbbb",
+    "verifiedTransferRaw": "1000000",
+    "balances": {
+      "beforeVerified": { "sourceRaw": "20000000", "merchantRaw": "0" },
+      "afterVerified": { "sourceRaw": "19000000", "merchantRaw": "1000000" },
+      "afterBlocked": { "sourceRaw": "19000000", "merchantRaw": "1000000" },
+      "afterFrozen": { "sourceRaw": "19000000", "merchantRaw": "1000000" },
+      "afterRevoke": { "sourceRaw": "19000000", "merchantRaw": "1000000" }
+    }
+  },
   "transactions": {
-    "create": "okfc2Z9S2ehRgLxtVrRKwZoB3KPJJWTJf7Zz6xDdTkwMvneCfJ3qzV42p4hWUeZ3NTQzwoZaS4MLeUtgy5K2bTQ",
-    "verified": "4fMAWn5T4gAjJz5ragh66eaNjk7hXfxWhjdSx2ojkDK4GAwNWhaZoNNdGKsvwngJXcz3LHN7HEWAnQWsP7f9JNfJ",
-    "blocked": "5r8Cd9ajUmWoSmVsMar5S5wdxrNL6C8aFfQ58GBpCGqJEGJGQUdhDLbKBPUqsURbQF92UWM3DmRR5Lnb1KA77QV5",
-    "frozen": "3qHEpGrhwoVFkJfQj3ndr5bvKmebnTtJCE86bP5SHZo1Xx7wzMis8XNcb5dHYb7FWm8tajFaGrGG8ygmVWcJvcWF",
-    "revoke": "5gVQm2depgBZrMrMZc84ZGdvVVGfuwmmYeSyh5G9q1PbzTsNhfxoXyEdQ7ZsNGdcFAaWyPzcdesrQkYmSbT9CBr7"
+    "create": "kmeiVR39tEkX1Rgo4pkNHz784anFvi3eX1J3YYeyry6pAPHKwvJNsEMaxqSLo1grJkZ5fSrNmKoQrMiVdTnrHYH",
+    "verified": "22xKvkfk2YwEV6mVQXmhGeGFWSSTfvE9FGPLGJ7McSf93DpxuntZYLE8mjdv7SugEmMoo3rvswKa7eMfzf9nSPUU",
+    "blocked": "EU6bUcBTdpxCMu9rRBhDqQjPwnvPLtGmDtKepZnRZK5rKnRdeiWGqVvpKerPRAheddBgkhmpQgNdcTVZCCgvted",
+    "frozen": "5REqbiziiN5bAWPDYDMSq7TgS3rvMVUeW9UmqfMdzpfCPxYctWxeQa83beR14tHbSSdTRWg1P7jbWasE5U37MLpu",
+    "revoke": "5MpttoR2mfpDXhWq1B3nr6AWHC9AFCTsQ7626EXDEka6nWzgF3GdJGZnTxk9BmU4sBxiLjAAbbES9GXheGCqqysu"
   },
   "verifiedState": {
     "spentInPeriod": "1000000",
     "frozen": false,
-    "revoked": false
+    "revoked": false,
+    "splTokenTransferRaw": "1000000"
   },
   "blockedState": {
     "programError": 6,
     "meaning": "PerChargeLimitExceeded",
-    "spentInPeriodAfter": "1000000"
+    "spentInPeriodAfter": "1000000",
+    "splTokenTransferRaw": "0"
   },
   "frozenState": {
     "spentInPeriod": "1000000",
     "frozen": true,
     "revoked": false,
-    "mismatchedEvidenceHash": "7819bd76bb7612506357beef0da09f925e47e7c07052713729b2481ec00c498d"
+    "mismatchedEvidenceHash": "7819bd76bb7612506357beef0da09f925e47e7c07052713729b2481ec00c498d",
+    "splTokenTransferRaw": "0"
   },
   "revokedState": {
     "spentInPeriod": "1000000",
     "frozen": true,
-    "revoked": true
+    "revoked": true,
+    "splTokenTransferRaw": "0"
   },
-  "settlementDisclosure": "These transactions prove program-enforced allowance state transitions. No SPL token transfer occurs in this version."
+  "settlementDisclosure": "The VERIFIED transaction invokes the SPL Token Program and transfers exactly 1,000,000 raw units. BLOCKED fails before CPI; FROZEN persists containment without moving tokens; REVOKED moves no tokens. This mint is a project-created Devnet test token, not canonical USDC."
 }

@@ -111,7 +111,7 @@ private fun AppHeader(chinese: Boolean, onLanguageToggle: () -> Unit) {
         ) { Text("A", color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Black) }
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text("Allowance OS · v0.7.0", color = White, fontSize = 18.sp, fontWeight = FontWeight.Black)
+            Text("Allowance OS · v0.8.0", color = White, fontSize = 18.sp, fontWeight = FontWeight.Black)
             Text(t("链上周期支出控制", "Onchain recurring spend control", chinese), color = Muted, fontSize = 11.sp)
         }
         Row(
@@ -353,7 +353,7 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
             TimelineStep("02", t("MWA 用户授权", "MWA user authorization", chinese), t("钱包密钥始终留在 Phantom", "Wallet keys remain inside Phantom", chinese), state.walletAddress.isNotBlank())
             TimelineStep("03", t("Devnet 广播", "Devnet broadcast", chinese), t("签名后的 Memo 形成公开授权证据", "Signed Memo creates public authorization evidence", chinese), state.signature.isNotBlank())
             TimelineStep("04", t("Program 强制执行", "Program enforcement", chinese), t("Devnet 已部署，并有真实 VERIFIED / BLOCKED / FROZEN / REVOKED 证明", "Deployed on Devnet with real VERIFIED / BLOCKED / FROZEN / REVOKED proof", chinese), true)
-            TimelineStep("05", t("SPL 代币结算", "SPL-token settlement", chinese), t("尚未接入 CPI，明确标记为下一阶段", "CPI transfer is not connected and remains the next phase", chinese), false)
+            TimelineStep("05", t("SPL 代币结算", "SPL-token settlement", chinese), t("VERIFIED 已通过 Program CPI 完成真实 Devnet 代币转账", "VERIFIED completed a real Devnet token transfer through Program CPI", chinese), true)
             SecondaryButton(Modifier.fillMaxWidth(), t("打开 Devnet Program", "Open Devnet Program", chinese)) {
                 uriHandler.openUri("https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet")
             }
@@ -411,7 +411,7 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
         ProductCard {
             SectionTitle(t("链上三态矩阵", "ONCHAIN STATE MATRIX", chinese), "PROGRAM")
             Text(
-                t("直接读取五笔公开交易和最终 allowance 账户，验证 Program 是否真的拒绝超额、持久化冻结并完成撤销。", "Read five public transactions and the final allowance account to verify that the Program rejected overspend, persisted the freeze, and recorded revocation.", chinese),
+                t("直接读取五笔公开交易、最终 allowance 账户和两个 SPL 账户，验证真实结算与失败安全性。", "Read five public transactions, the final allowance account, and both SPL accounts to verify real settlement and failure safety.", chinese),
                 color = Muted,
                 fontSize = 13.sp,
             )
@@ -423,6 +423,9 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
             ValueRow("BLOCKED", if (state.programBlockedRejected) t("链上拒绝", "REJECTED ONCHAIN", chinese) else "—")
             ValueRow("FROZEN", if (state.programFrozenPersisted) t("已持久化", "PERSISTED", chinese) else "—")
             ValueRow("REVOKED", if (state.programRevokedPersisted) t("已持久化", "PERSISTED", chinese) else "—")
+            ValueRow("SPL CPI", if (state.programSettlementVerified) t("结算已验证", "SETTLEMENT VERIFIED", chinese) else "—")
+            ValueRow(t("资金源 raw 余额", "Source raw balance", chinese), state.programSourceTokenRaw.toString())
+            ValueRow(t("商户 raw 余额", "Merchant raw balance", chinese), state.programMerchantTokenRaw.toString())
             ValueRow(t("周期已用", "Period spent", chinese), state.programSpentInPeriod.toString())
             PrimaryButton(
                 if (state.programCheckLoading) t("正在读取 Devnet…", "Reading Devnet…", chinese)
@@ -438,7 +441,7 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
             BoundaryRow("SIMULATED", t("策略参数回放与三态矩阵", "Policy replay and three-state matrix", chinese), Blue)
             BoundaryRow("LIVE DEVNET PROOF", t("真实 MWA 钱包授权 + Memo 签名", "Real MWA wallet authorization + Memo signature", chinese), Mint)
             BoundaryRow("PROGRAM ENFORCEMENT", t("真实链上状态变更：通过、拒绝、冻结和撤销", "Real onchain state transitions: verify, reject, freeze, and revoke", chinese), Mint)
-            BoundaryRow("SPL TOKEN SETTLEMENT", t("尚未发生代币转账，绝不与状态证明混淆", "No token transfer yet; never conflated with state proof", chinese), Amber)
+            BoundaryRow("SPL TOKEN SETTLEMENT", t("VERIFIED 通过 CPI 转移 1,000,000 raw 单位；测试 mint 不是官方 USDC", "VERIFIED transferred 1,000,000 raw units by CPI; the test mint is not canonical USDC", chinese), Mint)
         }
         Spacer(Modifier.height(12.dp))
     }

@@ -26,7 +26,7 @@ const BLOCKED_AMOUNT = 3_000_000n;
 const PER_CHARGE = 2_000_000n;
 const PERIOD_CAP = 8_000_000n;
 const MERCHANT = new PublicKey("D3XJqkeFiPNtuwKkyeJfVG1Gjvi88AV6fiNs29ukjKm6");
-const TOKEN_MINT = new PublicKey("So11111111111111111111111111111111111111112");
+const TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 
 type StateSnapshot = {
   version: number;
@@ -61,11 +61,16 @@ function i64(value: bigint): Buffer {
   return buffer;
 }
 
-function createInstructionData(expiresAt: bigint, policyHash: Buffer, evidenceHash: Buffer): Buffer {
+function createInstructionData(
+  expiresAt: bigint,
+  policyHash: Buffer,
+  evidenceHash: Buffer,
+  tokenMint: PublicKey,
+): Buffer {
   return Buffer.concat([
     Buffer.from([0]),
     MERCHANT.toBuffer(),
-    TOKEN_MINT.toBuffer(),
+    tokenMint.toBuffer(),
     PROGRAM_ID.toBuffer(),
     u64(PER_CHARGE),
     u64(PERIOD_CAP),
@@ -89,6 +94,26 @@ function programInstruction(authority: PublicKey, allowance: PublicKey, data: Bu
     keys: [
       { pubkey: authority, isSigner: true, isWritable: false },
       { pubkey: allowance, isSigner: false, isWritable: true },
+    ],
+    data,
+  });
+}
+
+function chargeProgramInstruction(
+  authority: PublicKey,
+  allowance: PublicKey,
+  sourceToken: PublicKey,
+  merchantToken: PublicKey,
+  data: Buffer,
+): TransactionInstruction {
+  return new TransactionInstruction({
+    programId: PROGRAM_ID,
+    keys: [
+      { pubkey: authority, isSigner: true, isWritable: false },
+      { pubkey: allowance, isSigner: false, isWritable: true },
+      { pubkey: sourceToken, isSigner: false, isWritable: true },
+      { pubkey: merchantToken, isSigner: false, isWritable: true },
+      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
     ],
     data,
   });
@@ -145,6 +170,31 @@ async function fetchState(connection: Connection, allowance: PublicKey): Promise
   if (!account) throw new Error(`Allowance account ${allowance.toBase58()} was not found`);
   if (!account.owner.equals(PROGRAM_ID)) throw new Error("Allowance account has the wrong owner");
   return parseState(account.data);
+}
+
+async function tokenBalances(connection: Connection, source: PublicKey, merchant: PublicKey) {
+  const [sourceBalance, merchantBalance] = await Promise.all([
+    connection.getTokenAccountBalance(source, "confirmed"),
+    connection.getTokenAccountBalance(merchant, "confirmed"),
+  ]);
+  return {
+    sourceRaw: sourceBalance.value.amount,
+    merchantRaw: merchantBalance.value.amount,
+    decimals: sourceBalance.value.decimals,
+  };
+}
+
+function assertTokenBalances(
+  label: string,
+  actual: Awaited<ReturnType<typeof tokenBalances>>,
+  expectedSource: bigint,
+  expectedMerchant: bigint,
+): void {
+  if (BigInt(actual.sourceRaw) !== expectedSource || BigInt(actual.merchantRaw) !== expectedMerchant) {
+    throw new Error(
+      `${label} token balances did not match: source=${actual.sourceRaw}, merchant=${actual.merchantRaw}`,
+    );
+  }
 }
 
 async function sendRejectedTransaction(
@@ -205,6 +255,12 @@ async function main(): Promise<void> {
   if (!KEYPAIR_PATH) {
     throw new Error("Set SOLANA_KEYPAIR to a funded Devnet payer keypair file");
   }
+  if (!process.env.TOKEN_MINT || !process.env.SOURCE_TOKEN_ACCOUNT || !process.env.MERCHANT_TOKEN_ACCOUNT) {
+    throw new Error("Set TOKEN_MINT, SOURCE_TOKEN_ACCOUNT, and MERCHANT_TOKEN_ACCOUNT for live SPL settlement");
+  }
+  const tokenMint = new PublicKey(process.env.TOKEN_MINT);
+  const sourceToken = new PublicKey(process.env.SOURCE_TOKEN_ACCOUNT);
+  const merchantToken = new PublicKey(process.env.MERCHANT_TOKEN_ACCOUNT);
   const secret = JSON.parse(await readFile(KEYPAIR_PATH, "utf8")) as number[];
   const payer = Keypair.fromSecretKey(Uint8Array.from(secret));
   const resumedAllowance = process.env.ALLOWANCE_ACCOUNT;
@@ -218,7 +274,7 @@ async function main(): Promise<void> {
       programId: PROGRAM_ID.toBase58(),
       authority: payer.publicKey.toBase58(),
       merchant: MERCHANT.toBase58(),
-      tokenMint: TOKEN_MINT.toBase58(),
+      tokenMint: tokenMint.toBase58(),
       perCharge: PER_CHARGE.toString(),
       periodCap: PERIOD_CAP.toString(),
     }),
@@ -243,49 +299,64 @@ async function main(): Promise<void> {
           programInstruction(
             payer.publicKey,
             allowance,
-            createInstructionData(expiresAt, policyHash, requiredEvidenceHash),
+            createInstructionData(expiresAt, policyHash, requiredEvidenceHash, tokenMint),
           ),
         ),
         [payer, allowanceKeypair!],
       );
   const created = await fetchState(connection, allowance);
 
+  const balancesBefore = await tokenBalances(connection, sourceToken, merchantToken);
   const verifiedSignature = await sendSuccessfulTransaction(
     connection,
     new Transaction().add(
-      programInstruction(
+      chargeProgramInstruction(
         payer.publicKey,
         allowance,
+        sourceToken,
+        merchantToken,
         chargeInstructionData(VERIFIED_AMOUNT, requiredEvidenceHash),
       ),
     ),
     [payer],
   );
   const verified = await fetchState(connection, allowance);
+  const balancesAfterVerified = await tokenBalances(connection, sourceToken, merchantToken);
+  const sourceAfterVerified = BigInt(balancesBefore.sourceRaw) - VERIFIED_AMOUNT;
+  const merchantAfterVerified = BigInt(balancesBefore.merchantRaw) + VERIFIED_AMOUNT;
+  assertTokenBalances("VERIFIED", balancesAfterVerified, sourceAfterVerified, merchantAfterVerified);
 
   const blocked = await sendRejectedTransaction(
     connection,
     payer,
-    programInstruction(
+    chargeProgramInstruction(
       payer.publicKey,
       allowance,
+      sourceToken,
+      merchantToken,
       chargeInstructionData(BLOCKED_AMOUNT, requiredEvidenceHash),
     ),
   );
   const afterBlocked = await fetchState(connection, allowance);
+  const balancesAfterBlocked = await tokenBalances(connection, sourceToken, merchantToken);
+  assertTokenBalances("BLOCKED", balancesAfterBlocked, sourceAfterVerified, merchantAfterVerified);
 
   const frozenSignature = await sendSuccessfulTransaction(
     connection,
     new Transaction().add(
-      programInstruction(
+      chargeProgramInstruction(
         payer.publicKey,
         allowance,
+        sourceToken,
+        merchantToken,
         chargeInstructionData(VERIFIED_AMOUNT, mismatchedEvidenceHash),
       ),
     ),
     [payer],
   );
   const frozen = await fetchState(connection, allowance);
+  const balancesAfterFrozen = await tokenBalances(connection, sourceToken, merchantToken);
+  assertTokenBalances("FROZEN", balancesAfterFrozen, sourceAfterVerified, merchantAfterVerified);
 
   const revokeSignature = await sendSuccessfulTransaction(
     connection,
@@ -295,17 +366,30 @@ async function main(): Promise<void> {
     [payer],
   );
   const revoked = await fetchState(connection, allowance);
+  const balancesAfterRevoke = await tokenBalances(connection, sourceToken, merchantToken);
+  assertTokenBalances("REVOKED", balancesAfterRevoke, sourceAfterVerified, merchantAfterVerified);
 
   console.log(JSON.stringify({
     status: "LIVE_DEVNET_TRI_STATE_COMPLETE",
-    evidenceLevel: "PROGRAM_ENFORCED_STATE_TRANSITIONS",
-    settlementDisclosure: "No SPL token transfer occurs in this version.",
+    evidenceLevel: "PROGRAM_ENFORCED_SPL_TOKEN_SETTLEMENT",
+    settlementDisclosure: "Only the VERIFIED transaction transfers SPL tokens; BLOCKED and FROZEN do not.",
     rpcUrl: RPC_URL,
     programId: PROGRAM_ID.toBase58(),
     allowanceAccount: allowance.toBase58(),
     payer: payer.publicKey.toBase58(),
     policyHash: policyHash.toString("hex"),
     requiredEvidenceHash: requiredEvidenceHash.toString("hex"),
+    tokenSettlement: {
+      mint: tokenMint.toBase58(),
+      sourceTokenAccount: sourceToken.toBase58(),
+      merchantTokenAccount: merchantToken.toBase58(),
+      rawTransferAmount: VERIFIED_AMOUNT.toString(),
+      balancesBefore,
+      balancesAfterVerified,
+      balancesAfterBlocked,
+      balancesAfterFrozen,
+      balancesAfterRevoke,
+    },
     transactions: {
       create: { state: "CREATED", signature: createSignature, explorer: explorer(createSignature) },
       verified: { state: "VERIFIED", signature: verifiedSignature, explorer: explorer(verifiedSignature) },

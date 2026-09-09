@@ -75,31 +75,35 @@
       <div id="liveProof" class="proof-state muted">Not checked yet. This verification makes no write operation.</div>
     </section>
     <section class="card" style="margin-top:14px">
-      <div class="eyebrow">Program-enforced evidence · Solana Devnet</div>
-      <h2>One allowance. Five public transitions.</h2>
-      <p class="muted">The deployed Program commits the policy and evidence hash, rejects an over-cap charge, persists a freeze after evidence mismatch, and records authority revocation. This proves state enforcement; it does not claim an SPL-token transfer.</p>
+      <div class="eyebrow">Program-enforced SPL settlement · Solana Devnet</div>
+      <h2>One allowance. Five transitions. One real token transfer.</h2>
+      <p class="muted">The deployed Program validates policy and evidence before invoking the SPL Token Program. VERIFIED transfers exactly 1 test token; BLOCKED and FROZEN move zero. The mint is a project-created Devnet test token, not canonical USDC.</p>
       <div class="row"><span class="muted">Program</span><a href="https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet" target="_blank" rel="noreferrer">DJzPBS7F…WRcuE</a></div>
-      <div class="row"><span class="muted">Allowance account</span><a href="https://explorer.solana.com/address/4AzXfvZ6Ks2QFZFPTyAAzLL3vUWjzqUJguBvNUeoed9E?cluster=devnet" target="_blank" rel="noreferrer">4AzXfvZ6…oed9E</a></div>
+      <div class="row"><span class="muted">Allowance account</span><a href="https://explorer.solana.com/address/BRqgbZzdZPrueoWEcjusZ49etotWfNGtu2Bs1HiQ7E5x?cluster=devnet" target="_blank" rel="noreferrer">BRqgbZzd…Q7E5x</a></div>
+      <div class="row"><span class="muted">Devnet test mint</span><a href="https://explorer.solana.com/address/3KVq4nkUnb7GS7DjYCaGR7JJGAhDG1YPsz84xxThn5de?cluster=devnet" target="_blank" rel="noreferrer">3KVq4nkU…Thn5de</a></div>
       <div class="grid">
-        <div><span class="pill verified">VERIFIED</span><p><a href="https://explorer.solana.com/tx/4fMAWn5T4gAjJz5ragh66eaNjk7hXfxWhjdSx2ojkDK4GAwNWhaZoNNdGKsvwngJXcz3LHN7HEWAnQWsP7f9JNfJ?cluster=devnet" target="_blank" rel="noreferrer">Matching evidence charge</a></p></div>
-        <div><span class="pill blocked">BLOCKED</span><p><a href="https://explorer.solana.com/tx/5r8Cd9ajUmWoSmVsMar5S5wdxrNL6C8aFfQ58GBpCGqJEGJGQUdhDLbKBPUqsURbQF92UWM3DmRR5Lnb1KA77QV5?cluster=devnet" target="_blank" rel="noreferrer">Custom Error 6</a></p></div>
-        <div><span class="pill frozen">FROZEN</span><p><a href="https://explorer.solana.com/tx/3qHEpGrhwoVFkJfQj3ndr5bvKmebnTtJCE86bP5SHZo1Xx7wzMis8XNcb5dHYb7FWm8tajFaGrGG8ygmVWcJvcWF?cluster=devnet" target="_blank" rel="noreferrer">Evidence mismatch freeze</a></p></div>
+        <div><span class="pill verified">VERIFIED</span><p><a href="https://explorer.solana.com/tx/22xKvkfk2YwEV6mVQXmhGeGFWSSTfvE9FGPLGJ7McSf93DpxuntZYLE8mjdv7SugEmMoo3rvswKa7eMfzf9nSPUU?cluster=devnet" target="_blank" rel="noreferrer">SPL CPI · 20 → 19 / 0 → 1</a></p></div>
+        <div><span class="pill blocked">BLOCKED</span><p><a href="https://explorer.solana.com/tx/EU6bUcBTdpxCMu9rRBhDqQjPwnvPLtGmDtKepZnRZK5rKnRdeiWGqVvpKerPRAheddBgkhmpQgNdcTVZCCgvted?cluster=devnet" target="_blank" rel="noreferrer">Custom Error 6 · zero transfer</a></p></div>
+        <div><span class="pill frozen">FROZEN</span><p><a href="https://explorer.solana.com/tx/5REqbiziiN5bAWPDYDMSq7TgS3rvMVUeW9UmqfMdzpfCPxYctWxeQa83beR14tHbSSdTRWg1P7jbWasE5U37MLpu?cluster=devnet" target="_blank" rel="noreferrer">Evidence freeze · zero transfer</a></p></div>
       </div>
-      <button style="margin:16px 0" onclick="verifyProgramMatrix()">Verify the full matrix via Solana RPC</button>
-      <div id="programProof" class="proof-state muted">Not checked yet. This reads five signatures and the final allowance account.</div>
+      <button style="margin:16px 0" onclick="verifyProgramMatrix()">Verify state + token settlement via Solana RPC</button>
+      <div id="programProof" class="proof-state muted">Not checked yet. This reads five signatures, three transaction balance records, and the final allowance account.</div>
     </section>
   </main>
   <script>
     const base = { allowanceId: 'allowance-researchpulse-001', merchant: 'merchant:researchpulse', token: 'USDC', program: 'program:allowance-os-devnet' };
     const recordedSignature = '4w1cjWABu9L9NGMe4NrRTkqFxZVnJBsdket94ifiuKrGaMsMDnYquFpirq4kte4hsCxRuT6Jo79U8zvKNgzQ3B9k';
     const programId = 'DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE';
-    const allowanceAccount = '4AzXfvZ6Ks2QFZFPTyAAzLL3vUWjzqUJguBvNUeoed9E';
+    const allowanceAccount = 'BRqgbZzdZPrueoWEcjusZ49etotWfNGtu2Bs1HiQ7E5x';
+    const tokenMint = '3KVq4nkUnb7GS7DjYCaGR7JJGAhDG1YPsz84xxThn5de';
+    const sourceOwner = 'ETJL7fK6CkaYsjrfXm6NhyNcztes8PcZKJ6jK3xGgMXF';
+    const merchantOwner = 'D3XJqkeFiPNtuwKkyeJfVG1Gjvi88AV6fiNs29ukjKm6';
     const programSignatures = {
-      created: 'okfc2Z9S2ehRgLxtVrRKwZoB3KPJJWTJf7Zz6xDdTkwMvneCfJ3qzV42p4hWUeZ3NTQzwoZaS4MLeUtgy5K2bTQ',
-      verified: '4fMAWn5T4gAjJz5ragh66eaNjk7hXfxWhjdSx2ojkDK4GAwNWhaZoNNdGKsvwngJXcz3LHN7HEWAnQWsP7f9JNfJ',
-      blocked: '5r8Cd9ajUmWoSmVsMar5S5wdxrNL6C8aFfQ58GBpCGqJEGJGQUdhDLbKBPUqsURbQF92UWM3DmRR5Lnb1KA77QV5',
-      frozen: '3qHEpGrhwoVFkJfQj3ndr5bvKmebnTtJCE86bP5SHZo1Xx7wzMis8XNcb5dHYb7FWm8tajFaGrGG8ygmVWcJvcWF',
-      revoked: '5gVQm2depgBZrMrMZc84ZGdvVVGfuwmmYeSyh5G9q1PbzTsNhfxoXyEdQ7ZsNGdcFAaWyPzcdesrQkYmSbT9CBr7'
+      created: 'kmeiVR39tEkX1Rgo4pkNHz784anFvi3eX1J3YYeyry6pAPHKwvJNsEMaxqSLo1grJkZ5fSrNmKoQrMiVdTnrHYH',
+      verified: '22xKvkfk2YwEV6mVQXmhGeGFWSSTfvE9FGPLGJ7McSf93DpxuntZYLE8mjdv7SugEmMoo3rvswKa7eMfzf9nSPUU',
+      blocked: 'EU6bUcBTdpxCMu9rRBhDqQjPwnvPLtGmDtKepZnRZK5rKnRdeiWGqVvpKerPRAheddBgkhmpQgNdcTVZCCgvted',
+      frozen: '5REqbiziiN5bAWPDYDMSq7TgS3rvMVUeW9UmqfMdzpfCPxYctWxeQa83beR14tHbSSdTRWg1P7jbWasE5U37MLpu',
+      revoked: '5MpttoR2mfpDXhWq1B3nr6AWHC9AFCTsQ7626EXDEka6nWzgF3GdJGZnTxk9BmU4sBxiLjAAbbES9GXheGCqqysu'
     };
     const output = document.querySelector('#output');
     function syncControls() { document.querySelector('#amountValue').textContent = Number(document.querySelector('#amount').value).toFixed(1) + ' USDC'; document.querySelector('#spentValue').textContent = Number(document.querySelector('#spent').value).toFixed(1) + ' / 8.0 USDC'; }
@@ -109,7 +113,84 @@
     async function verifyLiveProof() { const el = document.querySelector('#liveProof'); el.textContent = 'Querying https://api.devnet.solana.com …'; try { const response = await fetch('https://api.devnet.solana.com', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getSignatureStatuses', params: [[recordedSignature], { searchTransactionHistory: true }] }) }); if (!response.ok) throw new Error('RPC HTTP ' + response.status); const body = await response.json(); const status = body.result?.value?.[0]; if (!status) throw new Error('Signature not found on Devnet'); const passed = !status.err && ['confirmed', 'finalized'].includes(status.confirmationStatus); el.className = 'proof-state ' + (passed ? 'ok' : 'limited'); el.textContent = JSON.stringify({ evidenceLevel: 'LIVE_DEVNET_PROOF', verified: passed, confirmationStatus: status.confirmationStatus, slot: status.slot, confirmations: status.confirmations, executionError: status.err, signature: recordedSignature }, null, 2); } catch (error) { el.className = 'proof-state limited'; el.textContent = 'Verification unavailable: ' + error.message + '\nOpen the Explorer link above to cross-check manually.'; } }
     async function rpc(method, params) { const response = await fetch('https://api.devnet.solana.com', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: method, method, params }) }); if (!response.ok) throw new Error('RPC HTTP ' + response.status); const body = await response.json(); if (body.error) throw new Error(body.error.message); return body.result; }
     function readU64(bytes, offset) { const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength); return view.getBigUint64(offset, true).toString(); }
-    async function verifyProgramMatrix() { const el = document.querySelector('#programProof'); el.className = 'proof-state muted'; el.textContent = 'Reading five transaction statuses and the final Program account…'; try { const names = Object.keys(programSignatures); const signatures = Object.values(programSignatures); const [statusResult, accountResult] = await Promise.all([rpc('getSignatureStatuses', [signatures, { searchTransactionHistory: true }]), rpc('getAccountInfo', [allowanceAccount, { encoding: 'base64', commitment: 'confirmed' }])]); const statuses = Object.fromEntries(names.map((name, index) => [name, statusResult.value[index]])); const encoded = accountResult.value?.data?.[0]; if (!encoded) throw new Error('Allowance account data unavailable'); const binary = atob(encoded); const bytes = Uint8Array.from(binary, character => character.charCodeAt(0)); const finalState = { ownerMatches: accountResult.value.owner === programId, spentInPeriod: readU64(bytes, 145), revoked: bytes[161] === 1, frozen: bytes[162] === 1, policyHash: Array.from(bytes.slice(163, 195)).map(value => value.toString(16).padStart(2, '0')).join(''), requiredEvidenceHash: Array.from(bytes.slice(195, 227)).map(value => value.toString(16).padStart(2, '0')).join(''), lastEvidenceHash: Array.from(bytes.slice(227, 259)).map(value => value.toString(16).padStart(2, '0')).join('') }; const checks = { createdSucceeded: !statuses.created?.err, verifiedSucceeded: !statuses.verified?.err, blockedFailedOnchain: Boolean(statuses.blocked?.err), frozenSucceeded: !statuses.frozen?.err, revokeSucceeded: !statuses.revoked?.err, frozenPersisted: finalState.frozen, revokedPersisted: finalState.revoked, blockedDidNotSpend: finalState.spentInPeriod === '1000000', ownerMatchesProgram: finalState.ownerMatches }; const verified = Object.values(checks).every(Boolean); el.className = 'proof-state ' + (verified ? 'ok' : 'limited'); el.textContent = JSON.stringify({ evidenceLevel: 'PROGRAM_ENFORCED_STATE_TRANSITIONS', verified, checks, blockedError: statuses.blocked?.err, finalState, settlementDisclosure: 'No SPL token transfer is claimed.' }, null, 2); } catch (error) { el.className = 'proof-state limited'; el.textContent = 'Program verification unavailable: ' + error.message + '\nUse the Explorer links above for manual cross-checking.'; } }
+    function tokenAmount(transaction, phase, owner) {
+      const balances = transaction?.meta?.[phase + 'TokenBalances'] ?? [];
+      const match = balances.find(balance => balance.owner === owner && balance.mint === tokenMint);
+      if (!match) throw new Error(`Missing ${phase} token balance for ${owner}`);
+      return BigInt(match.uiTokenAmount.amount);
+    }
+    function tokenDeltas(transaction) {
+      return {
+        source: tokenAmount(transaction, 'post', sourceOwner) - tokenAmount(transaction, 'pre', sourceOwner),
+        merchant: tokenAmount(transaction, 'post', merchantOwner) - tokenAmount(transaction, 'pre', merchantOwner),
+      };
+    }
+    async function verifyProgramMatrix() {
+      const el = document.querySelector('#programProof');
+      el.className = 'proof-state muted';
+      el.textContent = 'Reading state transitions and SPL-token balance deltas…';
+      try {
+        const names = Object.keys(programSignatures);
+        const signatures = Object.values(programSignatures);
+        const transactionConfig = { encoding: 'json', commitment: 'confirmed', maxSupportedTransactionVersion: 0 };
+        const [statusResult, accountResult, verifiedTx, blockedTx, frozenTx] = await Promise.all([
+          rpc('getSignatureStatuses', [signatures, { searchTransactionHistory: true }]),
+          rpc('getAccountInfo', [allowanceAccount, { encoding: 'base64', commitment: 'confirmed' }]),
+          rpc('getTransaction', [programSignatures.verified, transactionConfig]),
+          rpc('getTransaction', [programSignatures.blocked, transactionConfig]),
+          rpc('getTransaction', [programSignatures.frozen, transactionConfig]),
+        ]);
+        const statuses = Object.fromEntries(names.map((name, index) => [name, statusResult.value[index]]));
+        const encoded = accountResult.value?.data?.[0];
+        if (!encoded) throw new Error('Allowance account data unavailable');
+        const binary = atob(encoded);
+        const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
+        const finalState = {
+          ownerMatches: accountResult.value.owner === programId,
+          spentInPeriod: readU64(bytes, 145),
+          revoked: bytes[161] === 1,
+          frozen: bytes[162] === 1,
+          policyHash: Array.from(bytes.slice(163, 195)).map(value => value.toString(16).padStart(2, '0')).join(''),
+          requiredEvidenceHash: Array.from(bytes.slice(195, 227)).map(value => value.toString(16).padStart(2, '0')).join(''),
+          lastEvidenceHash: Array.from(bytes.slice(227, 259)).map(value => value.toString(16).padStart(2, '0')).join(''),
+        };
+        const verifiedDelta = tokenDeltas(verifiedTx);
+        const blockedDelta = tokenDeltas(blockedTx);
+        const frozenDelta = tokenDeltas(frozenTx);
+        const checks = {
+          createdSucceeded: !statuses.created?.err,
+          verifiedSucceeded: !statuses.verified?.err,
+          blockedFailedOnchain: Boolean(statuses.blocked?.err),
+          frozenSucceeded: !statuses.frozen?.err,
+          revokeSucceeded: !statuses.revoked?.err,
+          verifiedTransferredExactlyOneToken: verifiedDelta.source === -1000000n && verifiedDelta.merchant === 1000000n,
+          blockedTransferredZero: blockedDelta.source === 0n && blockedDelta.merchant === 0n,
+          frozenTransferredZero: frozenDelta.source === 0n && frozenDelta.merchant === 0n,
+          frozenPersisted: finalState.frozen,
+          revokedPersisted: finalState.revoked,
+          finalSpendMatchesVerifiedOnly: finalState.spentInPeriod === '1000000',
+          ownerMatchesProgram: finalState.ownerMatches,
+        };
+        const verified = Object.values(checks).every(Boolean);
+        el.className = 'proof-state ' + (verified ? 'ok' : 'limited');
+        el.textContent = JSON.stringify({
+          evidenceLevel: 'PROGRAM_ENFORCED_SPL_TOKEN_SETTLEMENT',
+          verified,
+          checks,
+          tokenDeltasRaw: {
+            verified: { source: verifiedDelta.source.toString(), merchant: verifiedDelta.merchant.toString() },
+            blocked: { source: blockedDelta.source.toString(), merchant: blockedDelta.merchant.toString() },
+            frozen: { source: frozenDelta.source.toString(), merchant: frozenDelta.merchant.toString() },
+          },
+          blockedError: statuses.blocked?.err,
+          finalState,
+          disclosure: 'Project-created Devnet test token; not canonical USDC.',
+        }, null, 2);
+      } catch (error) {
+        el.className = 'proof-state limited';
+        el.textContent = 'Program verification unavailable: ' + error.message + '\nUse the Explorer links above for manual cross-checking.';
+      }
+    }
   </script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 {
   "name": "allowance-os",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "description": "A Seeker-native control center for safe on-chain subscriptions and agent spending.",
   "type": "module",

@@ -56,6 +56,9 @@ data class AllowanceUiState(
     val programBlockedRejected: Boolean = false,
     val programFrozenPersisted: Boolean = false,
     val programRevokedPersisted: Boolean = false,
+    val programSettlementVerified: Boolean = false,
+    val programSourceTokenRaw: ULong = 0uL,
+    val programMerchantTokenRaw: ULong = 0uL,
 )
 
 class AllowanceViewModel(application: Application) : AndroidViewModel(application) {
@@ -380,6 +383,9 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                             programBlockedRejected = matrix.blockedRejected,
                             programFrozenPersisted = matrix.frozenPersisted,
                             programRevokedPersisted = matrix.revokedPersisted,
+                            programSettlementVerified = matrix.settlementVerified,
+                            programSourceTokenRaw = matrix.sourceTokenRaw,
+                            programMerchantTokenRaw = matrix.merchantTokenRaw,
                         )
                     }
                     logEvent(

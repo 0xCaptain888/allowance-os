@@ -2,7 +2,7 @@
 
 ## Product boundary
 
-Allowance OS is a mobile control plane for delegated spending. It does not custody keys and it does not silently submit live transactions. The policy engine, wallet authorization, deployed Program enforcement, and future token settlement are separate, auditable layers.
+Allowance OS is a mobile control plane for delegated spending. It does not custody keys and it does not silently submit live transactions. The policy engine, wallet authorization, deployed Program enforcement, and SPL-token settlement are separate, auditable layers.
 
 ```text
 Seeker Android App
@@ -20,7 +20,7 @@ Allowance Policy Engine
   ├─ expiry / revoke
   └─ evidence binding
           │
-          ├── VERIFIED → Program records matching evidence and spend
+          ├── VERIFIED → Program validates policy, then transfers SPL tokens by CPI
           ├── BLOCKED  → local preflight or Program rejects the request
           └── FROZEN   → Program persists evidence mismatch for containment
                               │
@@ -40,10 +40,10 @@ The adapter will be implemented behind the current engine with three explicit ca
 ```text
 authorizeAllowance(policy)  → MWA signature and wallet-broadcast evidence
 createAllowance(policy)     → deployed Program commits policy + evidence hash
-executeCharge(request)      → VERIFIED, BLOCKED, or persistent FROZEN state
+executeCharge(request)      → VERIFIED SPL transfer, BLOCKED rejection, or persistent FROZEN state
 revokeAllowance(allowance)  → authority persists REVOKED state
 ```
 
 Program ID: `DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE` on Solana Devnet.
 
-The same policy hash is exposed to the independent verifier. A UI-only cap is not considered a security boundary. SPL-token transfer CPI remains deliberately separate and is not claimed by the current evidence.
+The same policy hash is exposed to the independent verifier. A UI-only cap is not considered a security boundary. For VERIFIED, the Program validates the authority, mint, source owner, merchant owner, per-charge cap, period cap, expiry, and required evidence hash before invoking the SPL Token Program. The allowed Program ID is committed in the policy state and exposed to independent verification. BLOCKED and FROZEN return before CPI, so they move no tokens. The recorded mint is a project-created Devnet test token, not canonical USDC.
