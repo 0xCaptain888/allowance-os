@@ -11,7 +11,7 @@ Allowance OS is a Solana Mobile control center for safe on-chain subscriptions a
 | Surface | What it proves | Status |
 | --- | --- | --- |
 | [Public Judge Demo](https://0xcaptain888.github.io/allowance-os/) | Instant `VERIFIED` / `BLOCKED` / `FROZEN` policy replay | GitHub Pages deployment |
-| `mobile/android` | Bilingual native Android control center, adjustable policy studio, MWA authorization, and Devnet evidence flow | v0.3.0 compiled and unit-tested |
+| `mobile/android` | Bilingual native Android control center, adjustable policy studio, MWA authorization, and Devnet evidence flow | v0.3.1 compiled and unit-tested |
 | `program/` | Native Solana create / charge / revoke instruction logic | Compiled; 2 tests passed |
 | Solana Explorer | Wallet-broadcast Devnet authorization proof | Pending phone approval |
 | Deployed allowance program | Program-enforced SPL-token settlement | Not yet deployed |

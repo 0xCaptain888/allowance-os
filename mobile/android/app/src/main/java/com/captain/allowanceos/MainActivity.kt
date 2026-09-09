@@ -110,7 +110,7 @@ private fun AppHeader(chinese: Boolean, onLanguageToggle: () -> Unit) {
         ) { Text("A", color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Black) }
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text("Allowance OS", color = White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+            Text("Allowance OS · v0.3.1", color = White, fontSize = 18.sp, fontWeight = FontWeight.Black)
             Text(t("链上周期支出控制", "Onchain recurring spend control", chinese), color = Muted, fontSize = 11.sp)
         }
         Row(
