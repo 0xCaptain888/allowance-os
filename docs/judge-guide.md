@@ -1,18 +1,44 @@
-# Judge Guide
+# Two-Minute Judge Guide
 
-## 90-second path
+## 1. Understand the product in 20 seconds
 
-1. Open the browser demo.
-2. Read the active allowance: ResearchPulse, 2 USDC weekly, 8 USDC period cap.
-3. Run **Normal charge** → `VERIFIED` and a simulated receipt.
-4. Run **Over the cap** → `BLOCKED` before broadcast.
-5. Run **Merchant changed** → `FROZEN` because the destination identity changed.
-6. Click **Revoke allowance** → `REVOKED`.
+Allowance OS is the missing control plane between a one-time wallet approval and repeated subscription or autonomous-agent charges.
 
-## Truth boundary
+The policy binds:
 
-This repository currently contains a deterministic simulator. MWA, Seed Vault, Solana Devnet, and live explorer links are intentionally not claimed until the adapter has produced a real signature and transaction receipt.
+```text
+merchant + token + program + per-charge cap + period cap + expiry + evidence
+```
 
-## What makes this mobile-native
+## 2. Replay the safety matrix in 40 seconds
 
-The target product is a Seeker Android app: the browser page is only the judge-facing replay console. In the next milestone the same allowance card is authorized with MWA / Seed Vault and revoked from the device.
+Open `site/index.html` and run:
+
+- `VERIFIED`: all identity, budget, program, and evidence checks pass;
+- `BLOCKED`: the requested amount exceeds the allowance before any wallet request;
+- `FROZEN`: merchant identity or evidence changed after authorization;
+- `REVOKED`: the user terminates future authorization.
+
+Every browser hash is visibly labelled as simulated.
+
+## 3. Verify the native path in 60 seconds
+
+Build or install the Android app from `mobile/android`:
+
+1. Tap **Connect Phantom / MWA Wallet**.
+2. Approve Solana Devnet authorization.
+3. Run `BLOCKED` and confirm Phantom is not opened.
+4. Run `VERIFIED` and publish the Devnet authorization proof.
+5. Approve the transaction in Phantom.
+6. Tap **Open in Solana Explorer** and inspect the returned signature.
+7. Tap **Revoke & deauthorize**.
+
+## Evidence labels
+
+| Label | Meaning |
+| --- | --- |
+| SIMULATED | Deterministic local policy replay |
+| LIVE DEVNET PROOF | Real wallet-broadcast Memo authorization evidence |
+| PROGRAM SETTLEMENT | Only after the Rust program is deployed and executes a token charge |
+
+The current submission does not conflate these levels.

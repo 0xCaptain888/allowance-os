@@ -1,0 +1,13 @@
+{
+  "evidenceType": "LOCAL_SOLANA_PROGRAM_TEST",
+  "project": "Allowance OS",
+  "date": "2026-09-09",
+  "command": "cargo test --manifest-path program/Cargo.toml",
+  "result": "PASS",
+  "tests": {
+    "passed": 2,
+    "failed": 0
+  },
+  "solanaProgramVersion": "1.18.26",
+  "truthBoundary": "This proves native Rust compilation and unit tests. It is not a deployed Solana program or live transaction."
+}

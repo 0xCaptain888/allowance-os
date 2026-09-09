@@ -1,0 +1,12 @@
+{
+  "evidenceType": "LOCAL_ANDROID_BUILD",
+  "project": "Allowance OS",
+  "date": "2026-09-09",
+  "command": "./gradlew testDebugUnitTest assembleDebug",
+  "result": "BUILD_SUCCESSFUL",
+  "testCount": 4,
+  "artifact": "mobile/android/app/build/outputs/apk/debug/app-debug.apk",
+  "artifactSize": "18 MB",
+  "sha256": "0964730f20cd551483d946ab419fd8ee6952095a7afcc0f0decc7e1354f83e98",
+  "truthBoundary": "This proves a local Android build. It is not a Solana transaction or deployed-program receipt."
+}

@@ -1,21 +1,78 @@
 # Allowance OS
 
-Allowance OS is a Seeker-native control center for safe on-chain subscriptions and autonomous-agent spending.
-
 > Approve once. Enforce every charge. Revoke anytime.
 
-## What exists in this first slice
+Allowance OS is a Solana Mobile control center for safe on-chain subscriptions and autonomous-agent spending. It turns an open-ended wallet approval into a human-readable allowance with merchant, token, program, per-charge, period, expiry, and evidence boundaries.
 
-- A deterministic allowance policy engine.
-- Human-readable receipts for `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED`.
+## Judge path
+
+| Surface | What it proves | Status |
+| --- | --- | --- |
+| `site/index.html` | Instant `VERIFIED` / `BLOCKED` / `FROZEN` policy replay | Working simulator |
+| `mobile/android` | Native Android MWA authorization and Devnet transaction flow | Compiled and unit-tested |
+| `program/` | Native Solana create / charge / revoke instruction logic | Compiled; 2 tests passed |
+| Solana Explorer | Wallet-broadcast Devnet authorization proof | Pending phone approval |
+| Deployed allowance program | Program-enforced SPL-token settlement | Not yet deployed |
+
+The repository never labels a simulated receipt as a real transaction. The Android client only shows a Solana Explorer link after a wallet returns an actual Devnet signature.
+
+## Why this matters
+
+Wallets are good at approving one transaction. Autonomous agents and subscriptions need a durable answer to a harder question: **what may charge me later, how much, how often, through which program, and what proof must exist before funds move?**
+
+Allowance OS makes that policy visible and independently verifiable:
+
+```text
+User policy
+  → deterministic preflight
+      → BLOCKED before wallet invocation
+      → FROZEN on identity/evidence mismatch
+      → VERIFIED request opens MWA
+          → Phantom / compatible wallet confirmation
+          → real Solana Devnet signature
+  → REVOKED through MWA deauthorization
+```
+
+## Native Android MWA client
+
+The Android app is not a mockup. It uses Solana Mobile's official `mobile-wallet-adapter-clientlib-ktx:2.0.7` and implements:
+
+- `Connect Phantom / MWA Wallet`;
+- Solana Devnet authorization;
+- wallet public-key and SOL-balance display;
+- deterministic policy hash;
+- `VERIFIED`, `BLOCKED`, and `FROZEN` policy replay;
+- real `signAndSendTransactions` for a Devnet Memo authorization proof;
+- Solana Explorer evidence link;
+- `deauthorize` and `REVOKED` state;
+- honest standard-Android capability labels for Seed Vault and Genesis Token.
+
+Build it with JDK 21:
+
+```bash
+cd mobile/android
+./gradlew testDebugUnitTest assembleDebug
+```
+
+The resulting APK is:
+
+```text
+mobile/android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+See [`mobile/README.md`](mobile/README.md) for phone setup and [`docs/judge-guide.md`](docs/judge-guide.md) for the two-minute evaluation path.
+
+## Core engine
+
+- Deterministic policy and policy-hash generation.
 - Per-charge and period caps.
-- Merchant, token, program, expiry, and evidence checks.
-- A judge-facing browser simulator in `site/index.html`.
-- Explicit adapter boundary for MWA, Seed Vault, and a future Solana spend-permission program.
-- Native Solana program source in `program/` with create, charge, and revoke instructions.
-- Explicit device profiles for standard Android MWA and Seeker + Seed Vault.
+- Merchant, token, program, expiry, allowance-ID, and evidence checks.
+- Human-readable receipts for `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED`.
+- Native Solana instruction source for create, charge, and revoke.
+- Reproducible Rust dependency lockfile and passing native program tests.
+- Standard Android and Seeker device profiles.
 
-## Run locally
+Run the TypeScript verifier:
 
 ```bash
 npm install
@@ -24,19 +81,24 @@ npm test
 npm run demo
 ```
 
-Open `site/index.html` directly for the browser demo, or serve the directory with any static server.
-
 ## Truth boundary
 
-The current slice is a local deterministic simulator. It does not claim that a Solana transaction was broadcast. The next integration layer will add MWA / Seed Vault authorization and a Devnet spend-permission adapter; receipts will only be marked live after an explorer-verifiable transaction exists.
+There are three intentionally separate evidence levels:
 
-## Planned Solana integration
+1. **SIMULATED** — browser and TypeScript policy replay; never a chain claim.
+2. **WALLET-BROADCAST DEVNET PROOF** — real MWA authorization and Memo transaction returned by Phantom; proves the mobile authorization path, not allowance settlement.
+3. **PROGRAM-ENFORCED SETTLEMENT** — requires deployment of the Rust program plus an SPL-token CPI charge; still pending.
 
-```text
-Mobile app → MWA / Seed Vault → Allowance Program → USDC/SKR transfer
-                              ↘ Receipt / revoke / freeze
-```
+The Rust program ID is currently a placeholder. It must not be presented as deployed until a confirmed Devnet program address and explorer-verifiable create, charge, and revoke transactions are recorded.
 
-The on-chain program will enforce the same policy hash as the local verifier so a UI cannot silently widen an allowance.
+## Device modes
 
-The Rust program currently has a placeholder Devnet program ID and is not deployed. Replace the ID only as part of a reviewed deployment; local receipts must never be copied into live evidence.
+| Capability | Standard Android + Phantom | Seeker |
+| --- | --- | --- |
+| Mobile Wallet Adapter | Available | Available |
+| Real Devnet signing | Available | Available |
+| Seed Vault | Seeker only | Available |
+| Genesis Token | Not available | Available |
+| `SEEKER VERIFIED` label | Never shown | Requires real validation |
+
+This allows meaningful real-device testing now without pretending that a standard Android handset supplies Seeker hardware capabilities.

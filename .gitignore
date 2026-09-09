@@ -5,3 +5,10 @@ coverage/
 .env.*
 !.env.example
 *.log
+.gradle/
+**/build/
+**/target/
+**/local.properties
+*.apk
+*.aab
+.idea/

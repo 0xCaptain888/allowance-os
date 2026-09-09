@@ -9,7 +9,9 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test test/*.test.ts",
     "serve:site": "node scripts/serve-site.mjs",
-    "preflight": "node scripts/preflight.mjs"
+    "preflight": "node scripts/preflight.mjs",
+    "android:test": "cd mobile/android && ./gradlew testDebugUnitTest",
+    "android:build": "cd mobile/android && ./gradlew testDebugUnitTest assembleDebug"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
