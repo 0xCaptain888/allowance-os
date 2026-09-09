@@ -43,6 +43,12 @@ data class AllowanceUiState(
     val merchantTrusted: Boolean = true,
     val evidencePresent: Boolean = true,
     val auditEvents: List<AuditEvent> = emptyList(),
+    val proofCheckLoading: Boolean = false,
+    val proofCheckPassed: Boolean? = null,
+    val proofCheckSlot: Long? = null,
+    val proofCheckConfirmation: String = "",
+    val proofCheckedSignature: String = "",
+    val proofCheckMessage: String = "",
 )
 
 class AllowanceViewModel(application: Application) : AndroidViewModel(application) {
@@ -66,6 +72,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         AllowanceUiState(
             walletAddress = preferences.getString(KEY_PUBLIC_KEY, "").orEmpty(),
             walletLabel = preferences.getString(KEY_ACCOUNT_LABEL, "").orEmpty(),
+            signature = preferences.getString(KEY_LAST_SIGNATURE, "").orEmpty(),
             auditEvents = loadEvents(),
         ),
     )
@@ -222,6 +229,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                             error = "",
                         )
                     }
+                    preferences.edit().putString(KEY_LAST_SIGNATURE, result.payload).apply()
                     logEvent("DEVNET_MEMO_BROADCAST", AllowanceState.VERIFIED, current.requestedAmount, "Real Devnet Memo authorization proof", result.payload)
                 }
 
@@ -299,6 +307,52 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         _state.update { it.copy(auditEvents = emptyList()) }
     }
 
+    fun verifyDevnetProof() {
+        val signature = _state.value.signature.ifBlank { RECORDED_LIVE_SIGNATURE }
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    proofCheckLoading = true,
+                    proofCheckPassed = null,
+                    proofCheckMessage = "Querying Solana Devnet RPC…",
+                    proofCheckedSignature = signature,
+                )
+            }
+            runCatching { rpc.signatureStatus(signature) }
+                .onSuccess { status ->
+                    val passed = status.succeeded && status.confirmation in setOf("CONFIRMED", "FINALIZED")
+                    val message = if (passed) {
+                        "RPC independently confirmed the transaction without an execution error."
+                    } else {
+                        "The signature exists, but it is not yet confirmed successfully."
+                    }
+                    _state.update {
+                        it.copy(
+                            proofCheckLoading = false,
+                            proofCheckPassed = passed,
+                            proofCheckSlot = status.slot,
+                            proofCheckConfirmation = status.confirmation,
+                            proofCheckMessage = message,
+                        )
+                    }
+                    logEvent("PROOF_RPC_VERIFIED", if (passed) AllowanceState.VERIFIED else AllowanceState.FROZEN, message = message, signature = signature)
+                }
+                .onFailure { error ->
+                    val message = error.message ?: "Unable to verify the Devnet signature"
+                    _state.update {
+                        it.copy(
+                            proofCheckLoading = false,
+                            proofCheckPassed = false,
+                            proofCheckSlot = null,
+                            proofCheckConfirmation = "",
+                            proofCheckMessage = message,
+                        )
+                    }
+                    logEvent("PROOF_RPC_ERROR", AllowanceState.IDLE, message = message, signature = signature)
+                }
+        }
+    }
+
     fun receiptSummary(): String {
         val current = _state.value
         val checks = listOf(
@@ -352,5 +406,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         private const val KEY_ACCOUNT_LABEL = "account_label"
         private const val KEY_AUTH_TOKEN = "auth_token"
         private const val KEY_EVENTS = "audit_events"
+        private const val KEY_LAST_SIGNATURE = "last_signature"
+        const val RECORDED_LIVE_SIGNATURE = "4w1cjWABu9L9NGMe4NrRTkqFxZVnJBsdket94ifiuKrGaMsMDnYquFpirq4kte4hsCxRuT6Jo79U8zvKNgzQ3B9k"
     }
 }

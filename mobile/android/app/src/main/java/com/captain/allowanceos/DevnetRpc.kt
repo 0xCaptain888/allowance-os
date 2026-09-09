@@ -6,6 +6,12 @@ import com.solana.rpc.SolanaRpcClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+data class DevnetSignatureStatus(
+    val slot: Long,
+    val confirmation: String,
+    val succeeded: Boolean,
+)
+
 class DevnetRpc {
     private val client = SolanaRpcClient(
         "https://api.devnet.solana.com",
@@ -23,5 +29,19 @@ class DevnetRpc {
             result ?: error(error?.message ?: "Unable to fetch wallet balance")
         }
         lamports.toDouble() / 1_000_000_000.0
+    }
+
+    suspend fun signatureStatus(signature: String): DevnetSignatureStatus = withContext(Dispatchers.IO) {
+        val response = client.getSignatureStatuses(
+            signatures = listOf(signature),
+            searchTransactionHistory = true,
+        )
+        val status = response.result?.firstOrNull()
+            ?: error(response.error?.message ?: "Signature was not found on Solana Devnet")
+        DevnetSignatureStatus(
+            slot = status.slot,
+            confirmation = status.confirmationStatus?.toString()?.uppercase() ?: "PROCESSED",
+            succeeded = status.err == null,
+        )
     }
 }

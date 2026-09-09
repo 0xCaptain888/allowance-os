@@ -32,9 +32,10 @@ Build or install the Android app from `mobile/android`:
 5. Run `BLOCKED` or `FROZEN` and confirm Phantom is not opened.
 6. Run `VERIFIED`, then publish the real Devnet authorization proof.
 7. Approve the transaction in Phantom.
-8. On **Evidence**, copy the portable JSON receipt and its SHA-256 fingerprint, then open the signature in Solana Explorer.
-9. Open **Activity** to inspect the persistent local audit trail and decision counters.
-10. Test **Reconnect**, **Forget local wallet session**, and **Revoke & deauthorize** without exposing a wallet key.
+8. On **Evidence**, run **Independent RPC Verification** and inspect confirmation status plus slot without leaving the app.
+9. Copy the portable JSON receipt and its SHA-256 fingerprint, then open the signature in Solana Explorer for a second source.
+10. Open **Activity** to inspect the persistent local audit trail and decision counters.
+11. Test **Reconnect**, **Forget local wallet session**, and **Revoke & deauthorize** without exposing a wallet key.
 
 ## Evidence labels
 

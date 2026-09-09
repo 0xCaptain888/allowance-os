@@ -9,11 +9,12 @@ Verified locally on September 9, 2026:
 ```text
 ./gradlew testDebugUnitTest assembleDebug
 BUILD SUCCESSFUL
-4 Android policy tests passed
-APK SHA-256 (v0.4.0): b3d7d1119bcf4919af70fbae424cac252fa02cc7b2e82e51848c59eea14acb0b
+6 Android policy tests passed
+Artifact: app/build/outputs/apk/debug/allowance-os-0.6.0-debug.apk
+APK SHA-256: dc4737acebf2f12c00b4664d63b4719e1ca11ad13a8d9e1240aba6dfcdf58370
 ```
 
-v0.5.0 adds period-cap enforcement, judge mode, persistent decision activity, and portable receipt export. The checksum above belongs to the previous v0.4.0 build and will be replaced after the new build completes.
+v0.6.0 adds period-cap enforcement, judge mode, persistent decision activity, portable receipt export, signature persistence, and direct Solana RPC proof verification.
 
 The checksum belongs to the local debug build and may change after any source or dependency update.
 
@@ -48,7 +49,7 @@ JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home" \
 
 ```bash
 ~/Library/Android/sdk/platform-tools/adb install -r \
-  app/build/outputs/apk/debug/app-debug.apk
+  app/build/outputs/apk/debug/allowance-os-0.6.0-debug.apk
 ```
 
 7. Open **Allowance OS** on the phone.

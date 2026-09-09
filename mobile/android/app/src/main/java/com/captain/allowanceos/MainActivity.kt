@@ -111,7 +111,7 @@ private fun AppHeader(chinese: Boolean, onLanguageToggle: () -> Unit) {
         ) { Text("A", color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Black) }
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text("Allowance OS · v0.5.0", color = White, fontSize = 18.sp, fontWeight = FontWeight.Black)
+            Text("Allowance OS · v0.6.0", color = White, fontSize = 18.sp, fontWeight = FontWeight.Black)
             Text(t("链上周期支出控制", "Onchain recurring spend control", chinese), color = Muted, fontSize = 11.sp)
         }
         Row(
@@ -356,6 +356,41 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
         }
 
         ProductCard {
+            val signature = state.signature.ifBlank { AllowanceViewModel.RECORDED_LIVE_SIGNATURE }
+            val usingRecordedProof = state.signature.isBlank()
+            SectionTitle(
+                t("独立 RPC 验证", "INDEPENDENT RPC VERIFICATION", chinese),
+                if (usingRecordedProof) t("已记录证明", "RECORDED PROOF", chinese) else t("本机证明", "DEVICE PROOF", chinese),
+            )
+            Text(
+                if (usingRecordedProof) {
+                    t("当前设备尚未广播新证明，因此验证仓库中公开记录的真实 Devnet 交易。", "This device has not broadcast a new proof, so the app verifies the repository's recorded live Devnet transaction.", chinese)
+                } else {
+                    t("直接通过 Solana RPC 核验当前钱包广播的交易，不依赖区块浏览器页面。", "Verify the wallet-broadcast transaction directly through Solana RPC without trusting an explorer page.", chinese)
+                },
+                color = Muted,
+                fontSize = 13.sp,
+            )
+            Text(short(signature), color = Mint, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            when (state.proofCheckPassed) {
+                true -> {
+                    Notice(t("链上确认成功：交易存在且执行无错误。", "Onchain verification passed: the transaction exists and executed without error.", chinese), Mint)
+                    ValueRow(t("确认状态", "Confirmation", chinese), state.proofCheckConfirmation)
+                    ValueRow("Slot", state.proofCheckSlot?.toString() ?: "—")
+                }
+                false -> Notice(state.proofCheckMessage, Rose)
+                null -> if (state.proofCheckMessage.isNotBlank()) Notice(state.proofCheckMessage, Blue)
+            }
+            PrimaryButton(
+                if (state.proofCheckLoading) t("正在查询 Solana RPC…", "Querying Solana RPC…", chinese)
+                else t("立即独立验证", "Verify independently now", chinese),
+            ) { if (!state.proofCheckLoading) viewModel.verifyDevnetProof() }
+            SecondaryButton(Modifier.fillMaxWidth(), t("在浏览器打开交易", "Open transaction in explorer", chinese)) {
+                uriHandler.openUri("https://explorer.solana.com/tx/$signature?cluster=devnet")
+            }
+        }
+
+        ProductCard {
             SectionTitle(t("可移植收据", "PORTABLE RECEIPT", chinese), "SHA-256")
             Text(
                 t("当前策略决定可导出为结构化收据；哈希可用于把前端结果与链上证明绑定。", "Export the current policy decision as a structured receipt. Its hash binds the UI result to external or onchain evidence.", chinese),
@@ -441,5 +476,7 @@ private fun eventTitle(kind: String, chinese: Boolean): String = when (kind) {
     "LOCAL_SESSION_CLEARED" -> t("本地会话已清除", "Local session cleared", chinese)
     "WALLET_ERROR" -> t("钱包连接错误", "Wallet connection error", chinese)
     "BALANCE_ERROR" -> t("余额刷新错误", "Balance refresh error", chinese)
+    "PROOF_RPC_VERIFIED" -> t("链上证明已独立验证", "Proof independently verified", chinese)
+    "PROOF_RPC_ERROR" -> t("链上证明验证失败", "Proof verification error", chinese)
     else -> kind
 }
