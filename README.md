@@ -13,7 +13,7 @@ Allowance OS is a Solana Mobile control center for safe on-chain subscriptions a
 | [Public Judge Demo](https://0xcaptain888.github.io/allowance-os/) | Instant `VERIFIED` / `BLOCKED` / `FROZEN` policy replay | GitHub Pages deployment |
 | `mobile/android` | Bilingual native Android control center, adjustable policy studio, MWA authorization, and Devnet evidence flow | v0.3.1 compiled and unit-tested |
 | `program/` | Native Solana create / charge / revoke instruction logic | Compiled; 2 tests passed |
-| Solana Explorer | Connected Devnet wallet and wallet-broadcast authorization proof | Wallet connected; transaction signature pending capture |
+| Solana Explorer | Connected Devnet wallet and wallet-broadcast authorization proof | Live signature captured |
 | Deployed allowance program | Program-enforced SPL-token settlement | Not yet deployed |
 
 The repository never labels a simulated receipt as a real transaction. The Android client only shows a Solana Explorer link after a wallet returns an actual Devnet signature.
@@ -53,7 +53,7 @@ The Android app is not a mockup. It uses Solana Mobile's official `mobile-wallet
 - `deauthorize` and `REVOKED` state;
 - honest standard-Android capability labels for Seed Vault and Genesis Token.
 
-The first live device checkpoint is recorded in [`evidence/live-devnet-wallet.json`](evidence/live-devnet-wallet.json). It proves that the standard Android device connected a real Devnet wallet; the address page is deliberately not treated as a transaction receipt. The Memo transaction signature is recorded only after it is copied from the Evidence screen.
+The first live device checkpoint is recorded in [`evidence/live-devnet-wallet.json`](evidence/live-devnet-wallet.json). The resulting wallet-broadcast Memo proof is recorded in [`evidence/live-devnet-memo.json`](evidence/live-devnet-memo.json). The proof is a real authorization transaction, not a deployed allowance-program settlement.
 
 Build it with JDK 21:
 

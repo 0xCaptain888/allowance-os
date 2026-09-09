@@ -1,0 +1,11 @@
+{
+  "evidenceType": "LIVE_DEVNET_MEMO_AUTHORIZATION",
+  "network": "solana-devnet",
+  "walletAddress": "D3XJqkeFiPNtuwKkyeJfVG1Gjvi88AV6fiNs29ukjKm6",
+  "transactionSignature": "4w1cjWABu9L9NGMe4NrRTkqFxZVnJBsdket94ifiuKrGaMsMDnYquFpirq4kte4hsCxRuT6Jo79U8zvKNgzQ3B9k",
+  "explorerUrl": "https://solscan.io/tx/4w1cjWABu9L9NGMe4NrRTkqFxZVnJBsdket94ifiuKrGaMsMDnYquFpirq4kte4hsCxRuT6Jo79U8zvKNgzQ3B9k?cluster=devnet",
+  "solanaExplorerUrl": "https://explorer.solana.com/tx/4w1cjWABu9L9NGMe4NrRTkqFxZVnJBsdket94ifiuKrGaMsMDnYquFpirq4kte4hsCxRuT6Jo79U8zvKNgzQ3B9k?cluster=devnet",
+  "observedAt": "2026-09-09",
+  "status": "USER_REPORTED_LIVE_TRANSACTION",
+  "truthBoundary": "This is a real wallet-broadcast Memo authorization proof. It is not a deployed allowance-program settlement or SPL-token charge."
+}

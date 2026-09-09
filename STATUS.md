@@ -26,11 +26,9 @@ SHA-256: 0964730f20cd551483d946ab419fd8ee6952095a7afcc0f0decc7e1354f83e98
 
 ## External steps still required
 
-- Connect an Android phone through USB debugging and install the APK.
-- Approve Phantom MWA authorization on the phone.
-- Broadcast the Devnet Memo authorization proof and record its real signature.
+- Publicly record the connected Devnet wallet and its real Memo authorization proof.
 - Generate a reviewed program keypair and deploy the allowance program to Devnet.
 - Add SPL-token CPI settlement and record create, charge, and revoke transactions.
 - Test Seed Vault and Genesis Token on actual compatible Solana Mobile hardware.
 
-No external step is represented as complete until its public evidence exists.
+The live wallet and Memo evidence are recorded in `evidence/live-devnet-wallet.json` and `evidence/live-devnet-memo.json`. Program deployment and SPL-token settlement remain intentionally separate pending work.
