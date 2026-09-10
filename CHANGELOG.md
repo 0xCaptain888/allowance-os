@@ -1,0 +1,44 @@
+# Changelog
+
+All notable Allowance OS Android releases are recorded here. Installable APK files and checksums are attached to the matching [GitHub Releases](https://github.com/0xCaptain888/allowance-os/releases).
+
+## Android v0.9.0 — 2026-09-10
+
+- Reframed Allowance OS as a reusable Web3 payment-authorization layer.
+- Added five commercial allowance templates: AI Agent subscriptions, research reports, trading signals, automated trading bots, and paid APIs.
+- Added service filtering, template application, service-specific policy limits, and projected period spend.
+- Added the Seeker Integration Lab with explicitly unofficial blueprints for apps featured by Solana Mobile.
+- Rebuilt the Android visual system and navigation around Home, Services, Allowances, Activity, and Evidence.
+- Redesigned the public GitHub Pages demo with the same commercial catalog.
+- Increased Android policy coverage from six to eight tests.
+
+Release tag: `android-v0.9.0`
+
+## Android v0.8.0 — 2026-09-09
+
+- Added real Program-enforced SPL-token settlement on Solana Devnet.
+- VERIFIED transfers exactly `1,000,000` raw test-token units through CPI.
+- BLOCKED and FROZEN paths publicly demonstrate zero token movement.
+- Added in-app Program matrix verification and public balance-delta verification.
+- Preserved MWA connect, reconnect, local-session reset, and deauthorization controls.
+
+Release tag: `android-v0.8.0`
+
+## Android v0.7.0 — 2026-09-09
+
+- Added deployed Program evidence boundaries and five-transaction verification.
+- Added direct Solana RPC verification, period-cap controls, Activity Log, and portable receipt fingerprints.
+
+No archived APK was available when the permanent release process was introduced.
+
+## Release integrity rule
+
+Starting with v0.9.0, an Android version is not considered published until all of the following exist:
+
+1. versioned source commit;
+2. `android-vX.Y.Z` Git tag;
+3. GitHub Release;
+4. versioned APK asset;
+5. `SHA256SUMS.txt`;
+6. test/build result;
+7. changelog entry.

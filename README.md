@@ -4,6 +4,8 @@
 
 **[Open the public Judge Demo](https://0xcaptain888.github.io/allowance-os/)** · **[Android MWA client](mobile/android)** · **[Two-minute judge guide](docs/judge-guide.md)**
 
+**[Download versioned Android releases](https://github.com/0xCaptain888/allowance-os/releases)** · **[Changelog](CHANGELOG.md)** · **[Release process](docs/android-release-process.md)**
+
 Allowance OS is a Solana Mobile payment-authorization layer for Web3 services. It turns an open-ended wallet approval into a human-readable allowance with merchant, token, program, per-charge, period, expiry, and evidence boundaries—then applies that same model to AI subscriptions, paid research, trading signals, automation bots, and metered APIs.
 
 ## Commercial product proof
