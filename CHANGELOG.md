@@ -13,7 +13,7 @@ All notable Allowance OS Android releases are recorded here. Installable APK fil
 - Added a fail-closed production signing configuration and `npm run android:release` build path.
 - Added a candid product maturity audit and corrected browser revoke semantics.
 
-Release tag: `android-v0.11.0` (to be created after final APK verification)
+Release tag: `android-v0.11.0`
 
 ## Android v0.10.0 — 2026-09-10
 

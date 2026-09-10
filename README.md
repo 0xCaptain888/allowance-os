@@ -124,7 +124,7 @@ mobile/android/app/build/outputs/apk/debug/allowance-os-0.11.0-debug.apk
 
 Local build SHA-256: `8fc1b16e2ecae5bd451bc2110a8093c6f0b0992f8ce87ee00524a9e72c455be3`
 
-Published [`android-v0.10.0`](https://github.com/0xCaptain888/allowance-os/releases/tag/android-v0.10.0) CI asset SHA-256: `c583ddba4ee5f2596649b98133b67cf36fc2a9ea43e514ea104616e2c765af18`. The debug APKs use environment-specific debug signing keys, so the Release asset and its attached `SHA256SUMS.txt` are authoritative for public downloads.
+Published [`android-v0.11.0`](https://github.com/0xCaptain888/allowance-os/releases/tag/android-v0.11.0) CI asset SHA-256: `a1f8aac16f8e697297be292e414ed5fffdf27e3e7f8cc6e5068d75699b25390e`. The debug APKs use environment-specific debug signing keys, so the Release asset and its attached `SHA256SUMS.txt` are authoritative for public downloads.
 
 See [`mobile/README.md`](mobile/README.md) for phone setup and [`docs/judge-guide.md`](docs/judge-guide.md) for the two-minute evaluation path.
 
