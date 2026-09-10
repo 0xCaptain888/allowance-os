@@ -31,6 +31,7 @@ data class AuditEvent(
 
 data class AllowanceUiState(
     val loading: Boolean = false,
+    val loadingMessage: String = "",
     val walletAddress: String = "",
     val walletLabel: String = "",
     val solBalance: Double? = null,
@@ -70,6 +71,20 @@ data class AllowanceUiState(
 
 class AllowanceViewModel(application: Application) : AndroidViewModel(application) {
     private val preferences = application.getSharedPreferences("allowance_os", 0)
+    private val secureSession = SecureSessionStore(application)
+    val preferredChinese: Boolean
+        get() = preferences.getBoolean(KEY_LANGUAGE_CHINESE, true)
+    val hasCompletedOnboarding: Boolean
+        get() = preferences.getBoolean(KEY_ONBOARDING_COMPLETE, false)
+
+    init {
+        // Migrate pre-v0.11 installs that stored the MWA token in plaintext.
+        preferences.getString(KEY_AUTH_TOKEN_LEGACY, null)?.takeIf { it.isNotBlank() }?.let {
+            runCatching { secureSession.saveAuthToken(it) }
+            preferences.edit().remove(KEY_AUTH_TOKEN_LEGACY).apply()
+        }
+    }
+
     private var activePolicy = CommercialCatalog.byId(
         preferences.getString(KEY_SELECTED_SERVICE, CommercialCatalog.DEFAULT_ID).orEmpty(),
     ).toPolicy()
@@ -79,12 +94,12 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
     private val walletAdapter = MobileWalletAdapter(
         connectionIdentity = ConnectionIdentity(
             identityUri = Uri.parse("https://0xcaptain888.github.io/allowance-os/"),
-            iconUri = Uri.parse("favicon.ico"),
+            iconUri = Uri.parse("favicon.svg"),
             identityName = "Allowance OS",
         ),
     ).apply {
         blockchain = Solana.Devnet
-        authToken = preferences.getString(KEY_AUTH_TOKEN, null)
+        authToken = secureSession.loadAuthToken()
     }
 
     private val _state = MutableStateFlow(
@@ -148,6 +163,14 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
             )
         }
         logEvent("TEMPLATE_APPLIED", AllowanceState.IDLE, message = "${template.name} commercial allowance template applied")
+    }
+
+    fun setPreferredChinese(value: Boolean) {
+        preferences.edit().putBoolean(KEY_LANGUAGE_CHINESE, value).apply()
+    }
+
+    fun completeOnboarding() {
+        preferences.edit().putBoolean(KEY_ONBOARDING_COMPLETE, true).apply()
     }
 
     fun runVerified() = evaluate(
@@ -338,17 +361,17 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun revoke(sender: ActivityResultSender) {
         viewModelScope.launch {
-            setLoading("Requesting MWA deauthorization…")
+            setLoading("Requesting MWA wallet disconnect…")
             when (val result = walletAdapter.disconnect(sender)) {
                 is TransactionResult.Success -> {
                     clearConnection()
                     _state.value = AllowanceUiState(
-                        allowanceState = AllowanceState.REVOKED,
-                        decisionReason = "Wallet authorization was deauthorized through MWA.",
+                        allowanceState = AllowanceState.IDLE,
+                        decisionReason = "MWA wallet session was deauthorized. Any onchain allowance remains unchanged until separately revoked.",
                         auditEvents = loadEvents(),
                         selectedServiceId = CommercialCatalog.byId(_state.value.selectedServiceId).id,
                     )
-                    logEvent("MWA_REVOKED", AllowanceState.REVOKED, message = "MWA authorization deauthorized")
+                    logEvent("MWA_DISCONNECTED", AllowanceState.IDLE, message = "MWA wallet session deauthorized; onchain allowance unchanged")
                 }
 
                 is TransactionResult.NoWalletFound -> fail(result.message, "WALLET_ERROR")
@@ -361,7 +384,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         clearConnection()
         _state.value = AllowanceUiState(
             allowanceState = AllowanceState.IDLE,
-            decisionReason = "Local wallet session cleared. Connect your MWA wallet again.",
+            decisionReason = "Local wallet session cleared. This does not revoke an onchain allowance.",
             auditEvents = loadEvents(),
             selectedServiceId = CommercialCatalog.byId(_state.value.selectedServiceId).id,
         )
@@ -373,13 +396,14 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
             it.copy(
                 loading = true,
                 error = "",
+                loadingMessage = reason ?: "Waiting for wallet…",
                 decisionReason = reason ?: it.decisionReason,
             )
         }
     }
 
     private fun fail(message: String, kind: String = "ERROR") {
-        _state.update { it.copy(loading = false, error = message) }
+        _state.update { it.copy(loading = false, loadingMessage = "", error = message) }
         logEvent(kind, AllowanceState.IDLE, message = message)
     }
 
@@ -387,8 +411,8 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         preferences.edit()
             .putString(KEY_PUBLIC_KEY, publicKey)
             .putString(KEY_ACCOUNT_LABEL, accountLabel)
-            .putString(KEY_AUTH_TOKEN, authToken)
             .apply()
+        runCatching { secureSession.saveAuthToken(authToken) }
         walletAdapter.authToken = authToken
     }
 
@@ -396,8 +420,9 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         preferences.edit()
             .remove(KEY_PUBLIC_KEY)
             .remove(KEY_ACCOUNT_LABEL)
-            .remove(KEY_AUTH_TOKEN)
+            .remove(KEY_AUTH_TOKEN_LEGACY)
             .apply()
+        secureSession.clearAuthToken()
         walletAdapter.authToken = null
     }
 
@@ -551,10 +576,12 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
     companion object {
         private const val KEY_PUBLIC_KEY = "public_key"
         private const val KEY_ACCOUNT_LABEL = "account_label"
-        private const val KEY_AUTH_TOKEN = "auth_token"
+        private const val KEY_AUTH_TOKEN_LEGACY = "auth_token"
         private const val KEY_EVENTS = "audit_events"
         private const val KEY_LAST_SIGNATURE = "last_signature"
         private const val KEY_SELECTED_SERVICE = "selected_service"
+        private const val KEY_LANGUAGE_CHINESE = "language_chinese"
+        private const val KEY_ONBOARDING_COMPLETE = "onboarding_complete_v1"
         const val RECORDED_LIVE_SIGNATURE = "4w1cjWABu9L9NGMe4NrRTkqFxZVnJBsdket94ifiuKrGaMsMDnYquFpirq4kte4hsCxRuT6Jo79U8zvKNgzQ3B9k"
     }
 }

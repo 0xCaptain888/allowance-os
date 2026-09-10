@@ -2,7 +2,9 @@
 
 ## Product boundary
 
-Allowance OS is a mobile control plane for delegated spending. It does not custody keys and it does not silently submit live transactions. The policy engine, wallet authorization, deployed Program enforcement, and SPL-token settlement are separate, auditable layers.
+Allowance OS is a pre-production mobile control plane for bounded spending. It does not custody keys and it does not silently submit live transactions. The policy engine, wallet authorization, deployed Program enforcement, and SPL-token settlement are separate, auditable layers.
+
+The current deployed Program requires the authority signer for `Charge`. That is useful public enforcement evidence, but it is not yet the final “approve once, charge later” architecture. Production recurring settlement requires a user-approved SPL delegate or Program-owned vault/PDA so a merchant or executor can submit a bounded charge without possessing the user's key.
 
 ```text
 Seeker Android App
@@ -35,7 +37,7 @@ The local demo deliberately uses `simulated:` hashes. It must never present them
 
 ## Deployed Solana adapter
 
-The adapter will be implemented behind the current engine with three explicit calls:
+The target production adapter has four explicit calls:
 
 ```text
 authorizeAllowance(policy)  → MWA signature and wallet-broadcast evidence

@@ -96,7 +96,7 @@ internal fun MetricCard(modifier: Modifier, value: String, unit: String, label: 
     ) {
         Text(value, color = accent, fontSize = 20.sp, fontWeight = FontWeight.Black)
         Text(unit, color = White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-        Text(label, color = Muted, fontSize = 8.sp, maxLines = 2)
+        Text(label, color = Muted, fontSize = 10.sp, maxLines = 2)
     }
 }
 
@@ -138,7 +138,7 @@ internal fun StateAction(modifier: Modifier, label: String, color: Color, onClic
         colors = ButtonDefaults.buttonColors(backgroundColor = color, contentColor = Ink),
         contentPadding = PaddingValues(horizontal = 4.dp),
         onClick = onClick,
-    ) { Text(label, fontSize = 9.sp, fontWeight = FontWeight.Black) }
+    ) { Text(label, fontSize = 10.sp, fontWeight = FontWeight.Black) }
 }
 
 @Composable
@@ -242,7 +242,7 @@ internal fun TinyTag(label: String, color: Color) {
         label,
         modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(color.copy(alpha = 0.12f)).padding(horizontal = 7.dp, vertical = 5.dp),
         color = color,
-        fontSize = 8.sp,
+        fontSize = 9.sp,
         fontWeight = FontWeight.Black,
     )
 }
@@ -303,7 +303,7 @@ private fun BottomItem(modifier: Modifier, icon: String, label: String, selected
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(icon, color = if (selected) Mint else Muted, fontWeight = FontWeight.Black, fontSize = 13.sp)
-        Text(label, color = if (selected) Mint else Muted, fontWeight = if (selected) FontWeight.Black else FontWeight.Medium, fontSize = 9.sp, maxLines = 1)
+        Text(label, color = if (selected) Mint else Muted, fontWeight = if (selected) FontWeight.Black else FontWeight.Medium, fontSize = 10.sp, maxLines = 1)
     }
 }
 

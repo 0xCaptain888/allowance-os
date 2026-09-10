@@ -19,8 +19,31 @@ export function evaluateCharge(
       nextSpentInPeriod: policy.spentInPeriod,
     };
   }
+  const validPolicyBudget = Number.isFinite(policy.perCharge)
+    && policy.perCharge > 0
+    && Number.isFinite(policy.periodCap)
+    && policy.periodCap >= policy.perCharge
+    && Number.isFinite(policy.spentInPeriod)
+    && policy.spentInPeriod >= 0;
+  if (!validPolicyBudget) {
+    return {
+      state: 'FROZEN',
+      reasons: ['invalid_policy_budget'],
+      checks: { policyBudgetValid: false },
+      nextSpentInPeriod: policy.spentInPeriod,
+    };
+  }
+  if (!Number.isFinite(request.amount) || request.amount <= 0) {
+    return {
+      state: 'BLOCKED',
+      reasons: ['amount_invalid'],
+      checks: { amountPositiveFinite: false },
+      nextSpentInPeriod: policy.spentInPeriod,
+    };
+  }
   const requestedAt = Date.parse(request.requestedAt);
   const requestExpiresAt = Date.parse(request.expiresAt);
+  const policyExpiresAt = Date.parse(policy.expiresAt);
   const nowMs = now.getTime();
   const checks = {
     requestIdBound: REQUEST_ID_PATTERN.test(request.requestId),
@@ -29,13 +52,13 @@ export function evaluateCharge(
     requestTimeValid: Number.isFinite(requestedAt) && requestedAt <= nowMs + MAX_CLOCK_SKEW_MS,
     requestFresh: Number.isFinite(requestExpiresAt) && requestExpiresAt > nowMs && requestExpiresAt > requestedAt,
     allowanceMatches: policy.allowanceId === request.allowanceId,
-    allowanceActive: policy.expiresAt > now.toISOString(),
+    allowanceActive: Number.isFinite(policyExpiresAt) && policyExpiresAt > nowMs,
     merchantMatches: policy.merchant === request.merchant,
     tokenMatches: policy.token === request.token,
     perChargeWithinPolicy: request.amount <= policy.perCharge,
     periodCapWithinPolicy: policy.spentInPeriod + request.amount <= policy.periodCap,
     programAllowed: policy.allowedProgram === request.program,
-    evidenceBound: HASH_PATTERN.test(request.evidenceHash) && request.evidenceUri.length > 0,
+    evidenceBound: HASH_PATTERN.test(request.evidenceHash) && request.evidenceUri.trim().length > 0,
     evidenceUnused: !context.usedEvidenceHashes?.has(request.evidenceHash.toLowerCase()),
   };
   const reasons: string[] = [];

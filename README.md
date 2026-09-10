@@ -4,15 +4,17 @@
 
 **[Open the public Judge Demo](https://0xcaptain888.github.io/allowance-os/)** · **[Android MWA client](mobile/android)** · **[Two-minute judge guide](docs/judge-guide.md)**
 
-**[Download versioned Android releases](https://github.com/0xCaptain888/allowance-os/releases)** · **[Changelog](CHANGELOG.md)** · **[Release process](docs/android-release-process.md)**
+**[Download versioned Android releases](https://github.com/0xCaptain888/allowance-os/releases)** · **[Product maturity audit](docs/product-maturity-audit.md)** · **[Changelog](CHANGELOG.md)** · **[Release process](docs/android-release-process.md)**
 
 Allowance OS is a Solana Mobile payment-authorization layer for Web3 services. It turns an open-ended wallet approval into a human-readable allowance with merchant, token, program, per-charge, period, expiry, and evidence boundaries—then applies that same model to AI subscriptions, paid research, trading signals, automation bots, and metered APIs.
 
-**v0.10.0 adds the missing merchant loop:** AlphaBrief delivers a report, hashes its content, submits an expiring request with an ID and nonce, receives a VERIFIED receipt plus signed webhook, and unlocks the report. Exact retries are idempotent; a new request reusing the same evidence is BLOCKED. Run it with `npm run demo:alphabrief` or attack it in the public Demo.
+**v0.11.0 hardens the mobile trust boundary:** the MWA reconnect token is encrypted with Android Keystore, language choice persists, malformed amounts fail closed, wallet publishing requires a clear review step, MWA disconnect is no longer presented as onchain revocation, cleartext traffic is disabled, and a production-signing build path is prepared. The complete AlphaBrief merchant loop from v0.10 remains available.
+
+> **Pre-production disclosure:** the repository proves policy evaluation, real MWA signing, deployed Devnet state transitions, and a recorded SPL-token transfer. The current Program still requires the authority signer for `Charge`, so it is not yet an autonomous “approve once, charge later” production protocol. See the [maturity audit](docs/product-maturity-audit.md).
 
 ## Commercial product proof
 
-v0.10.0 keeps the five-surface product—**Home → Services → Allowances → Activity → Evidence**—and adds a complete merchant integration rather than another static use-case card.
+v0.11.0 keeps the five-surface product—**Home → Services → Allowances → Activity → Evidence**—while tightening session security and transaction truthfulness instead of adding another static use-case card.
 
 | Ready template | Commercial use | Payment boundary | Required evidence |
 | --- | --- | --- | --- |
@@ -31,7 +33,7 @@ The **Seeker Integration Lab** also maps Allowance OS to apps featured by Solana
 | Surface | What it proves | Status |
 | --- | --- | --- |
 | [Public Judge Demo](https://0xcaptain888.github.io/allowance-os/) | Instant `VERIFIED` / `BLOCKED` / `FROZEN` policy replay | GitHub Pages deployment |
-| `mobile/android` | Bilingual native Android product with commercial catalog, AlphaBrief unlock/replay lab, persistent activity audit, MWA authorization, and direct Devnet RPC verification | v0.10.0; 10 Android tests |
+| `mobile/android` | Bilingual native Android product with commercial catalog, AlphaBrief unlock/replay lab, encrypted MWA session, explicit action review, persistent activity audit, and direct Devnet RPC verification | v0.11.0; 12 Android tests |
 | `program/` | Native Solana create / SPL-token charge / evidence-freeze / duplicate-evidence / revoke source | Existing v0.9.0 binary deployed; hardened source has 6 Rust tests |
 | Solana Explorer | Connected Devnet wallet and wallet-broadcast authorization proof | Live signature captured |
 | [Deployed allowance program](https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet) | Program-enforced state transitions and settlement | Live `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED` evidence |
@@ -78,7 +80,10 @@ User policy
 
 The Android app is not a mockup. It uses Solana Mobile's official `mobile-wallet-adapter-clientlib-ktx:2.0.7` and implements:
 
-- Chinese and English product interfaces with an in-app language switch;
+- Chinese and English product interfaces with a persisted in-app language switch;
+- Android Keystore encryption for the MWA reconnect token, including migration from the legacy plaintext preference;
+- a pre-sign review that clearly shows network, payload, and `0 USDC` asset movement for the current Memo proof;
+- separate language and controls for disconnecting MWA versus revoking an onchain allowance;
 - five product surfaces: Home, Services, Allowances, Activity, and Evidence;
 - five reusable commercial templates for AI Agent subscriptions, research reports, trading signals, automated trading bots, and paid APIs;
 - an AlphaBrief reference purchase that exposes request ID, nonce, expiry, content hash, unlock state, and evidence replay rejection;
@@ -114,7 +119,7 @@ cd mobile/android
 The resulting APK is:
 
 ```text
-mobile/android/app/build/outputs/apk/debug/allowance-os-0.10.0-debug.apk
+mobile/android/app/build/outputs/apk/debug/allowance-os-0.11.0-debug.apk
 ```
 
 Local build SHA-256: `8fc1b16e2ecae5bd451bc2110a8093c6f0b0992f8ce87ee00524a9e72c455be3`

@@ -16,8 +16,8 @@ android {
         applicationId 'com.captain.allowanceos'
         minSdk 27
         targetSdk 37
-        versionCode 10
-        versionName '0.10.0'
+        versionCode 11
+        versionName '0.11.0'
 
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
@@ -28,9 +28,32 @@ android {
         }
     }
 
+    signingConfigs {
+        release {
+            def storePath = System.getenv('ALLOWANCE_OS_STORE_FILE')
+            def storePasswordValue = System.getenv('ALLOWANCE_OS_STORE_PASSWORD')
+            def aliasValue = System.getenv('ALLOWANCE_OS_KEY_ALIAS')
+            def keyPasswordValue = System.getenv('ALLOWANCE_OS_KEY_PASSWORD')
+            if (storePath && storePasswordValue && aliasValue && keyPasswordValue) {
+                storeFile file(storePath)
+                storePassword storePasswordValue
+                keyAlias aliasValue
+                keyPassword keyPasswordValue
+            } else {
+                // Never silently ship a debug-signed APK as a production build.
+                storeFile file("${project.buildDir}/missing-production-keystore.jks")
+                storePassword 'missing'
+                keyAlias 'missing'
+                keyPassword 'missing'
+            }
+        }
+    }
+
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }

@@ -4,12 +4,12 @@
   "date": "2026-09-10",
   "command": "./gradlew testDebugUnitTest assembleDebug",
   "result": "BUILD_SUCCESSFUL",
-  "testCount": 10,
+  "testCount": 12,
   "testFailures": 0,
-  "versionCode": 10,
-  "versionName": "0.10.0",
-  "artifact": "mobile/android/app/build/outputs/apk/debug/allowance-os-0.10.0-debug.apk",
-  "artifactSize": "18975074 bytes",
-  "sha256": "8fc1b16e2ecae5bd451bc2110a8093c6f0b0992f8ce87ee00524a9e72c455be3",
+  "versionCode": 11,
+  "versionName": "0.11.0",
+  "artifact": "mobile/android/app/build/outputs/apk/debug/allowance-os-0.11.0-debug.apk",
+  "artifactSize": "19010740 bytes",
+  "sha256": "14d5ed6d41b47a5a7a921cb2e5f193c5fba4effc4911191e830be96926710fd2",
   "truthBoundary": "This proves a local Android build. It is not a Solana transaction or deployed-program receipt."
 }

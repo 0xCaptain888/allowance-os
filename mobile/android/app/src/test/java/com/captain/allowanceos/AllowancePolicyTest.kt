@@ -20,6 +20,25 @@ class AllowancePolicyTest {
     }
 
     @Test
+    fun zeroNegativeAndNonFiniteChargesAreBlocked() {
+        listOf(0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY).forEach { amount ->
+            assertEquals(
+                "Amount $amount must be rejected",
+                AllowanceState.BLOCKED,
+                PolicyEngine.evaluate(policy, amount, policy.merchant, "evidence").state,
+            )
+        }
+    }
+
+    @Test
+    fun invalidPolicyBudgetIsFrozen() {
+        assertEquals(
+            AllowanceState.FROZEN,
+            PolicyEngine.evaluate(policy.copy(periodCap = 1.0), 1.0, policy.merchant, "evidence").state,
+        )
+    }
+
+    @Test
     fun periodCapIsEnforcedBeforeWalletInvocation() {
         val decision = PolicyEngine.evaluate(policy, 1.5, policy.merchant, "evidence", periodSpent = 7.0)
         assertEquals(AllowanceState.BLOCKED, decision.state)

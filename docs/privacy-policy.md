@@ -9,7 +9,7 @@ Allowance OS is a local-first Android reference application. It does not operate
 The app may process and store locally:
 
 - the public address and label returned by a wallet authorization;
-- the MWA authorization token required to reconnect to that wallet;
+- the MWA authorization token required to reconnect to that wallet, encrypted at rest with an app-scoped Android Keystore AES-GCM key;
 - the latest public Devnet transaction signature;
 - locally generated policy decisions and audit events;
 - selected service template and language preference.

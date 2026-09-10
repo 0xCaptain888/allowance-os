@@ -12,4 +12,9 @@ coverage/
 **/local.properties
 *.apk
 *.aab
+*.jks
+*.keystore
+keystore.properties
+signing.properties
 .idea/
+**/.DS_Store

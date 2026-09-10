@@ -1,6 +1,7 @@
 package com.captain.allowanceos
 
 import android.os.Bundle
+import androidx.activity.compose.BackHandler
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -25,6 +26,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.AlertDialog
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
 import androidx.compose.material.LinearProgressIndicator
@@ -75,7 +77,9 @@ class MainActivity : ComponentActivity() {
 private fun AllowanceApp(viewModel: AllowanceViewModel, sender: ActivityResultSender) {
     val state by viewModel.state.collectAsState()
     var page by rememberSaveable { mutableStateOf(AppPage.HOME) }
-    var chinese by rememberSaveable { mutableStateOf(true) }
+    var chinese by rememberSaveable { mutableStateOf(viewModel.preferredChinese) }
+    var showOnboarding by rememberSaveable { mutableStateOf(!viewModel.hasCompletedOnboarding) }
+    BackHandler(enabled = page != AppPage.HOME && !state.loading) { page = AppPage.HOME }
 
     Box(
         modifier = Modifier.fillMaxSize().background(
@@ -83,7 +87,10 @@ private fun AllowanceApp(viewModel: AllowanceViewModel, sender: ActivityResultSe
         ),
     ) {
         Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
-            AppHeader(chinese = chinese, onLanguageToggle = { chinese = !chinese })
+            AppHeader(chinese = chinese, onLanguageToggle = {
+                chinese = !chinese
+                viewModel.setPreferredChinese(chinese)
+            })
             Box(modifier = Modifier.weight(1f)) {
                 when (page) {
                     AppPage.HOME -> OverviewPage(state, viewModel, sender, chinese) { page = it }
@@ -101,10 +108,35 @@ private fun AllowanceApp(viewModel: AllowanceViewModel, sender: ActivityResultSe
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     CircularProgressIndicator(color = Mint)
                     Spacer(Modifier.height(16.dp))
-                    Text(t("正在等待钱包…", "Waiting for wallet…", chinese), color = White)
+                    Text(
+                        state.loadingMessage.ifBlank { t("正在处理请求…", "Processing request…", chinese) },
+                        color = White,
+                    )
                 }
             }
         }
+    }
+
+    if (showOnboarding) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text(t("欢迎使用 Allowance OS", "Welcome to Allowance OS", chinese), color = White, fontWeight = FontWeight.Black) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(t("在开始前，请先确认当前产品边界：", "Before continuing, understand the current product boundary:", chinese), color = White)
+                    BoundaryRow("DEVNET", t("所有钱包与链上操作均位于 Solana Devnet。", "All wallet and onchain actions use Solana Devnet.", chinese), Blue)
+                    BoundaryRow("NO CUSTODY", t("私钥始终留在钱包中；应用只保存加密的 MWA 重连令牌。", "Private keys remain in the wallet; the app stores only an encrypted MWA reconnect token.", chinese), Mint)
+                    BoundaryRow("PRE-PRODUCTION", t("Memo 是授权证明，不是支付；自动周期扣款架构尚未上线。", "A Memo is authorization proof, not payment; autonomous recurring settlement is not yet live.", chinese), Amber)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.completeOnboarding()
+                    showOnboarding = false
+                }) { Text(t("了解并开始", "Understand and continue", chinese), color = Mint, fontWeight = FontWeight.Black) }
+            },
+            backgroundColor = Panel,
+        )
     }
 }
 
@@ -120,7 +152,7 @@ private fun AppHeader(chinese: Boolean, onLanguageToggle: () -> Unit) {
         ) { Text("A", color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Black) }
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text("Allowance OS · v0.10.0", color = White, fontSize = 18.sp, fontWeight = FontWeight.Black)
+            Text("Allowance OS · v0.11.0", color = White, fontSize = 18.sp, fontWeight = FontWeight.Black)
             Text(t("Web3 服务支付与授权层", "Payment authorization for Web3 services", chinese), color = Muted, fontSize = 11.sp)
         }
         Row(
@@ -156,6 +188,20 @@ private fun OverviewPage(
             color = Muted,
             fontSize = 15.sp,
         )
+
+        ProductCard {
+            SectionTitle(t("当前运行模式", "CURRENT OPERATING MODE", chinese), t("预生产", "PRE-PRODUCTION", chinese))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TinyTag("SOLANA DEVNET", Blue)
+                TinyTag(t("非托管", "NON-CUSTODIAL", chinese), Mint)
+                TinyTag(t("不自动扣款", "NO AUTO-DEBIT", chinese), Amber)
+            }
+            Text(
+                t("策略回放、钱包 Memo 证明与历史 Program 结算是三个独立证据层。当前 App 不会自动从钱包扣款。", "Policy replay, wallet Memo proof, and recorded Program settlement are three separate evidence layers. This app does not automatically debit a wallet.", chinese),
+                color = Muted,
+                fontSize = 12.sp,
+            )
+        }
 
         Column(
             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp))
@@ -397,6 +443,8 @@ private fun PolicyPage(state: AllowanceUiState, viewModel: AllowanceViewModel, s
     var periodSpent by rememberSaveable(state.selectedServiceId) { mutableStateOf(0f) }
     var trustedMerchant by rememberSaveable(state.selectedServiceId) { mutableStateOf(true) }
     var evidencePresent by rememberSaveable(state.selectedServiceId) { mutableStateOf(true) }
+    var showPublishConfirmation by rememberSaveable { mutableStateOf(false) }
+    var showDisconnectConfirmation by rememberSaveable { mutableStateOf(false) }
 
     PageColumn {
         Text(t("授权中心", "Allowance center", chinese), color = White, fontSize = 30.sp, fontWeight = FontWeight.Black)
@@ -491,12 +539,66 @@ private fun PolicyPage(state: AllowanceUiState, viewModel: AllowanceViewModel, s
 
         ProductCard {
             SectionTitle(t("真实钱包动作", "LIVE WALLET ACTION", chinese), "MWA")
-            Text(t("只有策略结果为 VERIFIED 时，才应发布真实 Devnet Memo 授权证明。", "Publish a real Devnet Memo authorization proof only after a VERIFIED decision.", chinese), color = Muted, fontSize = 13.sp)
-            PrimaryButton(t("发布真实 Devnet 授权证明", "Publish real Devnet authorization proof", chinese)) { viewModel.publishDevnetProof(sender) }
+            Notice(
+                t(
+                    "当前动作只发布一笔 Solana Devnet Memo 作为钱包授权证明：不会扣除 USDC，也不会创建可自动扣款的生产授权。只会产生极少量 Devnet 网络费。",
+                    "This action publishes only a Solana Devnet Memo as wallet-authorization proof. It does not transfer USDC or create a production recurring-charge allowance; only a tiny Devnet network fee may apply.",
+                    chinese,
+                ),
+                Blue,
+            )
+            PrimaryButton(t("审查并发布 Devnet Memo", "Review and publish Devnet Memo", chinese)) { showPublishConfirmation = true }
             if (state.error.isNotBlank()) Notice(state.error, Rose)
-            SecondaryButton(Modifier.fillMaxWidth(), t("撤销并取消 MWA 授权", "Revoke and deauthorize MWA", chinese)) { viewModel.revoke(sender) }
+            SecondaryButton(Modifier.fillMaxWidth(), t("断开钱包并取消 MWA 会话", "Disconnect wallet and deauthorize MWA", chinese)) { showDisconnectConfirmation = true }
+            Text(
+                t("断开 MWA 会话不会撤销已存在的链上 Allowance；链上撤销必须单独发送 Program 指令。", "Disconnecting MWA does not revoke an existing onchain allowance; onchain revocation requires a separate Program instruction.", chinese),
+                color = Muted,
+                fontSize = 11.sp,
+            )
         }
         Spacer(Modifier.height(12.dp))
+    }
+
+    if (showPublishConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showPublishConfirmation = false },
+            title = { Text(t("确认发布测试网证明", "Confirm Devnet proof", chinese), color = White, fontWeight = FontWeight.Black) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(t("网络：Solana Devnet", "Network: Solana Devnet", chinese), color = White)
+                    Text(t("资产转移：0 USDC", "Asset transfer: 0 USDC", chinese), color = Mint, fontWeight = FontWeight.Bold)
+                    Text(t("内容：策略哈希、商户和请求额度的 Memo 证明", "Payload: Memo proof containing policy hash, merchant, and requested allowance amount", chinese), color = Muted)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showPublishConfirmation = false
+                    viewModel.publishDevnetProof(sender)
+                }) { Text(t("打开钱包确认", "Open wallet", chinese), color = Mint, fontWeight = FontWeight.Black) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPublishConfirmation = false }) { Text(t("取消", "Cancel", chinese), color = Muted) }
+            },
+            backgroundColor = Panel,
+        )
+    }
+
+    if (showDisconnectConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showDisconnectConfirmation = false },
+            title = { Text(t("断开钱包会话？", "Disconnect wallet session?", chinese), color = White, fontWeight = FontWeight.Black) },
+            text = { Text(t("这会取消 MWA 重连令牌并清除本地钱包连接，但不会更改链上资产或 Allowance。", "This removes the MWA reconnect token and local wallet connection, but does not change onchain assets or allowances.", chinese), color = Muted) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDisconnectConfirmation = false
+                    viewModel.revoke(sender)
+                }) { Text(t("确认断开", "Disconnect", chinese), color = Rose, fontWeight = FontWeight.Black) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDisconnectConfirmation = false }) { Text(t("取消", "Cancel", chinese), color = Muted) }
+            },
+            backgroundColor = Panel,
+        )
     }
 }
 
@@ -688,7 +790,7 @@ private fun eventTitle(kind: String, chinese: Boolean): String = when (kind) {
     "TEMPLATE_APPLIED" -> t("商业模板已应用", "Commercial template applied", chinese)
     "WALLET_CONNECTED" -> t("钱包已连接", "Wallet connected", chinese)
     "DEVNET_MEMO_BROADCAST" -> t("Devnet 证明已广播", "Devnet proof broadcast", chinese)
-    "MWA_REVOKED" -> t("MWA 授权已撤销", "MWA authorization revoked", chinese)
+    "MWA_DISCONNECTED" -> t("MWA 会话已断开", "MWA session disconnected", chinese)
     "LOCAL_SESSION_CLEARED" -> t("本地会话已清除", "Local session cleared", chinese)
     "WALLET_ERROR" -> t("钱包连接错误", "Wallet connection error", chinese)
     "BALANCE_ERROR" -> t("余额刷新错误", "Balance refresh error", chinese)

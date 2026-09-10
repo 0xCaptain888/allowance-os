@@ -1,6 +1,6 @@
 # Merchant SDK integration
 
-Allowance OS v0.10.0 includes a reference TypeScript SDK for bounded repeat payments. It is intentionally signer-agnostic: wallet credentials stay in Mobile Wallet Adapter, Seed Vault, or an application-controlled signer adapter.
+Allowance OS v0.11.0 includes a reference TypeScript SDK for bounded repeat payments. It is intentionally signer-agnostic: wallet credentials stay in Mobile Wallet Adapter, Seed Vault, or an application-controlled signer adapter.
 
 ## AlphaBrief flow
 

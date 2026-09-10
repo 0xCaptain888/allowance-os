@@ -13,7 +13,7 @@ const policy: AllowancePolicy = {
   spentInPeriod: 0,
   expiresAt: '2026-10-09T00:00:00.000Z',
   allowedProgram: 'program:allowance-os-devnet',
-  appReleaseHash: 'release:allowance-os-0.1.0',
+  appReleaseHash: 'release:allowance-os-0.11.0',
 };
 
 const scenarios: Array<[string, ChargeRequest]> = [

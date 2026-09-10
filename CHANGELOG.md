@@ -2,6 +2,19 @@
 
 All notable Allowance OS Android releases are recorded here. Installable APK files and checksums are attached to the matching [GitHub Releases](https://github.com/0xCaptain888/allowance-os/releases).
 
+## Android v0.11.0 — 2026-09-10
+
+- Encrypted the MWA reconnect token with an app-scoped Android Keystore AES-GCM key and added migration from the legacy plaintext preference.
+- Added explicit review dialogs that distinguish a non-payment Devnet Memo proof from USDC movement and distinguish MWA disconnect from onchain revocation.
+- Persisted the Chinese/English language choice across restarts.
+- Rejected zero, negative, non-finite and invalid-budget requests in both TypeScript and Android policy engines.
+- Disabled cleartext Android traffic and added an adaptive launcher icon.
+- Removed the portrait-only restriction, added back-to-home navigation, and improved small-label readability for tablets and foldables.
+- Added a fail-closed production signing configuration and `npm run android:release` build path.
+- Added a candid product maturity audit and corrected browser revoke semantics.
+
+Release tag: `android-v0.11.0` (to be created after final APK verification)
+
 ## Android v0.10.0 — 2026-09-10
 
 - Added a complete AlphaBrief paid-research flow across the SDK, Android app, and public Demo.

@@ -9,12 +9,12 @@ Verified locally on September 10, 2026:
 ```text
 ./gradlew testDebugUnitTest assembleDebug
 BUILD SUCCESSFUL
-10 Android policy tests passed
-Artifact: app/build/outputs/apk/debug/allowance-os-0.10.0-debug.apk
-APK SHA-256: 3bc974a09091315a52456fccc25bb3664a21d796344974844097728d3b17df82
+12 Android policy tests passed
+Artifact: app/build/outputs/apk/debug/allowance-os-0.11.0-debug.apk
+APK SHA-256: 14d5ed6d41b47a5a7a921cb2e5f193c5fba4effc4911191e830be96926710fd2
 ```
 
-v0.10.0 adds the AlphaBrief report purchase/unlock path, v2 request metadata, and interactive evidence-replay rejection while retaining the five commercial templates, Seeker Integration Lab, deployed Program evidence boundary, and direct Devnet verification.
+v0.11.0 encrypts the MWA reconnect token with Android Keystore, adds explicit review before broadcasting a non-payment Memo proof, persists the selected language, and clearly separates wallet-session disconnect from onchain allowance revocation. It retains the AlphaBrief flow, five commercial templates, Seeker Integration Lab, deployed Program evidence boundary, and direct Devnet verification.
 
 The checksum belongs to the local debug build and may change after any source or dependency update.
 
@@ -49,7 +49,7 @@ JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home" \
 
 ```bash
 ~/Library/Android/sdk/platform-tools/adb install -r \
-  app/build/outputs/apk/debug/allowance-os-0.10.0-debug.apk
+  app/build/outputs/apk/debug/allowance-os-0.11.0-debug.apk
 ```
 
 7. Open **Allowance OS** on the phone.
@@ -63,10 +63,24 @@ JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home" \
 5. Tap `BLOCKED`; confirm no wallet request opens.
 6. Tap `FROZEN`; confirm no wallet request opens.
 7. Tap `VERIFIED`.
-8. Tap **Publish real Devnet authorization proof**.
+8. Tap **Review and publish Devnet Memo**, review the `0 USDC` asset movement disclosure, and continue.
 9. Inspect the Memo transaction in Phantom and approve it.
 10. Open the returned signature in Solana Explorer.
-11. Tap **Revoke & deauthorize** to remove the MWA authorization.
+11. Tap **Disconnect wallet and deauthorize MWA** to remove the reconnect session. This does not revoke an onchain allowance.
+
+## Production-signed build
+
+The production signing key must live outside the repository. Provide the four signing values only through the local process environment, then run:
+
+```bash
+export ALLOWANCE_OS_STORE_FILE='/absolute/path/to/allowance-os-dappstore.jks'
+export ALLOWANCE_OS_STORE_PASSWORD='enter-locally'
+export ALLOWANCE_OS_KEY_ALIAS='allowance-os-dappstore'
+export ALLOWANCE_OS_KEY_PASSWORD='enter-locally'
+npm run android:release
+```
+
+Do not paste signing passwords into chat, shell history, source files, GitHub issues, or CI logs. The build fails closed when any signing value is absent; it never silently emits an unsigned or debug-signed production APK.
 
 Recorded live proof: [`evidence/live-devnet-memo.json`](../evidence/live-devnet-memo.json), transaction signature `4w1cjWABu9L9NGMe4NrRTkqFxZVnJBsdket94ifiuKrGaMsMDnYquFpirq4kte4hsCxRuT6Jo79U8zvKNgzQ3B9k`.
 

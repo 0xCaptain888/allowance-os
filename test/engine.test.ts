@@ -22,6 +22,14 @@ const request = (overrides: Partial<ChargeRequest> = {}): ChargeRequest => ({
 
 test('verified charge passes every policy check', () => assert.equal(evaluateCharge(policy, request(), new Date('2026-09-09T00:00:00.000Z')).state, 'VERIFIED'));
 test('over-cap charge is blocked', () => assert.equal(evaluateCharge(policy, request({ amount: 10 }), new Date('2026-09-09T00:00:00.000Z')).state, 'BLOCKED'));
+test('zero, negative, and non-finite charges are blocked', () => {
+  for (const amount of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
+    assert.equal(evaluateCharge(policy, request({ amount }), new Date('2026-09-09T00:00:00.000Z')).state, 'BLOCKED');
+  }
+});
+test('invalid policy budget freezes instead of authorizing', () => {
+  assert.equal(evaluateCharge({ ...policy, periodCap: 1 }, request(), new Date('2026-09-09T00:00:00.000Z')).state, 'FROZEN');
+});
 test('merchant mismatch freezes the allowance', () => assert.equal(evaluateCharge(policy, request({ merchant: 'merchant:lookalike' }), new Date('2026-09-09T00:00:00.000Z')).state, 'FROZEN'));
 test('allowance ID mismatch freezes the request', () => assert.equal(evaluateCharge(policy, request({ allowanceId: 'other-allowance' }), new Date('2026-09-09T00:00:00.000Z')).state, 'FROZEN'));
 test('verified charge advances the period spend', () => assert.equal(applyVerifiedCharge(policy, request(), new Date('2026-09-09T00:00:00.000Z')).spentInPeriod, 2));

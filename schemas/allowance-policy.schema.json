@@ -3,7 +3,8 @@
   "$id": "https://allowance-os.dev/schemas/allowance-policy.schema.json",
   "title": "AllowancePolicy",
   "type": "object",
-  "required": ["allowanceId", "subscriber", "merchant", "token", "perCharge", "period", "periodCap", "expiresAt", "allowedProgram", "appReleaseHash"],
+  "additionalProperties": false,
+  "required": ["allowanceId", "subscriber", "merchant", "merchantName", "token", "perCharge", "period", "periodCap", "spentInPeriod", "expiresAt", "allowedProgram", "appReleaseHash"],
   "properties": {
     "allowanceId": { "type": "string", "minLength": 1 },
     "subscriber": { "type": "string", "minLength": 1 },

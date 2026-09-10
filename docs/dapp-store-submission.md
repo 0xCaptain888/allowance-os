@@ -14,7 +14,7 @@ Official publishing guidance requires a release-ready signed APK, listing metada
 - Support URL: `https://github.com/0xCaptain888/allowance-os/issues`
 - Website: `https://0xcaptain888.github.io/allowance-os/`
 - Privacy policy: `docs/privacy-policy.md`
-- Version: `0.10.0` / code `10`
+- Version: `0.11.0` / code `11`
 
 ## Required preview asset plan
 
@@ -40,6 +40,7 @@ Capture these from the final signed release on a supported Android device:
 
 - create/complete Publisher Portal account and KYC/KYB;
 - generate and securely back up a dedicated release signing key;
+- supply its path, alias, and passwords only through the local signing environment described in `mobile/README.md`;
 - build a signed release APK with the same key used for every future update;
 - capture final device screenshots and icon assets;
 - fund the publisher wallet for upload and onchain publishing costs;

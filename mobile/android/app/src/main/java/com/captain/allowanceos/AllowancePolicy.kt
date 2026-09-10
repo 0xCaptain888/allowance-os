@@ -41,6 +41,22 @@ object PolicyEngine {
         evidence: String,
         periodSpent: Double = 0.0,
     ): PolicyDecision = when {
+        !policy.perChargeCap.isFinite() || policy.perChargeCap <= 0.0 ||
+            !policy.periodCap.isFinite() || policy.periodCap < policy.perChargeCap -> PolicyDecision(
+            AllowanceState.FROZEN,
+            "Allowance policy has invalid budget boundaries; freeze until it is corrected.",
+        )
+
+        !amount.isFinite() || amount <= 0.0 -> PolicyDecision(
+            AllowanceState.BLOCKED,
+            "Charge amount must be a positive finite number.",
+        )
+
+        !periodSpent.isFinite() || periodSpent < 0.0 -> PolicyDecision(
+            AllowanceState.BLOCKED,
+            "Current-period spend must be a non-negative finite number.",
+        )
+
         merchant != policy.merchant -> PolicyDecision(
             AllowanceState.FROZEN,
             "Merchant identity changed; freeze and require explicit recovery.",

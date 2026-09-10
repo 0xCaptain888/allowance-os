@@ -14,7 +14,7 @@ const policy: AllowancePolicy = {
   allowanceId: 'allowance-alphabrief-reference', subscriber: 'wallet:demo-subscriber',
   merchant: 'merchant:alphabrief', merchantName: 'AlphaBrief', token: 'USDC', perCharge: 2,
   period: 'weekly', periodCap: 8, spentInPeriod: 0, periodStartedAt: now.toISOString(),
-  expiresAt: '2026-10-10T00:00:00.000Z', allowedProgram: 'program:allowance-os-devnet', appReleaseHash: 'android-v0.10.0',
+  expiresAt: '2026-10-10T00:00:00.000Z', allowedProgram: 'program:allowance-os-devnet', appReleaseHash: 'android-v0.11.0',
 };
 
 const request: ChargeRequest = {

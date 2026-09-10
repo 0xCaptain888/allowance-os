@@ -30,10 +30,22 @@ The CI-generated `SHA256SUMS.txt` is the checksum authority for the public downl
 Example:
 
 ```bash
-git tag -a android-v0.10.0 -m "Allowance OS Android v0.10.0"
-git push origin android-v0.10.0
+git tag -a android-v0.11.0 -m "Allowance OS Android v0.11.0"
+git push origin android-v0.11.0
 ```
 
 ## Truth boundary
 
 The automated asset is a debug APK intended for testing, judging, and reproducibility. A production release must use a protected signing key, a release build type, a privacy/security review, and an app-store distribution process.
+
+The repository now provides a fail-closed production path:
+
+```bash
+ALLOWANCE_OS_STORE_FILE=/absolute/path/to/allowance-os-dappstore.jks \
+ALLOWANCE_OS_STORE_PASSWORD='set-locally' \
+ALLOWANCE_OS_KEY_ALIAS=allowance-os-dappstore \
+ALLOWANCE_OS_KEY_PASSWORD='set-locally' \
+npm run android:release
+```
+
+`android:release` runs Android tests, creates the signed release APK, and writes `SHA256SUMS.txt`. It refuses to build when a signing value is missing. Never commit the keystore or any password.
