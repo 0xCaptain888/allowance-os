@@ -2,6 +2,17 @@
 
 All notable Allowance OS Android releases are recorded here. Installable APK files and checksums are attached to the matching [GitHub Releases](https://github.com/0xCaptain888/allowance-os/releases).
 
+## Unreleased — Delegated Settlement v2 source
+
+- Added backward-compatible Program v2 instructions without changing legacy v1 Borsh discriminants.
+- Added an allowance-scoped SPL delegate PDA so later settlement does not require the user authority signer.
+- Added separate executor and independent verifier signatures, sequential nonces, last-evidence replay rejection, and per-charge, rolling-period, and lifetime caps.
+- Added user pause/unpause, verifier evidence-bound freeze, authority+verifier unfreeze, and terminal revoke that removes the SPL Token delegation.
+- Added TypeScript instruction builders and expanded coverage to 18 TypeScript and 16 Rust tests.
+- Produced a 92,704-byte Solana SBF binary with SHA-256 `9c36a9aaa91f40a9797c99876015ebcd2aaf284f796166719e2df1f19ee34fd5` and recorded it as non-deployment source-build evidence.
+- Added a pinned CI SBF build job that uploads the deployable `.so` as a workflow artifact.
+- Added the full v2 architecture, account model, threat boundary, deployment checklist, and explicit `SOURCE TESTED · NOT DEPLOYED` label.
+
 ## Android v0.11.0 — 2026-09-10
 
 - Encrypted the MWA reconnect token with an app-scoped Android Keystore AES-GCM key and added migration from the legacy plaintext preference.

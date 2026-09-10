@@ -6,6 +6,17 @@ import { capabilitySummary, standardAndroidProfile } from '../src/device-profile
 import { AllowanceOS } from '../src/sdk.js';
 import { verifyWebhookSignature } from '../src/webhook.js';
 import { SolanaDevnetAdapter } from '../src/adapter.js';
+import {
+  chargeDelegatedInstruction,
+  createDelegatedInstruction,
+  delegatedAuthority,
+  freezeDelegatedInstruction,
+  pauseDelegatedInstruction,
+  revokeDelegatedInstruction,
+  unfreezeDelegatedInstruction,
+  unpauseDelegatedInstruction,
+} from '../src/delegated-protocol.js';
+import { PublicKey } from '@solana/web3.js';
 import type { AllowancePolicy, ChargeRequest } from '../src/types.js';
 
 const policy: AllowancePolicy = {
@@ -96,4 +107,95 @@ test('live adapter delegates signing without accepting wallet secrets', async ()
   assert.equal(authorization.authorizationId, 'devnet:1');
   assert.equal(revoked.state, 'REVOKED');
   assert.equal(sent.length, 2);
+});
+
+test('delegated v2 builders preserve signer separation and stable discriminants', () => {
+  const programId = new PublicKey('DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE');
+  const allowance = PublicKey.unique();
+  const authority = PublicKey.unique();
+  const merchant = PublicKey.unique();
+  const executor = PublicKey.unique();
+  const verifier = PublicKey.unique();
+  const tokenMint = PublicKey.unique();
+  const sourceToken = PublicKey.unique();
+  const merchantToken = PublicKey.unique();
+  const policyHash = new Uint8Array(32).fill(3);
+  const evidenceHash = new Uint8Array(32).fill(7);
+  const [delegate] = delegatedAuthority(programId, allowance);
+
+  const create = createDelegatedInstruction({
+    programId,
+    allowance,
+    authority,
+    merchant,
+    executor,
+    verifier,
+    tokenMint,
+    sourceToken,
+    perCharge: 2_000_000n,
+    periodCap: 8_000_000n,
+    lifetimeCap: 24_000_000n,
+    periodSeconds: 604_800n,
+    expiresAt: 2_000_000_000n,
+    policyHash,
+  });
+  assert.equal(create.data[0], 3);
+  assert.equal(create.data.length, 233);
+  assert.equal(create.keys[0].pubkey.equals(authority), true);
+  assert.equal(create.keys[0].isSigner, true);
+  assert.equal(create.keys[3].pubkey.equals(delegate), true);
+
+  const charge = chargeDelegatedInstruction({
+    programId,
+    allowance,
+    executor,
+    verifier,
+    sourceToken,
+    merchantToken,
+    amount: 1_000_000n,
+    nonce: 4n,
+    evidenceHash,
+  });
+  assert.equal(charge.data[0], 4);
+  assert.equal(charge.data.length, 49);
+  assert.equal(charge.keys[0].pubkey.equals(executor), true);
+  assert.equal(charge.keys[0].isSigner, true);
+  assert.equal(charge.keys[1].pubkey.equals(verifier), true);
+  assert.equal(charge.keys[1].isSigner, true);
+  assert.equal(charge.keys.some(key => key.pubkey.equals(authority)), false);
+
+  assert.equal(pauseDelegatedInstruction(programId, authority, allowance).data[0], 5);
+  assert.equal(unpauseDelegatedInstruction(programId, authority, allowance).data[0], 6);
+  const freeze = freezeDelegatedInstruction(programId, verifier, allowance, evidenceHash);
+  assert.equal(freeze.data[0], 7);
+  assert.equal(freeze.data.length, 33);
+  assert.equal(unfreezeDelegatedInstruction({ programId, authority, verifier, allowance }).data[0], 8);
+  assert.equal(revokeDelegatedInstruction({ programId, authority, allowance, sourceToken }).data[0], 9);
+});
+
+test('delegated v2 builders reject malformed hashes and integer ranges', () => {
+  const programId = PublicKey.unique();
+  const allowance = PublicKey.unique();
+  assert.throws(() => chargeDelegatedInstruction({
+    programId,
+    allowance,
+    executor: PublicKey.unique(),
+    verifier: PublicKey.unique(),
+    sourceToken: PublicKey.unique(),
+    merchantToken: PublicKey.unique(),
+    amount: -1n,
+    nonce: 0n,
+    evidenceHash: new Uint8Array(32),
+  }), /u64 out of range/);
+  assert.throws(() => chargeDelegatedInstruction({
+    programId,
+    allowance,
+    executor: PublicKey.unique(),
+    verifier: PublicKey.unique(),
+    sourceToken: PublicKey.unique(),
+    merchantToken: PublicKey.unique(),
+    amount: 1n,
+    nonce: 0n,
+    evidenceHash: new Uint8Array(31),
+  }), /exactly 32 bytes/);
 });

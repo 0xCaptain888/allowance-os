@@ -32,6 +32,23 @@ jobs:
       - run: cargo fmt -- --check
       - run: cargo test
 
+  solana-sbf-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install pinned SBF builder
+        run: cargo install cargo-build-sbf --version 4.3.0 --locked
+      - name: Build deployable Program artifact
+        run: cargo-build-sbf --manifest-path program/Cargo.toml
+      - name: Record artifact digest
+        run: sha256sum program/target/deploy/allowance_os_program.so
+      - uses: actions/upload-artifact@v7
+        with:
+          name: allowance-os-program-v2-sbf
+          path: program/target/deploy/allowance_os_program.so
+          if-no-files-found: error
+
   android-mwa-client:
     runs-on: ubuntu-latest
     defaults:

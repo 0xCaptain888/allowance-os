@@ -10,7 +10,11 @@ Allowance OS is a Solana Mobile payment-authorization layer for Web3 services. I
 
 **v0.11.0 hardens the mobile trust boundary:** the MWA reconnect token is encrypted with Android Keystore, language choice persists, malformed amounts fail closed, wallet publishing requires a clear review step, MWA disconnect is no longer presented as onchain revocation, cleartext traffic is disabled, and a production-signing build path is prepared. The complete AlphaBrief merchant loop from v0.10 remains available.
 
-> **Pre-production disclosure:** the repository proves policy evaluation, real MWA signing, deployed Devnet state transitions, and a recorded SPL-token transfer. The current Program still requires the authority signer for `Charge`, so it is not yet an autonomous “approve once, charge later” production protocol. See the [maturity audit](docs/product-maturity-audit.md).
+**Delegated Settlement v2 is now source-tested:** a user approves an allowance-scoped SPL delegate PDA once; later `ChargeDelegated` settlement requires the configured executor and independent verifier, enforces sequential nonces plus per-charge/period/lifetime caps, and does not include the user authority as a signer. Pause, evidence-bound freeze, dual-signature unfreeze, and token-delegate revoke are implemented. Read the [v2 specification](docs/delegated-settlement-v2.md).
+
+The v2 source also produces a Solana SBF binary: `92,704` bytes, SHA-256 `9c36a9aaa91f40a9797c99876015ebcd2aaf284f796166719e2df1f19ee34fd5`. This is recorded as [source-build evidence](evidence/delegated-v2-source-build.json), not deployment evidence. CI independently rebuilds and uploads the `.so` using pinned `cargo-build-sbf 4.3.0`.
+
+> **Pre-production disclosure:** v2 is **SOURCE TESTED · NOT DEPLOYED**. The repository proves policy evaluation, real MWA signing, deployed v1 Devnet state transitions, and a recorded v1 SPL-token transfer. The current deployed Program still requires the authority signer for `Charge`; do not interpret the v2 source as live recurring settlement until new public transactions and a matching binary hash are published. See the [maturity audit](docs/product-maturity-audit.md).
 
 ## Commercial product proof
 
@@ -34,7 +38,7 @@ The **Seeker Integration Lab** also maps Allowance OS to apps featured by Solana
 | --- | --- | --- |
 | [Public Judge Demo](https://0xcaptain888.github.io/allowance-os/) | Instant `VERIFIED` / `BLOCKED` / `FROZEN` policy replay | GitHub Pages deployment |
 | `mobile/android` | Bilingual native Android product with commercial catalog, AlphaBrief unlock/replay lab, encrypted MWA session, explicit action review, persistent activity audit, and direct Devnet RPC verification | v0.11.0; 12 Android tests |
-| `program/` | Native Solana create / SPL-token charge / evidence-freeze / duplicate-evidence / revoke source | Existing v0.9.0 binary deployed; hardened source has 6 Rust tests |
+| `program/` | Backward-compatible v1 plus Delegated Settlement v2 with PDA authority, executor/verifier separation, three-level caps, period rollover, recovery and SPL revoke | v2 source tested with 16 Rust tests; not deployed |
 | Solana Explorer | Connected Devnet wallet and wallet-broadcast authorization proof | Live signature captured |
 | [Deployed allowance program](https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet) | Program-enforced state transitions and settlement | Live `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED` evidence |
 | SPL-token settlement | Token movement through CPI | Live Devnet transfer with independently readable pre/post balances |
@@ -74,6 +78,17 @@ User policy
           → Phantom / compatible wallet confirmation
           → real Solana Devnet signature
   → REVOKED through MWA deauthorization
+```
+
+The source-tested v2 settlement path removes the recurring user signature:
+
+```text
+User signs CreateDelegated once
+  → SPL delegate PDA receives a hard lifetime cap
+  → Executor requests a later charge
+  → independent Verifier attests delivery
+  → Program enforces nonce + per-charge + period + lifetime policy
+  → PDA signs SPL transfer; user is offline
 ```
 
 ## Native Android MWA client
@@ -137,8 +152,9 @@ See [`mobile/README.md`](mobile/README.md) for phone setup and [`docs/judge-guid
 - SDK v2 request IDs, nonces, request expiry, idempotent retries, evidence-replay rejection, and HMAC-signed merchant webhooks.
 - A signer-agnostic live adapter that accepts MWA or protected server executors without accepting wallet secrets.
 - End-to-end AlphaBrief paid-content integration in TypeScript, Android, and the browser Demo.
-- Native Solana instruction source for create, SPL-token CPI charge, evidence freeze, and revoke.
-- Reproducible Rust dependency lockfile and six passing native program source tests.
+- Backward-compatible Delegated Settlement v2 instruction builders for TypeScript and Rust.
+- Allowance-scoped SPL delegate PDA, executor/verifier separation, sequential nonce, deterministic period rollover, three-level caps, pause, evidence-bound freeze, dual-signature unfreeze, and delegate-removing revoke.
+- Reproducible Rust dependency lockfile and 16 passing native Program source tests.
 - Standard Android and Seeker device profiles.
 
 Run the TypeScript verifier:
@@ -161,6 +177,22 @@ MERCHANT_TOKEN_ACCOUNT=<merchant-owned-token-account> \
 npm run devnet:live
 ```
 
+After a v2 Program is deployed, reproduce the decisive approve-once / settle-later proof with separate authority, executor, and verifier keypairs:
+
+```bash
+DELEGATED_PROGRAM_ID=<v2-program-id> \
+SOLANA_KEYPAIR=/absolute/path/to/authority.json \
+EXECUTOR_KEYPAIR=/absolute/path/to/executor.json \
+VERIFIER_KEYPAIR=/absolute/path/to/verifier.json \
+TOKEN_MINT=<devnet-mint> \
+SOURCE_TOKEN_ACCOUNT=<authority-token-account> \
+MERCHANT=<merchant-wallet> \
+MERCHANT_TOKEN_ACCOUNT=<merchant-token-account> \
+npm run devnet:delegated
+```
+
+The second transaction is fee-paid and signed by the executor plus verifier; the authority keypair is deliberately absent. The runner fails unless the token deltas, nonce, lifetime spend, actor separation, and v2 state all match. It cannot run accidentally against an unspecified deployment because `DELEGATED_PROGRAM_ID` is mandatory.
+
 ## Truth boundary
 
 There are four intentionally separate evidence levels:
@@ -170,9 +202,9 @@ There are four intentionally separate evidence levels:
 3. **PROGRAM-ENFORCED STATE TRANSITIONS** — deployed Rust Program with public create, verified, blocked, frozen, and revoke evidence.
 4. **SPL-TOKEN SETTLEMENT** — the VERIFIED transaction invokes the SPL Token Program and transfers exactly `1,000,000` raw units; BLOCKED and FROZEN are publicly shown to transfer zero.
 
-The deployed Rust Program ID is `DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`. Its upgrade authority remains the deployment wallet for hackathon iteration; this is disclosed rather than presented as immutable production infrastructure. The deployed binary is still the v0.9.0 evidence build; replay protection is proven in v0.10.0 SDK/Android/browser behavior and Rust source tests, but is not claimed for that older deployed binary.
+The deployed Rust Program ID is `DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`. Its upgrade authority remains the deployment wallet for hackathon iteration; this is disclosed rather than presented as immutable production infrastructure. The deployed binary is still the v0.9.0 evidence build. Delegated Settlement v2 and replay protection are source-tested but are not claimed for that older deployed binary.
 
-See the [merchant SDK guide](docs/sdk-integration.md), [security notes](docs/security.md), [privacy policy](docs/privacy-policy.md), and [prepared dApp Store submission pack](docs/dapp-store-submission.md).
+See the [Delegated Settlement v2 specification](docs/delegated-settlement-v2.md), [merchant SDK guide](docs/sdk-integration.md), [security notes](docs/security.md), [privacy policy](docs/privacy-policy.md), and [prepared dApp Store submission pack](docs/dapp-store-submission.md).
 
 ## Device modes
 

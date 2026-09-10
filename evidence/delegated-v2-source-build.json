@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1",
+  "capturedAt": "2026-09-10",
+  "status": "SOURCE_TESTED_NOT_DEPLOYED",
+  "program": {
+    "crate": "allowance-os-program",
+    "crateVersion": "0.2.0",
+    "declaredProgramId": "DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE",
+    "stateVersion": 2,
+    "stateSizeBytes": 332
+  },
+  "build": {
+    "artifact": "program/target/deploy/allowance_os_program.so",
+    "artifactCommitted": false,
+    "sizeBytes": 92704,
+    "sha256": "9c36a9aaa91f40a9797c99876015ebcd2aaf284f796166719e2df1f19ee34fd5",
+    "cargoBuildSbf": "4.3.0",
+    "platformTools": "v1.57",
+    "rustc": "1.95.0"
+  },
+  "verification": {
+    "rustTestsPassed": 16,
+    "typescriptTestsPassed": 18,
+    "npmAuditVulnerabilities": 0,
+    "sbfBuildPassed": true
+  },
+  "deployment": {
+    "deployed": false,
+    "transaction": null,
+    "authorityFreeChargeTransaction": null,
+    "note": "This record proves a reproducible local SBF build only. It is not chain evidence and must not be presented as a live v2 deployment."
+  }
+}

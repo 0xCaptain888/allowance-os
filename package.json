@@ -12,6 +12,7 @@
     "serve:site": "node scripts/serve-site.mjs",
     "preflight": "node scripts/preflight.mjs",
     "devnet:live": "tsx scripts/run-live-devnet.ts",
+    "devnet:delegated": "tsx scripts/run-delegated-devnet.ts",
     "android:test": "cd mobile/android && ./gradlew testDebugUnitTest",
     "android:build": "cd mobile/android && ./gradlew testDebugUnitTest assembleDebug",
     "android:release": "node scripts/build-production-android.mjs"

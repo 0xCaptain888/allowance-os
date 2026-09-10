@@ -6,6 +6,9 @@
 - `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED` flows.
 - Browser judge replay.
 - Native Solana instruction source for create, SPL-token CPI charge, evidence freeze, and revoke.
+- Delegated Settlement v2 source with an allowance-scoped SPL delegate PDA; later charges require executor + verifier signatures and omit the user authority.
+- V2 sequential nonce, per-charge/period/lifetime caps, deterministic period rollover, pause, evidence-bound freeze, dual-signature unfreeze, and SPL delegate removal on revoke.
+- Matching TypeScript v2 instruction builders with stable Borsh discriminants and explicit account/signer ordering.
 - Policy schema and SDK-facing instruction model.
 - Explicit standard Android and Seeker capability profiles.
 - Native Kotlin/Compose Android client.
@@ -24,9 +27,10 @@
 - Persistent Chinese/English preference, cleartext-traffic denial, and adaptive launcher icon.
 - Fail-closed production signing configuration and local signed-release builder.
 - Android policy tests and successful debug APK build.
-- Sixteen passing TypeScript tests, including malformed-amount, invalid-budget, idempotency, stale-request, signed-webhook, tamper, live-adapter, and replay coverage.
+- Eighteen passing TypeScript tests, including malformed-amount, invalid-budget, idempotency, stale-request, signed-webhook, tamper, live-adapter, replay, and delegated instruction coverage.
 - npm dependency audit: 0 known vulnerabilities after compatible transitive overrides.
-- Native Solana program source compiled with six passing Rust tests, including duplicate-evidence rejection.
+- Native Solana Program v0.2.0 source compiled with 16 passing Rust tests, including v1 compatibility, delegated settlement safety boundaries, and evidence-bound freeze validation.
+- Solana SBF v2 binary built locally with `cargo-build-sbf 4.3.0` / platform-tools `v1.57`; 92,704 bytes, SHA-256 `9c36a9aaa91f40a9797c99876015ebcd2aaf284f796166719e2df1f19ee34fd5`.
 - Upgradeable Program deployed to Solana Devnet at `DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`.
 - Real Devnet allowance account with public `CREATED`, `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED` evidence.
 - VERIFIED transfers exactly `1,000,000` raw SPL-token units through CPI; source balance changes `20 → 19`, merchant `0 → 1`.
@@ -65,6 +69,8 @@ The v0.11.0 tag workflow completed successfully on September 10, 2026. Local and
 
 The wallet/Memo evidence is recorded separately from program enforcement. Program deployment, real state transitions, and the SPL-token CPI settlement are recorded in `evidence/live-devnet-program.json`. The token is a project-created Devnet test mint and is not presented as canonical USDC.
 
+The v2 SBF artifact is recorded separately in `evidence/delegated-v2-source-build.json`. It proves buildability only; no v2 deployment or authority-free settlement transaction is claimed yet.
+
 ## Production architecture gate
 
-The current deployed Program requires the authority signer for every `Charge`. It therefore proves bounded onchain enforcement but does not yet implement autonomous post-approval recurring charges. A mature launch requires a user-approved SPL delegate or Program-owned vault/PDA, merchant/executor authorization, nonce accounts, period rollover, recovery, and multisig/timelocked upgrade authority. See `docs/product-maturity-audit.md`.
+Delegated Settlement v2 is now **SOURCE TESTED · NOT DEPLOYED**. Its allowance-scoped SPL delegate PDA implements authority-free later settlement with executor/verifier authorization, sequential nonces, period rollover, recovery, and lifetime-bounded delegation. The current deployed v0.9 Program still requires the authority signer for every `Charge`. A mature launch therefore still requires v2 deployment and public transaction evidence, Android integration, a durable verifier/evidence store, independent review, and multisig/timelocked upgrade authority. See `docs/delegated-settlement-v2.md` and `docs/product-maturity-audit.md`.

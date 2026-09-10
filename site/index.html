@@ -70,13 +70,27 @@
 </head>
 <body>
   <main>
-    <nav><strong>Allowance OS · v0.11</strong><div class="links"><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os">GitHub</a><a class="nav-link" href="https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet">Devnet Program</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/tree/main/mobile/android">Android MWA</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/docs/product-maturity-audit.md">Maturity Audit</a></div></nav>
+    <nav><strong>Allowance OS · Android v0.11</strong><div class="links"><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os">GitHub</a><a class="nav-link" href="https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet">Devnet Program</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/docs/delegated-settlement-v2.md">Delegated v2</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/tree/main/mobile/android">Android MWA</a></div></nav>
     <section class="hero">
       <div><div class="eyebrow">Payment authorization for Web3 services</div><h1>Allowance OS</h1><p class="lede">One mobile control layer for AI subscriptions, research, trading signals, automation bots, and paid APIs. Approve a bounded policy—not an unlimited future.</p></div>
       <div class="card policy"><div class="row"><span class="muted">Active service</span><span id="heroService" class="value">AlphaBrief</span></div><div class="row"><span class="muted">Merchant</span><span id="heroMerchant" class="value">merchant:alphabrief</span></div><div class="row"><span class="muted">Per charge</span><span id="heroCharge" class="value">2 USDC</span></div><div class="row"><span class="muted">Period cap</span><span id="heroCap" class="value">8 USDC</span></div><div class="row"><span class="muted">Status</span><span class="pill verified">READY TEMPLATE</span></div></div>
     </section>
 
     <p class="truth-note"><strong>Pre-production boundary:</strong> this public site is an interactive policy and evidence verifier. Browser receipts are simulated; the recorded Program transactions are real Devnet evidence. The current deployment is not yet an autonomous recurring-payment service.</p>
+
+    <section class="card" style="margin-top:14px">
+      <div class="section-heading"><div><div class="eyebrow">Delegated Settlement v2</div><h2>Approve once. Settle later without the user online.</h2></div><span class="pill blocked">SOURCE TESTED · NOT DEPLOYED</span></div>
+      <p class="muted">The new Program source closes the central recurring-payment gap while keeping the public v1 evidence readable. The user's token account delegates a hard lifetime limit to an allowance-scoped PDA; a later charge needs both the configured executor and an independent verifier, but not the user's signature.</p>
+      <div class="matrix">
+        <div class="muted">Step</div><div class="muted">Required signer</div><div class="muted">Onchain boundary</div>
+        <div>Create allowance once</div><div>User authority</div><div>SPL delegate PDA + lifetime cap</div>
+        <div>Settle delivered service</div><div>Executor + verifier</div><div>Nonce + evidence + 3 budget caps</div>
+        <div>Freeze bad output</div><div>Verifier</div><div>Bad-result evidence hash persisted</div>
+        <div>Restore after dispute</div><div>User + verifier</div><div>Dual-signature unfreeze</div>
+        <div>Revoke permanently</div><div>User authority</div><div>SPL delegate removed</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px"><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/docs/delegated-settlement-v2.md">Read exact v2 specification</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/program/src/lib.rs">Inspect Program source</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/src/delegated-protocol.ts">Inspect TypeScript builders</a></div>
+    </section>
 
     <section id="services">
       <div class="section-heading"><div><div class="eyebrow">Commercial proof, not a toy demo</div><h2>Five businesses. One allowance protocol.</h2></div><p class="muted">Choose a service to load its merchant, charge limit, period budget, and evidence requirements into the verifier below.</p></div>
@@ -127,7 +141,7 @@
       <div id="alphaBriefReport" class="proof-state muted">The report preview remains locked until the receipt and webhook both verify.</div>
       <div id="alphaBriefReceipt" class="output">No request yet.</div>
     </section>
-    <section class="card" style="margin-top:14px"><div class="eyebrow">Native mobile readiness</div><h2>One policy, two honest device modes.</h2><div class="matrix"><div class="muted">Capability</div><div class="muted">Android + Phantom</div><div class="muted">Seeker</div><div>Mobile Wallet Adapter</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Devnet signing</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Seed Vault</div><div class="limited">SEEKER ONLY</div><div class="ok">AVAILABLE</div><div>Genesis Token</div><div class="limited">NOT AVAILABLE</div><div class="ok">AVAILABLE</div></div><p class="muted">Verified source coverage: 16 TypeScript tests + 12 Android tests + 6 Rust source tests. v0.11 encrypts the MWA reconnect token with Android Keystore and adds explicit wallet-action review. No simulated hash is presented as a chain transaction.</p></section>
+    <section class="card" style="margin-top:14px"><div class="eyebrow">Native mobile readiness</div><h2>One policy, two honest device modes.</h2><div class="matrix"><div class="muted">Capability</div><div class="muted">Android + Phantom</div><div class="muted">Seeker</div><div>Mobile Wallet Adapter</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Devnet signing</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Seed Vault</div><div class="limited">SEEKER ONLY</div><div class="ok">AVAILABLE</div><div>Genesis Token</div><div class="limited">NOT AVAILABLE</div><div class="ok">AVAILABLE</div></div><p class="muted">Verified source coverage: 18 TypeScript tests + 12 Android tests + 16 Rust source tests. v0.11 encrypts the MWA reconnect token with Android Keystore and adds explicit wallet-action review. Delegated v2 is source-tested and clearly separated from the deployed v1 evidence. No simulated hash is presented as a chain transaction.</p></section>
     <section class="card" style="margin-top:14px">
       <div class="eyebrow">Live evidence · Solana Devnet</div>
       <h2>Verify the wallet proof without trusting us.</h2>
