@@ -1,7 +1,7 @@
 # Allowance OS Android / SDK v0.15.0
 
 Date: September 10, 2026
-Status: local Devnet QA build verified; public test release pending
+Status: public debug-signed Devnet QA release
 
 ## Headline
 
@@ -42,6 +42,9 @@ purchase → deliver report → evidence hash → independent verifier
 - npm audit: 0 vulnerabilities;
 - local APK: `allowance-os-0.15.0-debug.apk`;
 - local SHA-256: `2feaad9180dee1b3c4c72796ed7a3789d9f21bb16ed94c5c5c20fa7d1ead6a05`.
+- public QA Release: `android-test-v0.15.0`;
+- public CI SHA-256: `a446a1d5ebdd62d8695d34ef5885b22da1ac6aab5d374f06556890ede92cb212`;
+- GitHub Actions run: `34481977096`.
 
 ## Truth boundary
 

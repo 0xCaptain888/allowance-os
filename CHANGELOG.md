@@ -10,7 +10,7 @@
 - Updated the public Demo to lead with the real AlphaBrief commerce chain and a browser-safe Daily Habits preview.
 - Kept boundaries explicit: browser and local dashboard actions do not move funds; Pause is local until an authority broadcasts the v2 pause instruction; the live asset is a project-created Devnet test mint, not canonical USDC.
 
-Local QA build verified. Public `android-test-v0.15.0` asset is pending the tag workflow; no production-signed release is claimed.
+Release tag: `android-test-v0.15.0`. The published APK is debug-signed for Devnet QA; no production-signed release is claimed.
 
 ## Android / SDK v0.14.0 — 2026-09-10
 
