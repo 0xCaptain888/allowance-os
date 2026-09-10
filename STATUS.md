@@ -58,13 +58,15 @@ SHA-256: a35e6d3d7182b90c20cf814417018a13420ff19d4c8a833e2827928c48d77a03
 Published GitHub Actions APK:
 
 ```text
-Artifact: allowance-os-0.11.0-debug.apk
-Size: 18,797,262 bytes
-SHA-256: a1f8aac16f8e697297be292e414ed5fffdf27e3e7f8cc6e5068d75699b25390e
-Authority: SHA256SUMS.txt attached to android-v0.11.0
+Artifact: allowance-os-0.13.0-debug.apk
+Size: 18,813,650 bytes
+SHA-256: d9d5f8e57ed358e09a780ca8d4097437fdb618a453a3beee72d67854a72c07b2
+Authority: SHA256SUMS.txt attached to android-test-v0.13.0
 ```
 
-The v0.11.0 artifact remains the latest previously published test APK until the v0.13.0 test tag completes. Local and CI debug APK hashes differ because they use different debug signing keys. Production distribution still requires one protected release signing key.
+Public QA release: https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.13.0
+
+The v0.13.0 test release and its checksum were produced by GitHub Actions run `34462245120`. Local and CI debug APK hashes differ because they use different debug signing keys. Production distribution still requires one protected release signing key.
 
 ## External hardware step still required
 

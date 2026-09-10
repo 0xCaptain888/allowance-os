@@ -2,7 +2,7 @@
 
 All notable Allowance OS Android releases are recorded here. Installable APK files and checksums are attached to the matching [GitHub Releases](https://github.com/0xCaptain888/allowance-os/releases).
 
-## Android / SDK v0.13.0 — 2026-09-10 (test release candidate)
+## Android / SDK v0.13.0 — 2026-09-10 (public test release)
 
 - Added atomic JSON-backed reference persistence behind a pluggable merchant runtime store.
 - Preserves policies, spend, idempotency, nonces, used evidence, and revocation across process restarts.
@@ -14,7 +14,7 @@ All notable Allowance OS Android releases are recorded here. Installable APK fil
 - Added a responsible-disclosure policy, operational runbook, and machine-readable evidence index.
 - Expanded coverage to 24 TypeScript, 15 Android, and 20 Rust tests.
 
-Release status: local debug build verified; v2 remains source-tested and not deployed; production tag not created.
+Release tag: `android-test-v0.13.0`. The published APK is debug-signed for Devnet QA; v2 remains source-tested and not deployed, and no production tag has been created.
 
 ## Android / SDK v0.12.0 — 2026-09-10 (release candidate)
 
