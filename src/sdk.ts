@@ -32,3 +32,6 @@ export class AllowanceOS {
     return this.runtime.revokeAllowance(allowanceId);
   }
 }
+
+export { JsonFileRuntimeStateStore, MemoryRuntimeStateStore } from './runtime-store.js';
+export type { RuntimeSnapshot, RuntimeStateStore } from './runtime-store.js';

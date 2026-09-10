@@ -53,22 +53,30 @@ jobs:
 
       - name: Verify deployment identity and artifact
         shell: bash
+        env:
+          CONFIGURED_RPC_URL: ${{ secrets.SOLANA_DEVNET_RPC_URL }}
         run: |
+          RPC_URL="${CONFIGURED_RPC_URL:-https://api.devnet.solana.com}"
+          echo "::add-mask::$RPC_URL"
           test "$(solana address -k "$RUNNER_TEMP/deployer.json")" = "Hwr3facWMTBCJYbYPcRNLPKZspWDmSkizdi7f9tjUsYt"
           test "$(solana address -k "$RUNNER_TEMP/program.json")" = "7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL"
           test "$(solana address -k "$RUNNER_TEMP/buffer.json")" = "3WyJiKJjmcQnznH45Yxtha5Dmgt6ueM7CnGeeGUNGbWN"
           echo "Artifact digest: $(sha256sum program/target/deploy/allowance_os_program.so | cut -d' ' -f1)"
-          solana balance Hwr3facWMTBCJYbYPcRNLPKZspWDmSkizdi7f9tjUsYt --url devnet
+          solana balance Hwr3facWMTBCJYbYPcRNLPKZspWDmSkizdi7f9tjUsYt --url "$RPC_URL"
 
       - name: Deploy v2 through RPC
         shell: bash
+        env:
+          CONFIGURED_RPC_URL: ${{ secrets.SOLANA_DEVNET_RPC_URL }}
         run: |
+          RPC_URL="${CONFIGURED_RPC_URL:-https://api.devnet.solana.com}"
+          echo "::add-mask::$RPC_URL"
           solana program deploy program/target/deploy/allowance_os_program.so \
             --program-id "$RUNNER_TEMP/program.json" \
             --buffer "$RUNNER_TEMP/buffer.json" \
             --keypair "$RUNNER_TEMP/deployer.json" \
             --upgrade-authority "$RUNNER_TEMP/deployer.json" \
-            --url devnet \
+            --url "$RPC_URL" \
             --commitment confirmed \
             --max-len 130280 \
             --use-rpc \
@@ -77,12 +85,16 @@ jobs:
 
       - name: Record public program state
         shell: bash
+        env:
+          CONFIGURED_RPC_URL: ${{ secrets.SOLANA_DEVNET_RPC_URL }}
         run: |
+          RPC_URL="${CONFIGURED_RPC_URL:-https://api.devnet.solana.com}"
+          echo "::add-mask::$RPC_URL"
           solana program show 7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL \
-            --url devnet \
+            --url "$RPC_URL" \
             --keypair "$RUNNER_TEMP/deployer.json" \
             --output json | tee program-state.json
-          solana balance Hwr3facWMTBCJYbYPcRNLPKZspWDmSkizdi7f9tjUsYt --url devnet | tee remaining-balance.txt
+          solana balance Hwr3facWMTBCJYbYPcRNLPKZspWDmSkizdi7f9tjUsYt --url "$RPC_URL" | tee remaining-balance.txt
 
       - name: Upload deployment evidence
         uses: actions/upload-artifact@v7

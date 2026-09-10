@@ -27,8 +27,8 @@ The Android header reads `BuildConfig.VERSION_NAME`; it must not contain a separ
 The workflow validates the tag, restores the protected keystore, runs unit tests, builds `assembleRelease`, verifies the APK certificate with `apksigner`, generates `SHA256SUMS.txt`, and creates the GitHub Release. Missing signing configuration fails the workflow; it never falls back to a debug certificate.
 
 ```bash
-git tag -a android-v0.12.0 -m "Allowance OS Android v0.12.0"
-git push origin android-v0.12.0
+git tag -a android-v0.13.0 -m "Allowance OS Android v0.13.0"
+git push origin android-v0.13.0
 ```
 
 Do not create this tag until the protected signing environment is configured and its recovery backup has been tested.
@@ -38,8 +38,8 @@ Do not create this tag until the protected signing environment is configured and
 `.github/workflows/android-test-release.yml` builds a debug-signed APK for device QA, hackathon judging, or reproducibility. Its title and notes explicitly say that it is not a production or dApp Store release.
 
 ```bash
-git tag -a android-test-v0.12.0 -m "Allowance OS Android test build v0.12.0"
-git push origin android-test-v0.12.0
+git tag -a android-test-v0.13.0 -m "Allowance OS Android test build v0.13.0"
+git push origin android-test-v0.13.0
 ```
 
 Debug certificates differ by build environment. The attached checksum verifies the downloaded bytes, but does not establish a stable production publisher identity.

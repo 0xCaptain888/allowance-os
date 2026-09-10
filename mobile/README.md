@@ -9,12 +9,12 @@ Verified locally on September 10, 2026:
 ```text
 ./gradlew testDebugUnitTest assembleDebug
 BUILD SUCCESSFUL
-13 Android policy/session tests passed
-Artifact: app/build/outputs/apk/debug/allowance-os-0.12.0-debug.apk
-APK SHA-256: 85a052d9adcb27ec6ccd3028be8454fe16ca6d823397fb694775655cc0c0b238
+15 Android policy/session/protocol tests passed
+Artifact: app/build/outputs/apk/debug/allowance-os-0.13.0-debug.apk
+APK SHA-256: a35e6d3d7182b90c20cf814417018a13420ff19d4c8a833e2827928c48d77a03
 ```
 
-v0.12.0 requires a valid encrypted MWA reconnect token before restoring a connected wallet, clearly labels slider accounting as local-only, and separates test-release tags from protected production releases. The shared SDK now uses mint-bound integer raw units instead of floating-point payment values.
+v0.13.0 adds a strict Delegated Settlement v2 state decoder, native pause/unpause/revoke/role-rotation encoders, bounded RPC retries, and portable JSON Activity exports. These codecs are source-tested but are not shown as live controls until v2 is deployed. Existing encrypted MWA session and integer-money boundaries remain enforced.
 
 The checksum belongs to the local debug build and may change after any source or dependency update.
 
@@ -49,7 +49,7 @@ JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home" \
 
 ```bash
 ~/Library/Android/sdk/platform-tools/adb install -r \
-  app/build/outputs/apk/debug/allowance-os-0.12.0-debug.apk
+  app/build/outputs/apk/debug/allowance-os-0.13.0-debug.apk
 ```
 
 7. Open **Allowance OS** on the phone.
@@ -67,6 +67,16 @@ JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home" \
 9. Inspect the Memo transaction in Phantom and approve it.
 10. Open the returned signature in Solana Explorer.
 11. Tap **Disconnect wallet and deauthorize MWA** to remove the reconnect session. This does not revoke an onchain allowance.
+
+## Custom Devnet RPC
+
+For testing against a different public-compatible Devnet endpoint:
+
+```bash
+./gradlew assembleDebug -PallowanceOsSolanaRpcUrl=https://your-devnet-rpc.example
+```
+
+The URL is compiled into the APK and is therefore public. Never embed a secret provider API key in a distributable mobile build; use a protected relay or provider-supported public client configuration instead.
 
 ## Production-signed build
 

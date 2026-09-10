@@ -1,11 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { applyVerifiedCharge, evaluateCharge, revokeAllowance } from '../src/engine.js';
 import { chargeAllowanceInstruction, policyHash } from '../src/protocol.js';
 import { capabilitySummary, standardAndroidProfile } from '../src/device-profile.js';
 import { AllowanceOS } from '../src/sdk.js';
-import { verifyWebhookSignature } from '../src/webhook.js';
+import { verifyWebhookSignature, WebhookVerifier } from '../src/webhook.js';
 import { SolanaDevnetAdapter } from '../src/adapter.js';
+import { JsonFileRuntimeStateStore } from '../src/runtime-store.js';
+import { AllowanceRuntime } from '../src/runtime.js';
 import {
   chargeDelegatedInstruction,
   createDelegatedInstruction,
@@ -120,6 +125,51 @@ test('signed webhooks fail closed after payload tampering', () => {
   const completed = sdk.requestCharge(request(), new Date('2026-09-09T00:00:00.000Z'));
   const tampered = { ...completed.webhook, eventId: 'evt_tampered' };
   assert.equal(verifyWebhookSignature(tampered, completed.webhookSignature, 'test-webhook-secret-32-characters'), false);
+});
+test('merchant webhook verifier supports secret rotation and rejects replay or stale events', () => {
+  const oldSecret = 'old-webhook-secret-32-characters';
+  const newSecret = 'new-webhook-secret-32-characters';
+  const sdk = new AllowanceOS(oldSecret);
+  sdk.createAllowance(policy);
+  const completed = sdk.requestCharge(request(), new Date('2026-09-09T00:00:00.000Z'));
+  const verifier = new WebhookVerifier([newSecret, oldSecret], 60_000);
+  assert.deepEqual(
+    verifier.verify(completed.webhook, completed.webhookSignature, new Date('2026-09-09T00:00:30.000Z')),
+    { valid: true, reason: 'verified' },
+  );
+  assert.equal(
+    verifier.verify(completed.webhook, completed.webhookSignature, new Date('2026-09-09T00:00:31.000Z')).reason,
+    'replayed_event',
+  );
+  const staleVerifier = new WebhookVerifier([oldSecret], 10_000);
+  assert.equal(
+    staleVerifier.verify(completed.webhook, completed.webhookSignature, new Date('2026-09-09T00:01:00.000Z')).reason,
+    'stale_event',
+  );
+});
+test('file-backed runtime preserves idempotency, spend, evidence replay, and revocation after restart', () => {
+  const path = join(mkdtempSync(join(tmpdir(), 'allowance-os-runtime-')), 'state.json');
+  const first = new AllowanceRuntime(new JsonFileRuntimeStateStore(path));
+  first.createAllowance(policy);
+  const accepted = first.requestCharge(request(), new Date('2026-09-09T00:00:00.000Z'));
+  assert.equal(accepted.state, 'VERIFIED');
+
+  const restarted = new AllowanceRuntime(new JsonFileRuntimeStateStore(path));
+  assert.equal(restarted.getAllowance(policy.allowanceId)?.spentInPeriodRaw, '2000000');
+  assert.equal(
+    restarted.requestCharge(request(), new Date('2026-09-09T00:00:01.000Z')).idempotentReplay,
+    true,
+  );
+  assert.equal(
+    restarted.requestCharge(
+      request({ requestId: 'req_alphabrief_restart_2', nonce: 2 }),
+      new Date('2026-09-09T00:00:02.000Z'),
+    ).state,
+    'BLOCKED',
+  );
+  restarted.revokeAllowance(policy.allowanceId);
+  const afterSecondRestart = new AllowanceRuntime(new JsonFileRuntimeStateStore(path));
+  assert.equal(afterSecondRestart.getAllowance(policy.allowanceId)?.revoked, true);
 });
 test('live adapter delegates signing without accepting wallet secrets', async () => {
   const sent: unknown[] = [];

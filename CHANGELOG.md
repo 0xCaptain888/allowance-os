@@ -2,6 +2,20 @@
 
 All notable Allowance OS Android releases are recorded here. Installable APK files and checksums are attached to the matching [GitHub Releases](https://github.com/0xCaptain888/allowance-os/releases).
 
+## Android / SDK v0.13.0 — 2026-09-10 (test release candidate)
+
+- Added atomic JSON-backed reference persistence behind a pluggable merchant runtime store.
+- Preserves policies, spend, idempotency, nonces, used evidence, and revocation across process restarts.
+- Added merchant webhook timestamp tolerance, event replay rejection, and overlapping-secret rotation.
+- Added an Android Delegated Settlement v2 state decoder and pause/unpause/revoke/operator-rotation instruction encoders.
+- Added JSON export and SHA-256 fingerprinting for the device-local Activity audit trail.
+- Added configurable Android Devnet RPC selection and bounded retries.
+- Added a private-RPC option to the manual v2 GitHub deployment workflow.
+- Added a responsible-disclosure policy, operational runbook, and machine-readable evidence index.
+- Expanded coverage to 24 TypeScript, 15 Android, and 20 Rust tests.
+
+Release status: local debug build verified; v2 remains source-tested and not deployed; production tag not created.
+
 ## Android / SDK v0.12.0 — 2026-09-10 (release candidate)
 
 - Replaced SDK floating-point payment fields with mint-bound base-10 integer raw-unit strings.

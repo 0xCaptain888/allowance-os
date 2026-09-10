@@ -34,8 +34,10 @@ Build or install the Android app from `mobile/android`:
 7. Approve the transaction in Phantom.
 8. On **Evidence**, run **Independent RPC Verification** and inspect confirmation status plus slot without leaving the app.
 9. Copy the portable JSON receipt and its SHA-256 fingerprint, then open the signature in Solana Explorer for a second source.
-10. Open **Activity** to inspect the persistent local audit trail and decision counters.
+10. Open **Activity**, export the complete audit trail as JSON, and compare its displayed SHA-256 fingerprint before sharing it with another reviewer.
 11. Test **Reconnect**, **Forget local wallet session**, and **Revoke & deauthorize** without exposing a wallet key.
+
+The Android v0.13 source also contains a strict 332-byte Delegated Allowance v2 state decoder plus pause, unpause, revoke, executor-rotation, and verifier-rotation instruction encoders. These codecs are source-tested mobile readiness for v2; they are not evidence of a v2 deployment.
 
 ## 4. Inspect the real Program path
 
@@ -59,3 +61,5 @@ The deployed Devnet Program is [`DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`](
 | SPL TOKEN SETTLEMENT | Real VERIFIED CPI transfer using a project-created Devnet test mint; not canonical USDC |
 
 The current submission does not conflate these levels.
+
+Delegated Settlement v2 is currently labelled **SOURCE TESTED · NOT DEPLOYED**. The live links in this guide refer only to the deployed v1 Devnet Program and its recorded transactions.

@@ -1,6 +1,6 @@
 # Merchant SDK integration
 
-Allowance OS v0.12.0 includes a reference TypeScript SDK for bounded repeat payments. It is intentionally signer-agnostic: wallet credentials stay in Mobile Wallet Adapter, Seed Vault, or an application-controlled signer adapter.
+Allowance OS v0.13.0 includes a reference TypeScript SDK for bounded repeat payments. It is intentionally signer-agnostic: wallet credentials stay in Mobile Wallet Adapter, Seed Vault, or an application-controlled signer adapter.
 
 Receipt schema v3 uses base-10 integer strings in the mint's smallest unit. A policy binds the display symbol, exact mint address, decimals, per-charge raw amount, period raw amount, and raw amount already spent. For a six-decimal token, `"2000000"` represents two tokens. Decimal strings, scientific notation, negative values, and values above Solana `u64` are rejected.
 
@@ -40,6 +40,18 @@ const unlocked = client.verifyEvidence(result.receipt, request.evidenceHash);
 client.revokeAllowance(policy.allowanceId);
 ```
 
+For a restart-safe single-process demo, inject the atomic JSON store:
+
+```ts
+import { AllowanceOS, JsonFileRuntimeStateStore } from './src/sdk.js';
+import { AllowanceRuntime } from './src/runtime.js';
+
+const store = new JsonFileRuntimeStateStore('./var/allowance-runtime.json');
+const client = new AllowanceOS(process.env.ALLOWANCE_WEBHOOK_SECRET!, new AllowanceRuntime(store));
+```
+
+The file is written atomically and preserves allowances, receipts, idempotency fingerprints, nonces, evidence replay state, spending, and revocation. It is deliberately a single-process reference store, not a substitute for a transactional multi-writer database.
+
 The minimum money fields are:
 
 ```ts
@@ -61,7 +73,7 @@ const request = {
 
 Policy, receipt, idempotency, and webhook hashes use recursively canonical JSON. Nested keys are sorted, nested values remain covered by the digest, and non-finite numbers are rejected rather than serialized ambiguously.
 
-The merchant must verify `webhookSignature` before fulfilling or unlocking a paid resource. Production deployments should persist policies, nonces, evidence hashes, idempotency records, and receipts in a transactional database rather than the included in-memory reference runtime.
+The merchant must verify `webhookSignature` before fulfilling or unlocking a paid resource. `WebhookVerifier` additionally enforces a timestamp window, rejects repeated event IDs, and accepts overlapping old/new secrets during rotation. Its replay cache is process-local; production deployments must persist replay state transactionally and add retry/dead-letter delivery handling.
 
 ## Live Solana adapter
 

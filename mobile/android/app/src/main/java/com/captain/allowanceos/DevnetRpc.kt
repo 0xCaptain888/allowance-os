@@ -4,6 +4,7 @@ import com.solana.networking.KtorNetworkDriver
 import com.solana.publickey.SolanaPublicKey
 import com.solana.rpc.SolanaRpcClient
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.bitcoinj.base.Base58
 
@@ -25,40 +26,57 @@ data class DevnetProgramMatrix(
     val message: String,
 )
 
-class DevnetRpc {
-    private val client = SolanaRpcClient(
-        "https://api.devnet.solana.com",
-        KtorNetworkDriver(),
-    )
+class DevnetRpc(
+    endpoints: List<String> = listOf(BuildConfig.SOLANA_RPC_URL),
+    private val attemptsPerEndpoint: Int = 3,
+) {
+    private val clients = endpoints.map(String::trim).filter(String::isNotBlank).distinct().map {
+        SolanaRpcClient(it, KtorNetworkDriver())
+    }
+
+    init {
+        require(clients.isNotEmpty()) { "At least one Solana Devnet RPC endpoint is required" }
+        require(attemptsPerEndpoint in 1..5) { "RPC attempts must be between 1 and 5" }
+    }
 
     suspend fun latestBlockhash(): String = withContext(Dispatchers.IO) {
-        client.getLatestBlockhash().run {
-            result?.blockhash ?: error(error?.message ?: "Unable to fetch a Devnet blockhash")
+        withRpcFailover { client ->
+            client.getLatestBlockhash().run {
+                result?.blockhash ?: error(error?.message ?: "Unable to fetch a Devnet blockhash")
+            }
         }
     }
 
     suspend fun balance(publicKey: SolanaPublicKey): Double = withContext(Dispatchers.IO) {
-        val lamports = client.getBalance(publicKey).run {
-            result ?: error(error?.message ?: "Unable to fetch wallet balance")
+        val lamports = withRpcFailover { client ->
+            client.getBalance(publicKey).run {
+                result ?: error(error?.message ?: "Unable to fetch wallet balance")
+            }
         }
         lamports.toDouble() / 1_000_000_000.0
     }
 
     suspend fun signatureStatus(signature: String): DevnetSignatureStatus = withContext(Dispatchers.IO) {
-        val response = client.getSignatureStatuses(
-            signatures = listOf(signature),
-            searchTransactionHistory = true,
-        )
-        val status = response.result?.firstOrNull()
-            ?: error(response.error?.message ?: "Signature was not found on Solana Devnet")
-        DevnetSignatureStatus(
-            slot = status.slot,
-            confirmation = status.confirmationStatus?.toString()?.uppercase() ?: "PROCESSED",
-            succeeded = status.err == null,
-        )
+        withRpcFailover { client ->
+            val response = client.getSignatureStatuses(
+                signatures = listOf(signature),
+                searchTransactionHistory = true,
+            )
+            val status = response.result?.firstOrNull()
+                ?: error(response.error?.message ?: "Signature was not found on Solana Devnet")
+            DevnetSignatureStatus(
+                slot = status.slot,
+                confirmation = status.confirmationStatus?.toString()?.uppercase() ?: "PROCESSED",
+                succeeded = status.err == null,
+            )
+        }
     }
 
     suspend fun programMatrix(): DevnetProgramMatrix = withContext(Dispatchers.IO) {
+        withRpcFailover { client -> programMatrix(client) }
+    }
+
+    private suspend fun programMatrix(client: SolanaRpcClient): DevnetProgramMatrix {
         val signatures = listOf(
             CREATED_SIGNATURE,
             VERIFIED_SIGNATURE,
@@ -92,14 +110,14 @@ class DevnetRpc {
         val frozenPersisted = data[FROZEN_OFFSET].toInt() == 1
         val ownerMatches = account.owner.base58() == PROGRAM_ID
 
-        val sourceToken = tokenAccount(SOURCE_TOKEN_ACCOUNT, SOURCE_OWNER)
-        val merchantToken = tokenAccount(MERCHANT_TOKEN_ACCOUNT, MERCHANT_OWNER)
+        val sourceToken = tokenAccount(client, SOURCE_TOKEN_ACCOUNT, SOURCE_OWNER)
+        val merchantToken = tokenAccount(client, MERCHANT_TOKEN_ACCOUNT, MERCHANT_OWNER)
         val settlementVerified = sourceToken == 19_000_000uL && merchantToken == 1_000_000uL
         val passed = createdSucceeded && verifiedSucceeded && blockedRejected && frozenSucceeded &&
             revokedSucceeded && frozenPersisted && revokedPersisted && spentInPeriod == 1_000_000uL &&
             ownerMatches && settlementVerified
 
-        DevnetProgramMatrix(
+        return DevnetProgramMatrix(
             passed = passed,
             blockedRejected = blockedRejected,
             frozenPersisted = frozenPersisted,
@@ -116,7 +134,7 @@ class DevnetRpc {
         )
     }
 
-    private suspend fun tokenAccount(address: String, expectedOwner: String): ULong {
+    private suspend fun tokenAccount(client: SolanaRpcClient, address: String, expectedOwner: String): ULong {
         val response = client.getAccountInfo(SolanaPublicKey(Base58.decode(address)))
         val account = response.result ?: error(response.error?.message ?: "Token account was not found")
         val data = account.data ?: error("Token account contains no data")
@@ -125,6 +143,24 @@ class DevnetRpc {
         if (Base58.encode(data.copyOfRange(0, 32)) != TOKEN_MINT) error("Token mint does not match the policy")
         if (Base58.encode(data.copyOfRange(32, 64)) != expectedOwner) error("Token owner does not match the policy")
         return data.readU64Le(TOKEN_AMOUNT_OFFSET)
+    }
+
+    private suspend fun <T> withRpcFailover(operation: suspend (SolanaRpcClient) -> T): T {
+        var lastFailure: Throwable? = null
+        clients.forEach { client ->
+            repeat(attemptsPerEndpoint) { attempt ->
+                try {
+                    return operation(client)
+                } catch (error: Throwable) {
+                    lastFailure = error
+                    if (attempt + 1 < attemptsPerEndpoint) delay(250L shl attempt)
+                }
+            }
+        }
+        throw IllegalStateException(
+            "All configured Solana Devnet RPC attempts failed: ${lastFailure?.message ?: "unknown RPC failure"}",
+            lastFailure,
+        )
     }
 
     private fun ByteArray.readU64Le(offset: Int): ULong {

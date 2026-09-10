@@ -16,8 +16,12 @@ android {
         applicationId 'com.captain.allowanceos'
         minSdk 27
         targetSdk 37
-        versionCode 13
-        versionName '0.12.0'
+        versionCode 14
+        versionName '0.13.0'
+
+        def solanaRpcUrl = providers.gradleProperty('allowanceOsSolanaRpcUrl')
+            .orElse('https://api.devnet.solana.com').get()
+        buildConfigField 'String', 'SOLANA_RPC_URL', '"' + solanaRpcUrl.replace('"', '\\"') + '"'
 
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }

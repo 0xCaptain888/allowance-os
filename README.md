@@ -8,7 +8,7 @@
 
 Allowance OS is a Solana Mobile payment-authorization layer for Web3 services. It turns an open-ended wallet approval into a human-readable allowance with merchant, token, program, per-charge, period, expiry, and evidence boundaries—then applies that same model to AI subscriptions, paid research, trading signals, automation bots, and metered APIs.
 
-**v0.12.0 hardens money, hashes, wallet sessions, and release identity:** SDK payment values are base-10 integer raw units bound to an exact mint and decimals; nested canonical hashes now cover the entire payload; restored wallets require a valid encrypted MWA token; and production tags can no longer publish debug-signed APKs.
+**v0.13.0 hardens the path from demo to operated product:** the merchant runtime now supports atomic restart-safe reference persistence; webhook verification adds timestamp tolerance, event replay rejection, and overlapping-secret rotation; Android adds strict v2 state decoding, authority-control encoders, bounded RPC retries, and portable Activity audit exports. These additions remain honestly separated from live v2 deployment claims.
 
 **Delegated Settlement v2 is now source-tested:** a user approves an allowance-scoped SPL delegate PDA once; later `ChargeDelegated` settlement requires the configured executor and independent verifier, enforces sequential nonces plus per-charge/period/lifetime caps, and does not include the user authority as a signer. Every accepted charge or freeze creates an immutable evidence PDA keyed by the full evidence hash. Pause, evidence-bound freeze, dual-signature unfreeze, terminal token-delegate revoke, and governed executor/verifier rotation are implemented. Read the [v2 specification](docs/delegated-settlement-v2.md).
 
@@ -20,7 +20,7 @@ The current v2 source produces `130,280`-byte Solana SBF binaries with pinned `c
 
 ## Commercial product proof
 
-v0.12.0 keeps the five-surface product—**Home → Services → Allowances → Activity → Evidence**—while tightening accounting, session security, and release truthfulness instead of adding another static use-case card.
+v0.13.0 keeps the five-surface product—**Home → Services → Allowances → Activity → Evidence**—while adding restart-safe merchant behavior, exportable audit evidence, and mobile v2 protocol readiness instead of adding another static use-case card.
 
 | Ready template | Commercial use | Payment boundary | Required evidence |
 | --- | --- | --- | --- |
@@ -39,7 +39,7 @@ The **Seeker Integration Lab** also maps Allowance OS to apps featured by Solana
 | Surface | What it proves | Status |
 | --- | --- | --- |
 | [Public Judge Demo](https://0xcaptain888.github.io/allowance-os/) | Instant `VERIFIED` / `BLOCKED` / `FROZEN` policy replay | GitHub Pages deployment |
-| `mobile/android` | Bilingual native Android product with commercial catalog, AlphaBrief unlock/replay lab, fail-closed encrypted MWA session, explicit action review, persistent activity audit, and direct Devnet RPC verification | v0.12.0; 13 Android tests |
+| `mobile/android` | Bilingual native Android product with commercial catalog, AlphaBrief unlock/replay lab, fail-closed encrypted MWA session, JSON audit export, v2 state/control codecs, bounded RPC retry, and direct Devnet verification | v0.13.0; 15 Android tests |
 | `program/` | Backward-compatible v1 plus Delegated Settlement v2 with PDA authority, executor/verifier separation, immutable evidence records, governed role rotation, three-level caps, period rollover, recovery and SPL revoke | v2 source tested with 20 Rust tests; not deployed |
 | Solana Explorer | Connected Devnet wallet and wallet-broadcast authorization proof | Live signature captured |
 | [Deployed allowance program](https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet) | Program-enforced state transitions and settlement | Live `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED` evidence |
@@ -79,7 +79,8 @@ User policy
       → VERIFIED request opens MWA
           → Phantom / compatible wallet confirmation
           → real Solana Devnet signature
-  → REVOKED through MWA deauthorization
+  → MWA session may be disconnected locally
+  → onchain REVOKED requires a separate authority-signed Program instruction
 ```
 
 The source-tested v2 settlement path removes the recurring user signature:
@@ -107,6 +108,7 @@ The Android app is not a mockup. It uses Solana Mobile's official `mobile-wallet
 - an AlphaBrief reference purchase that exposes request ID, nonce, expiry, content hash, unlock state, and evidence replay rejection;
 - an explicitly unofficial Seeker integration lab covering service subscriptions, games, commerce, fitness, and DeFi automation;
 - persistent Activity Log with decision counts, wallet events, and error history;
+- portable JSON Activity Log export with a SHA-256 audit fingerprint;
 - `Connect Phantom / MWA Wallet`;
 - reconnect, balance refresh, address copy, and safe local-session reset;
 - Solana Devnet authorization;
@@ -118,6 +120,8 @@ The Android app is not a mockup. It uses Solana Mobile's official `mobile-wallet
 - portable JSON receipt with a SHA-256 fingerprint for cross-surface evidence binding;
 - direct `getSignatureStatuses` verification of either the current device proof or the repository's recorded live proof;
 - in-app verification of the five Program transactions plus final frozen/revoked allowance state;
+- strict Delegated Settlement v2 state decoding plus tested pause, unpause, revoke, executor-rotation, and verifier-rotation instruction encoders;
+- configurable Devnet RPC selection with bounded retries;
 - persistence of the last wallet-broadcast signature across app restarts;
 - `VERIFIED`, `BLOCKED`, and `FROZEN` policy replay before wallet invocation;
 - real `signAndSendTransactions` for a Devnet Memo authorization proof;
@@ -137,10 +141,10 @@ cd mobile/android
 The resulting APK is:
 
 ```text
-mobile/android/app/build/outputs/apk/debug/allowance-os-0.12.0-debug.apk
+mobile/android/app/build/outputs/apk/debug/allowance-os-0.13.0-debug.apk
 ```
 
-Local v0.12.0 debug build SHA-256: `85a052d9adcb27ec6ccd3028be8454fe16ca6d823397fb694775655cc0c0b238`
+Local v0.13.0 debug build SHA-256: `a35e6d3d7182b90c20cf814417018a13420ff19d4c8a833e2827928c48d77a03`
 
 Latest previously published test asset: [`android-v0.11.0`](https://github.com/0xCaptain888/allowance-os/releases/tag/android-v0.11.0), SHA-256 `a1f8aac16f8e697297be292e414ed5fffdf27e3e7f8cc6e5068d75699b25390e`. Starting with v0.12.0, `android-v*` is reserved for protected production-signed releases; debug QA assets must use `android-test-v*` and are explicitly labelled as test builds.
 
@@ -153,6 +157,8 @@ See [`mobile/README.md`](mobile/README.md) for phone setup and [`docs/judge-guid
 - Merchant, token, program, expiry, allowance-ID, and evidence checks.
 - Human-readable receipts for `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED`.
 - SDK receipt v3 with exact mint metadata, integer raw-unit accounting, request IDs, nonces, expiry, idempotent retries, evidence-replay rejection, and canonical HMAC-signed merchant webhooks.
+- Pluggable runtime persistence with an atomic JSON single-process reference store that survives restarts without losing spend, idempotency, nonce, replay, or revocation state.
+- Stateful webhook verification with timestamp tolerance, event replay rejection, and overlapping old/new secrets for safe rotation.
 - A signer-agnostic live adapter that accepts MWA or protected server executors without accepting wallet secrets.
 - End-to-end AlphaBrief paid-content integration in TypeScript, Android, and the browser Demo.
 - Backward-compatible Delegated Settlement v2 instruction builders for TypeScript and Rust.
@@ -207,7 +213,7 @@ There are four intentionally separate evidence levels:
 
 The deployed Rust Program ID is `DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`. Its upgrade authority remains the deployment wallet for hackathon iteration; this is disclosed rather than presented as immutable production infrastructure. The deployed binary is still the v0.9.0 evidence build. Delegated Settlement v2 and replay protection are source-tested but are not claimed for that older deployed binary.
 
-See the [Delegated Settlement v2 specification](docs/delegated-settlement-v2.md), [merchant SDK guide](docs/sdk-integration.md), [security notes](docs/security.md), [privacy policy](docs/privacy-policy.md), and [prepared dApp Store submission pack](docs/dapp-store-submission.md).
+See the [Delegated Settlement v2 specification](docs/delegated-settlement-v2.md), [merchant SDK guide](docs/sdk-integration.md), [operations runbook](docs/operations.md), [security policy](SECURITY.md), [security notes](docs/security.md), [privacy policy](docs/privacy-policy.md), and [prepared dApp Store submission pack](docs/dapp-store-submission.md).
 
 ## Device modes
 

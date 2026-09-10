@@ -504,6 +504,23 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         _state.update { it.copy(auditEvents = emptyList()) }
     }
 
+    fun auditExport(): String {
+        val events = _state.value.auditEvents.joinToString(",\n") { event ->
+            """  {"createdAt":${event.createdAt},"kind":${jsonString(event.kind)},"state":${jsonString(event.state.name)},"amount":${event.amount},"message":${jsonString(event.message)},"signature":${jsonString(event.signature)}}"""
+        }
+        return """{
+  "schemaVersion": 1,
+  "evidenceLevel": "DEVICE_LOCAL_AUDIT",
+  "events": [
+$events
+  ]
+}"""
+    }
+
+    fun auditFingerprint(): String = MessageDigest.getInstance("SHA-256")
+        .digest(auditExport().encodeToByteArray())
+        .joinToString("") { "%02x".format(it) }
+
     fun verifyDevnetProof() {
         val signature = _state.value.signature.ifBlank { RECORDED_LIVE_SIGNATURE }
         viewModelScope.launch {
@@ -645,6 +662,21 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         val parts = value.split("|", limit = 6)
         AuditEvent(parts[0].toLong(), parts[1], AllowanceState.valueOf(parts[2]), parts[3].toDouble(), parts[5], parts[4])
     }.getOrNull()
+
+    private fun jsonString(value: String): String = buildString {
+        append('"')
+        value.forEach { character ->
+            when (character) {
+                '"' -> append("\\\"")
+                '\\' -> append("\\\\")
+                '\n' -> append("\\n")
+                '\r' -> append("\\r")
+                '\t' -> append("\\t")
+                else -> if (character.code < 0x20) append("\\u%04x".format(character.code)) else append(character)
+            }
+        }
+        append('"')
+    }
 
     companion object {
         private const val KEY_PUBLIC_KEY = "public_key"

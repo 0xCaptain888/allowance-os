@@ -2,7 +2,11 @@ package com.captain.allowanceos
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.solana.publickey.SolanaPublicKey
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 class AllowancePolicyTest {
     private val policy = AllowancePolicy()
@@ -112,5 +116,70 @@ class AllowancePolicyTest {
             WalletSessionState.DISCONNECTED,
             resolveRestoredWalletSession("", "", "orphan-token").state,
         )
+    }
+
+    @Test
+    fun delegatedV2StateDecoderValidatesCapsRolesAndFlags() {
+        val authority = SolanaPublicKey.from(DevnetRpc.SOURCE_OWNER)
+        val merchant = SolanaPublicKey.from(DevnetRpc.MERCHANT_OWNER)
+        val executor = SolanaPublicKey.from(DevnetRpc.ALLOWANCE_ACCOUNT)
+        val verifier = SolanaPublicKey.from(DevnetRpc.PROGRAM_ID)
+        val mint = SolanaPublicKey.from(DevnetRpc.TOKEN_MINT)
+        val source = SolanaPublicKey.from(DevnetRpc.SOURCE_TOKEN_ACCOUNT)
+        val data = ByteBuffer.allocate(DelegatedAllowanceV2.STATE_SIZE).order(ByteOrder.LITTLE_ENDIAN).apply {
+            put(2)
+            listOf(authority, merchant, executor, verifier, mint, source).forEach { put(it.bytes) }
+            putLong(2_000_000)
+            putLong(8_000_000)
+            putLong(24_000_000)
+            putLong(1_000_000)
+            putLong(3_000_000)
+            putLong(1_789_000_000)
+            putLong(604_800)
+            putLong(1_800_000_000)
+            putLong(4)
+            put(1)
+            put(0)
+            put(1)
+            put(ByteArray(32) { 3 })
+            put(ByteArray(32) { 7 })
+        }.array()
+        val decoded = DelegatedAllowanceV2.parseState(data)
+        assertEquals(authority.base58(), decoded.authority)
+        assertEquals(executor.base58(), decoded.executor)
+        assertEquals(4uL, decoded.nextNonce)
+        assertTrue(decoded.paused)
+        assertTrue(decoded.frozen)
+        assertEquals("03".repeat(32), decoded.policyHash)
+    }
+
+    @Test
+    fun delegatedV2ControlInstructionsPreserveSignerBoundaries() {
+        val program = DelegatedAllowanceV2.PROGRAM_ID
+        val authority = DevnetRpc.SOURCE_OWNER
+        val allowance = DevnetRpc.ALLOWANCE_ACCOUNT
+        val source = DevnetRpc.SOURCE_TOKEN_ACCOUNT
+        val newExecutor = DevnetRpc.MERCHANT_OWNER
+        val currentVerifier = DevnetRpc.PROGRAM_ID
+        val newVerifier = DevnetRpc.MERCHANT_TOKEN_ACCOUNT
+
+        val pause = DelegatedAllowanceV2.pause(program, authority, allowance)
+        assertEquals(5, pause.data.single().toInt())
+        assertTrue(pause.accounts[0].isSigner)
+        assertTrue(pause.accounts[1].isWritable)
+
+        val revoke = DelegatedAllowanceV2.revoke(program, authority, allowance, source)
+        assertEquals(9, revoke.data.single().toInt())
+        assertEquals(DevnetRpc.TOKEN_PROGRAM_ID, revoke.accounts[3].publicKey.base58())
+
+        val rotateExecutor = DelegatedAllowanceV2.rotateExecutor(program, authority, allowance, newExecutor)
+        assertEquals(10, rotateExecutor.data.first().toInt())
+        assertEquals(newExecutor, SolanaPublicKey(rotateExecutor.data.copyOfRange(1, 33)).base58())
+
+        val rotateVerifier = DelegatedAllowanceV2.rotateVerifier(program, authority, currentVerifier, allowance, newVerifier)
+        assertEquals(11, rotateVerifier.data.first().toInt())
+        assertTrue(rotateVerifier.accounts[0].isSigner)
+        assertTrue(rotateVerifier.accounts[1].isSigner)
+        assertEquals(newVerifier, SolanaPublicKey(rotateVerifier.data.copyOfRange(1, 33)).base58())
     }
 }

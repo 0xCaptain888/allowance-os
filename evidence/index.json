@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1",
+  "project": "Allowance OS",
+  "capturedAt": "2026-09-10",
+  "truthBoundary": "Each evidence record must be interpreted according to its own evidence type and status.",
+  "records": [
+    {
+      "path": "evidence/live-devnet-wallet.json",
+      "type": "LIVE_DEVICE_WALLET_AUTHORIZATION",
+      "status": "RECORDED"
+    },
+    {
+      "path": "evidence/live-devnet-memo.json",
+      "type": "WALLET_BROADCAST_DEVNET_MEMO",
+      "status": "RECORDED"
+    },
+    {
+      "path": "evidence/live-devnet-program.json",
+      "type": "V1_PROGRAM_ENFORCEMENT_AND_SPL_SETTLEMENT",
+      "status": "RECORDED"
+    },
+    {
+      "path": "evidence/delegated-v2-source-build.json",
+      "type": "V2_SOURCE_TEST_AND_SBF_BUILD",
+      "status": "SOURCE_TESTED_NOT_DEPLOYED"
+    },
+    {
+      "path": "evidence/android-build.json",
+      "type": "LOCAL_ANDROID_DEBUG_BUILD",
+      "status": "BUILD_VERIFIED_NOT_PRODUCTION_SIGNED"
+    }
+  ]
+}

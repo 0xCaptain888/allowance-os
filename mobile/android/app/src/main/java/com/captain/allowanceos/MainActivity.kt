@@ -737,6 +737,19 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
         }
 
         ProductCard {
+            SectionTitle(t("Delegated v2 移动端能力", "DELEGATED V2 MOBILE CAPABILITY", chinese), t("源码就绪", "SOURCE READY", chinese))
+            Text(
+                t("Android 现已包含严格的 332-byte v2 状态解码器，以及 pause、unpause、revoke 和角色轮换指令编码器。它们已经单元测试，但在 v2 Program 成功部署前不会显示为实时操作。", "Android now includes a strict 332-byte v2 state decoder plus pause, unpause, revoke, and role-rotation instruction encoders. They are unit-tested but remain unavailable as live actions until the v2 Program is deployed.", chinese),
+                color = Muted,
+                fontSize = 13.sp,
+            )
+            ValueRow("Program ID", short(DelegatedAllowanceV2.PROGRAM_ID))
+            BoundaryRow("STATE DECODER", t("验证版本、角色、三层额度、nonce 和状态标志", "Validates version, roles, three cap levels, nonce, and state flags", chinese), Mint)
+            BoundaryRow("CONTROL ENCODERS", t("暂停、恢复、撤销、Executor/Verifier 轮换", "Pause, unpause, revoke, and Executor/Verifier rotation", chinese), Mint)
+            BoundaryRow("LIVE BROADCAST", t("等待稳定 RPC 完成 v2 部署", "Waiting for a stable RPC to complete v2 deployment", chinese), Amber)
+        }
+
+        ProductCard {
             SectionTitle(t("真实性边界", "TRUTH BOUNDARY", chinese), t("透明披露", "HONEST DISCLOSURE", chinese))
             BoundaryRow("SIMULATED", t("策略参数回放与三态矩阵", "Policy replay and three-state matrix", chinese), Blue)
             BoundaryRow("LIVE DEVNET PROOF", t("真实 MWA 钱包授权 + Memo 签名", "Real MWA wallet authorization + Memo signature", chinese), Mint)
@@ -749,6 +762,7 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
 
 @Composable
 private fun ActivityPage(state: AllowanceUiState, viewModel: AllowanceViewModel, chinese: Boolean) {
+    val clipboard = LocalClipboardManager.current
     PageColumn {
         Row(verticalAlignment = Alignment.Bottom) {
             Column(modifier = Modifier.weight(1f)) {
@@ -780,6 +794,10 @@ private fun ActivityPage(state: AllowanceUiState, viewModel: AllowanceViewModel,
             Text(t("活动记录保存在本机，仅用于演示可审计性；它不会伪装成链上事件。", "Activity entries are stored on-device for auditability and are never presented as onchain events.", chinese), color = Muted, fontSize = 13.sp)
             BoundaryRow("LOCAL AUDIT", t("策略判断、MWA 状态和错误回放", "Policy decisions, MWA state, and error replay", chinese), Blue)
             BoundaryRow("CHAIN EVIDENCE", t("只有真实交易签名才进入公开证据层", "Only a real transaction signature enters the public evidence layer", chinese), Mint)
+            ValueRow(t("审计指纹", "Audit fingerprint", chinese), short(viewModel.auditFingerprint()))
+            SecondaryButton(Modifier.fillMaxWidth(), t("复制 JSON 审计记录", "Copy JSON audit export", chinese)) {
+                clipboard.setText(AnnotatedString(viewModel.auditExport()))
+            }
         }
         Spacer(Modifier.height(12.dp))
     }
