@@ -162,7 +162,7 @@ mobile/android/app/build/outputs/apk/debug/allowance-os-0.14.0-debug.apk
 
 Latest clean local v0.14.0 debug build SHA-256: `3aeb6479969d116d637858031bd8de07f0818c2e04f92ba447b5870919c51dcf` (`18,813,650` bytes). The machine-readable build record is [`evidence/android-build.json`](evidence/android-build.json).
 
-Latest public QA asset: [`android-test-v0.13.0`](https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.13.0), CI SHA-256 `d9d5f8e57ed358e09a780ca8d4097437fdb618a453a3beee72d67854a72c07b2`. Local and CI debug hashes differ because each environment uses its own debug signing key. `android-v*` is reserved for protected production-signed releases; `android-test-v*` assets are explicitly labelled as Devnet QA builds.
+Latest public QA asset: [`android-test-v0.14.0`](https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.14.0), CI SHA-256 `d5fae3fecefc5260460ad4e22284e1e08375bf06a41cdb1b096198cb6c7a25ef`. Local and CI debug hashes differ because each environment uses its own debug signing key. `android-v*` is reserved for protected production-signed releases; `android-test-v*` assets are explicitly labelled as Devnet QA builds.
 
 See [`mobile/README.md`](mobile/README.md) for phone setup and [`docs/judge-guide.md`](docs/judge-guide.md) for the two-minute evaluation path.
 

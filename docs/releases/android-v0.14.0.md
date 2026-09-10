@@ -39,3 +39,13 @@ The full record is `evidence/live-devnet-v2.json`.
 ## Truth boundary
 
 The deployment is on Solana Devnet and uses a project-created test mint, not canonical USDC. The Program remains upgradeable under a single development authority and has not received an independent audit. This release does not claim Mainnet or production readiness. The APK is a debug-signed QA artifact, not a dApp Store production release.
+
+## Public QA artifact
+
+- Release: `android-test-v0.14.0`
+- APK: `allowance-os-0.14.0-debug.apk`
+- Size: `18,813,650` bytes
+- CI SHA-256: `d5fae3fecefc5260460ad4e22284e1e08375bf06a41cdb1b096198cb6c7a25ef`
+- GitHub Actions run: `34474593759`
+
+The local and CI debug APK hashes differ because each environment uses its own debug signing key.

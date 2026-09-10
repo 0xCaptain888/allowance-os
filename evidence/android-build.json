@@ -11,5 +11,13 @@
   "artifact": "mobile/android/app/build/outputs/apk/debug/allowance-os-0.14.0-debug.apk",
   "artifactSize": "18813650 bytes",
   "sha256": "3aeb6479969d116d637858031bd8de07f0818c2e04f92ba447b5870919c51dcf",
-  "truthBoundary": "This proves a local Android build. It is not a Solana transaction or deployed-program receipt."
+  "publicQaRelease": {
+    "tag": "android-test-v0.14.0",
+    "workflowRunId": 34474593759,
+    "artifact": "allowance-os-0.14.0-debug.apk",
+    "artifactSize": "18813650 bytes",
+    "sha256": "d5fae3fecefc5260460ad4e22284e1e08375bf06a41cdb1b096198cb6c7a25ef",
+    "note": "The local and CI debug APK hashes differ because each environment uses its own debug signing key."
+  },
+  "truthBoundary": "This records a clean local Android build plus the public CI QA artifact metadata. Neither APK is production-signed, a Solana transaction, or a deployed-program receipt."
 }
