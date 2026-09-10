@@ -31,24 +31,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-internal val Ink = Color(0xFF080B11)
-internal val Panel = Color(0xFF111722)
-internal val PanelRaised = Color(0xFF182131)
-internal val Mint = Color(0xFF59E3B3)
-internal val Blue = Color(0xFF7FA7FF)
-internal val Amber = Color(0xFFFFC966)
-internal val Rose = Color(0xFFFF7597)
-internal val White = Color(0xFFF4F7FB)
-internal val Muted = Color(0xFF8E9AB0)
-internal val Line = Color(0xFF263146)
+internal val Ink = Color(0xFF060810)
+internal val Panel = Color(0xFF101525)
+internal val PanelRaised = Color(0xFF181F34)
+internal val Mint = Color(0xFF65F3C5)
+internal val Blue = Color(0xFF8CA7FF)
+internal val Violet = Color(0xFFB78CFF)
+internal val Cyan = Color(0xFF5DDCFF)
+internal val Amber = Color(0xFFFFCB72)
+internal val Rose = Color(0xFFFF759F)
+internal val White = Color(0xFFF7F8FF)
+internal val Muted = Color(0xFF9BA6BF)
+internal val Line = Color(0xFF29324A)
 
-internal enum class AppPage { OVERVIEW, POLICY, ACTIVITY, EVIDENCE }
+internal enum class AppPage { HOME, SERVICES, ALLOWANCES, ACTIVITY, EVIDENCE }
 
 @Composable
 internal fun PageColumn(content: @Composable ColumnScope.() -> Unit) {
@@ -62,8 +65,10 @@ internal fun PageColumn(content: @Composable ColumnScope.() -> Unit) {
 @Composable
 internal fun ProductCard(content: @Composable ColumnScope.() -> Unit) {
     Column(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Panel)
-            .border(1.dp, Line, RoundedCornerShape(22.dp)).padding(18.dp),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(
+            Brush.linearGradient(listOf(Color(0xFF151C30), Color(0xFF0E1423))),
+        )
+            .border(1.dp, Line, RoundedCornerShape(24.dp)).padding(18.dp),
         verticalArrangement = Arrangement.spacedBy(11.dp),
         content = content,
     )
@@ -282,21 +287,23 @@ internal fun BottomBar(page: AppPage, chinese: Boolean, onSelect: (AppPage) -> U
         modifier = Modifier.fillMaxWidth().background(Panel).navigationBarsPadding().padding(horizontal = 10.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        BottomItem(Modifier.weight(1f), t("总览", "Overview", chinese), page == AppPage.OVERVIEW) { onSelect(AppPage.OVERVIEW) }
-        BottomItem(Modifier.weight(1f), t("策略", "Policy", chinese), page == AppPage.POLICY) { onSelect(AppPage.POLICY) }
-        BottomItem(Modifier.weight(1f), t("活动", "Activity", chinese), page == AppPage.ACTIVITY) { onSelect(AppPage.ACTIVITY) }
-        BottomItem(Modifier.weight(1f), t("证据", "Evidence", chinese), page == AppPage.EVIDENCE) { onSelect(AppPage.EVIDENCE) }
+        BottomItem(Modifier.weight(1f), "⌂", t("首页", "Home", chinese), page == AppPage.HOME) { onSelect(AppPage.HOME) }
+        BottomItem(Modifier.weight(1f), "◇", t("服务", "Services", chinese), page == AppPage.SERVICES) { onSelect(AppPage.SERVICES) }
+        BottomItem(Modifier.weight(1f), "◎", t("授权", "Allowances", chinese), page == AppPage.ALLOWANCES) { onSelect(AppPage.ALLOWANCES) }
+        BottomItem(Modifier.weight(1f), "≡", t("活动", "Activity", chinese), page == AppPage.ACTIVITY) { onSelect(AppPage.ACTIVITY) }
+        BottomItem(Modifier.weight(1f), "✓", t("证据", "Evidence", chinese), page == AppPage.EVIDENCE) { onSelect(AppPage.EVIDENCE) }
     }
 }
 
 @Composable
-private fun BottomItem(modifier: Modifier, label: String, selected: Boolean, onClick: () -> Unit) {
-    Box(
+private fun BottomItem(modifier: Modifier, icon: String, label: String, selected: Boolean, onClick: () -> Unit) {
+    Column(
         modifier = modifier.clip(RoundedCornerShape(14.dp)).background(if (selected) Color(0xFF203C34) else Color.Transparent)
-            .clickable(onClick = onClick).padding(vertical = 12.dp),
-        contentAlignment = Alignment.Center,
+            .clickable(onClick = onClick).padding(vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(label, color = if (selected) Mint else Muted, fontWeight = if (selected) FontWeight.Black else FontWeight.Medium, fontSize = 12.sp)
+        Text(icon, color = if (selected) Mint else Muted, fontWeight = FontWeight.Black, fontSize = 13.sp)
+        Text(label, color = if (selected) Mint else Muted, fontWeight = if (selected) FontWeight.Black else FontWeight.Medium, fontSize = 9.sp, maxLines = 1)
     }
 }
 
@@ -310,7 +317,7 @@ internal fun stateColor(state: AllowanceState): Color = when (state) {
 internal fun localizedReason(state: AllowanceUiState, chinese: Boolean): String = when (state.allowanceState) {
     AllowanceState.IDLE -> t("等待策略请求。调整参数后运行预检。", "Waiting for a policy request. Adjust parameters and run pre-flight.", chinese)
     AllowanceState.VERIFIED -> t("商户、证据和预算检查通过。现在可以请求钱包授权。", "Merchant, evidence, and budget checks passed. Wallet authorization may now be requested.", chinese)
-    AllowanceState.BLOCKED -> t("请求金额超过 2.0 USDC 单笔上限，已在钱包打开前拦截。", "The request exceeds the 2.0 USDC per-charge cap and was blocked before the wallet opened.", chinese)
+    AllowanceState.BLOCKED -> t("请求超过当前授权预算，已在钱包打开前拦截。", "The request exceeds the active allowance budget and was blocked before the wallet opened.", chinese)
     AllowanceState.FROZEN -> if (!state.merchantTrusted) {
         t("商户身份与授权策略不一致，任务已冻结等待恢复审查。", "Merchant identity no longer matches the allowance; the task is frozen for recovery review.", chinese)
     } else {

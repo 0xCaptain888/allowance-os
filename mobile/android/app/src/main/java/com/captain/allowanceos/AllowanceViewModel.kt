@@ -59,13 +59,16 @@ data class AllowanceUiState(
     val programSettlementVerified: Boolean = false,
     val programSourceTokenRaw: ULong = 0uL,
     val programMerchantTokenRaw: ULong = 0uL,
+    val selectedServiceId: String = CommercialCatalog.DEFAULT_ID,
 )
 
 class AllowanceViewModel(application: Application) : AndroidViewModel(application) {
-    val policy = AllowancePolicy()
-    val policyHash = PolicyEngine.policyHash(policy)
-
     private val preferences = application.getSharedPreferences("allowance_os", 0)
+    private var activePolicy = CommercialCatalog.byId(
+        preferences.getString(KEY_SELECTED_SERVICE, CommercialCatalog.DEFAULT_ID).orEmpty(),
+    ).toPolicy()
+    val policy: AllowancePolicy get() = activePolicy
+    val policyHash: String get() = PolicyEngine.policyHash(activePolicy)
     private val rpc = DevnetRpc()
     private val walletAdapter = MobileWalletAdapter(
         connectionIdentity = ConnectionIdentity(
@@ -84,6 +87,8 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
             walletLabel = preferences.getString(KEY_ACCOUNT_LABEL, "").orEmpty(),
             signature = preferences.getString(KEY_LAST_SIGNATURE, "").orEmpty(),
             auditEvents = loadEvents(),
+            selectedServiceId = preferences.getString(KEY_SELECTED_SERVICE, CommercialCatalog.DEFAULT_ID)
+                ?: CommercialCatalog.DEFAULT_ID,
         ),
     )
     val state: StateFlow<AllowanceUiState> = _state
@@ -119,34 +124,55 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    fun selectCommercialTemplate(id: String) {
+        val template = CommercialCatalog.byId(id)
+        activePolicy = template.toPolicy()
+        preferences.edit().putString(KEY_SELECTED_SERVICE, template.id).apply()
+        _state.update {
+            it.copy(
+                selectedServiceId = template.id,
+                allowanceState = AllowanceState.IDLE,
+                requestedAmount = template.perCharge,
+                periodSpent = 0.0,
+                merchantTrusted = true,
+                evidencePresent = true,
+                signature = "",
+                error = "",
+                decisionReason = "${template.name} template applied locally. Review the policy before wallet authorization.",
+            )
+        }
+        logEvent("TEMPLATE_APPLIED", AllowanceState.IDLE, message = "${template.name} commercial allowance template applied")
+    }
+
     fun runVerified() = evaluate(
-        amount = 1.0,
+        amount = policy.perChargeCap,
         merchant = policy.merchant,
-        evidence = "research-report-sha256",
+        evidence = "service-delivery-sha256",
     )
 
     fun runBlocked() = evaluate(
-        amount = 10.0,
+        amount = policy.perChargeCap + maxOf(1.0, policy.perChargeCap),
         merchant = policy.merchant,
-        evidence = "research-report-sha256",
+        evidence = "service-delivery-sha256",
     )
 
     fun runFrozen() = evaluate(
-        amount = 1.0,
+        amount = policy.perChargeCap,
         merchant = "merchant:lookalike",
-        evidence = "research-report-sha256",
+        evidence = "service-delivery-sha256",
     )
 
     fun runJudgeDemo() {
-        evaluate(1.0, policy.merchant, "research-report-sha256", 1.5)
-        evaluate(10.0, policy.merchant, "research-report-sha256", 1.5)
-        evaluate(1.0, "merchant:lookalike", "research-report-sha256", 1.5)
+        val amount = policy.perChargeCap
+        evaluate(amount, policy.merchant, "service-delivery-sha256", 0.0)
+        evaluate(amount + maxOf(1.0, amount), policy.merchant, "service-delivery-sha256", 0.0)
+        evaluate(amount, "merchant:lookalike", "service-delivery-sha256", 0.0)
     }
 
     fun evaluateCustom(amount: Double, merchantTrusted: Boolean, evidencePresent: Boolean, periodSpent: Double = 0.0) = evaluate(
         amount = amount,
         merchant = if (merchantTrusted) policy.merchant else "merchant:lookalike",
-        evidence = if (evidencePresent) "research-report-sha256" else "",
+        evidence = if (evidencePresent) "service-delivery-sha256" else "",
         periodSpent = periodSpent,
     )
 
@@ -186,7 +212,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
             policy = policy,
             amount = current.requestedAmount,
             merchant = if (current.merchantTrusted) policy.merchant else "merchant:lookalike",
-            evidence = if (current.evidencePresent) "research-report-sha256" else "",
+            evidence = if (current.evidencePresent) "service-delivery-sha256" else "",
             periodSpent = current.periodSpent,
         )
         if (preflight.state != AllowanceState.VERIFIED) {
@@ -259,6 +285,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                         allowanceState = AllowanceState.REVOKED,
                         decisionReason = "Wallet authorization was deauthorized through MWA.",
                         auditEvents = loadEvents(),
+                        selectedServiceId = CommercialCatalog.byId(_state.value.selectedServiceId).id,
                     )
                     logEvent("MWA_REVOKED", AllowanceState.REVOKED, message = "MWA authorization deauthorized")
                 }
@@ -275,6 +302,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
             allowanceState = AllowanceState.IDLE,
             decisionReason = "Local wallet session cleared. Connect your MWA wallet again.",
             auditEvents = loadEvents(),
+            selectedServiceId = CommercialCatalog.byId(_state.value.selectedServiceId).id,
         )
         logEvent("LOCAL_SESSION_CLEARED", AllowanceState.IDLE, message = "Local wallet session forgotten")
     }
@@ -460,6 +488,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         private const val KEY_AUTH_TOKEN = "auth_token"
         private const val KEY_EVENTS = "audit_events"
         private const val KEY_LAST_SIGNATURE = "last_signature"
+        private const val KEY_SELECTED_SERVICE = "selected_service"
         const val RECORDED_LIVE_SIGNATURE = "4w1cjWABu9L9NGMe4NrRTkqFxZVnJBsdket94ifiuKrGaMsMDnYquFpirq4kte4hsCxRuT6Jo79U8zvKNgzQ3B9k"
     }
 }

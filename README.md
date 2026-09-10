@@ -4,14 +4,30 @@
 
 **[Open the public Judge Demo](https://0xcaptain888.github.io/allowance-os/)** · **[Android MWA client](mobile/android)** · **[Two-minute judge guide](docs/judge-guide.md)**
 
-Allowance OS is a Solana Mobile control center for safe on-chain subscriptions and autonomous-agent spending. It turns an open-ended wallet approval into a human-readable allowance with merchant, token, program, per-charge, period, expiry, and evidence boundaries.
+Allowance OS is a Solana Mobile payment-authorization layer for Web3 services. It turns an open-ended wallet approval into a human-readable allowance with merchant, token, program, per-charge, period, expiry, and evidence boundaries—then applies that same model to AI subscriptions, paid research, trading signals, automation bots, and metered APIs.
+
+## Commercial product proof
+
+v0.9.0 replaces the single-use demo structure with a five-surface product: **Home → Services → Allowances → Activity → Evidence**.
+
+| Ready template | Commercial use | Payment boundary | Required evidence |
+| --- | --- | --- | --- |
+| AgentCloud | AI Agent subscription | 0.50 USDC/run; 12 USDC/month | signed run receipt + output hash |
+| AlphaBrief | paid research reports | 2 USDC/report; 8 USDC/week | report URI + content hash |
+| SignalWire | trading signals | 0.25 USDC/signal; 5 USDC/day | signal hash + publisher signature |
+| AutoPilot | automated trading bot | 1 USDC/fee; 20 USDC/week | strategy ID + order receipt + verifier hash |
+| DataPipe | paid API | 0.05 USDC/batch; 10 USDC/month | usage root + metering receipt |
+
+The Android app can filter these services, apply any template, inspect its merchant/program/evidence boundaries, and replay `VERIFIED`, `BLOCKED`, and `FROZEN` requests against its own limits.
+
+The **Seeker Integration Lab** also maps Allowance OS to apps featured by Solana Mobile, including Helium Mobile, Parallel Colony, Amp Pay, Moonwalk Fitness, and Perena. Every third-party card is explicitly labeled `BLUEPRINT · UNOFFICIAL`; it does not imply partnership or live integration. See [the UI and Seeker research note](docs/product-ui-and-seeker-research.md).
 
 ## Judge path
 
 | Surface | What it proves | Status |
 | --- | --- | --- |
 | [Public Judge Demo](https://0xcaptain888.github.io/allowance-os/) | Instant `VERIFIED` / `BLOCKED` / `FROZEN` policy replay | GitHub Pages deployment |
-| `mobile/android` | Bilingual native Android control center, adjustable policy studio, period-cap enforcement, persistent activity audit, MWA authorization, and direct Devnet RPC verification | v0.8.0; SPL settlement verification added |
+| `mobile/android` | Bilingual native Android product with commercial catalog, reusable allowances, Seeker blueprints, persistent activity audit, MWA authorization, and direct Devnet RPC verification | v0.9.0; five commercial templates |
 | `program/` | Native Solana create / SPL-token charge / evidence-freeze / revoke logic | Deployed on Devnet; 5 Rust tests passed |
 | Solana Explorer | Connected Devnet wallet and wallet-broadcast authorization proof | Live signature captured |
 | [Deployed allowance program](https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet) | Program-enforced state transitions and settlement | Live `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED` evidence |
@@ -59,7 +75,9 @@ User policy
 The Android app is not a mockup. It uses Solana Mobile's official `mobile-wallet-adapter-clientlib-ktx:2.0.7` and implements:
 
 - Chinese and English product interfaces with an in-app language switch;
-- four judge-ready surfaces: Overview, Policy Studio, Activity Log, and Evidence Center;
+- five product surfaces: Home, Services, Allowances, Activity, and Evidence;
+- five reusable commercial templates for AI Agent subscriptions, research reports, trading signals, automated trading bots, and paid APIs;
+- an explicitly unofficial Seeker integration lab covering service subscriptions, games, commerce, fitness, and DeFi automation;
 - persistent Activity Log with decision counts, wallet events, and error history;
 - `Connect Phantom / MWA Wallet`;
 - reconnect, balance refresh, address copy, and safe local-session reset;
@@ -91,10 +109,10 @@ cd mobile/android
 The resulting APK is:
 
 ```text
-mobile/android/app/build/outputs/apk/debug/allowance-os-0.8.0-debug.apk
+mobile/android/app/build/outputs/apk/debug/allowance-os-0.9.0-debug.apk
 ```
 
-SHA-256: `ae5d36a631046b80093230bb101e956ae70d2c65c2626791d815fee5554ce8c2`
+SHA-256: `3bc974a09091315a52456fccc25bb3664a21d796344974844097728d3b17df82`
 
 See [`mobile/README.md`](mobile/README.md) for phone setup and [`docs/judge-guide.md`](docs/judge-guide.md) for the two-minute evaluation path.
 

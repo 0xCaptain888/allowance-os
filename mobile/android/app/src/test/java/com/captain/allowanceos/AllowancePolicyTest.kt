@@ -44,4 +44,25 @@ class AllowancePolicyTest {
             PolicyEngine.policyHash(policy.copy(perChargeCap = 3.0)),
         )
     }
+
+    @Test
+    fun commercialCatalogCoversFiveDistinctUseCases() {
+        assertEquals(5, CommercialCatalog.templates.size)
+        assertEquals(5, CommercialCatalog.templates.map { it.category }.distinct().size)
+        assertEquals(5, CommercialCatalog.templates.map { it.merchant }.distinct().size)
+    }
+
+    @Test
+    fun everyCommercialTemplateProducesAnEnforceablePolicy() {
+        CommercialCatalog.templates.forEach { template ->
+            val commercialPolicy = template.toPolicy()
+            val decision = PolicyEngine.evaluate(
+                commercialPolicy,
+                template.perCharge,
+                template.merchant,
+                "service-delivery-evidence",
+            )
+            assertEquals("${template.name} should pass its own template", AllowanceState.VERIFIED, decision.state)
+        }
+    }
 }

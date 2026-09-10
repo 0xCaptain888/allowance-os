@@ -1,8 +1,8 @@
 {
   "name": "allowance-os",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": true,
-  "description": "A Seeker-native control center for safe on-chain subscriptions and agent spending.",
+  "description": "A Solana Mobile payment-authorization layer for Web3 services, subscriptions, agents, and metered APIs.",
   "type": "module",
   "scripts": {
     "demo": "tsx src/demo.ts",

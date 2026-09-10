@@ -1,4 +1,4 @@
-# Project Status — September 9, 2026
+# Project Status — September 10, 2026
 
 ## Complete locally
 
@@ -9,6 +9,8 @@
 - Policy schema and SDK-facing instruction model.
 - Explicit standard Android and Seeker capability profiles.
 - Native Kotlin/Compose Android client.
+- Commercial Services catalog with five reusable allowance templates.
+- Seeker Integration Lab with explicitly unofficial blueprints for apps featured by Solana Mobile.
 - Period-aware policy studio with current-period spend input and projected cap meter.
 - Judge mode that records VERIFIED, BLOCKED, and FROZEN outcomes in a persistent local Activity Log.
 - Portable JSON receipt export with a SHA-256 fingerprint and explicit evidence level.
@@ -28,15 +30,15 @@
 - Onchain evidence mismatch persists `frozen = true`; revoke persists `revoked = true`.
 - Rust formatting and multi-job CI workflow.
 
-## Android v0.8.0 build
+## Android v0.9.0 build
 
 ```text
-Artifact: mobile/android/app/build/outputs/apk/debug/allowance-os-0.8.0-debug.apk
+Artifact: mobile/android/app/build/outputs/apk/debug/allowance-os-0.9.0-debug.apk
 Size: 18 MB
-Version code: 8
-Version name: 0.8.0
-Android tests: 6 passed, 0 failed
-SHA-256: ae5d36a631046b80093230bb101e956ae70d2c65c2626791d815fee5554ce8c2
+Version code: 9
+Version name: 0.9.0
+Android tests: 8 passed, 0 failed
+SHA-256: 3bc974a09091315a52456fccc25bb3664a21d796344974844097728d3b17df82
 ```
 
 ## External hardware step still required

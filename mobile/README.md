@@ -4,17 +4,17 @@
 
 ## Build status
 
-Verified locally on September 9, 2026:
+Verified locally on September 10, 2026:
 
 ```text
 ./gradlew testDebugUnitTest assembleDebug
 BUILD SUCCESSFUL
-6 Android policy tests passed
-Artifact: app/build/outputs/apk/debug/allowance-os-0.7.0-debug.apk
-APK SHA-256: 0d0b0553d671f90884f5c99028ce33c46f8e7a95558cb059eecefd101be76e2c
+8 Android policy tests passed
+Artifact: app/build/outputs/apk/debug/allowance-os-0.9.0-debug.apk
+APK SHA-256: 3bc974a09091315a52456fccc25bb3664a21d796344974844097728d3b17df82
 ```
 
-v0.7.0 adds the deployed Program evidence boundary, an in-app five-transaction matrix verifier, and direct links to the real Devnet enforcement path, while retaining period-cap enforcement, judge mode, persistent activity, portable receipts, and RPC proof verification.
+v0.9.0 adds a redesigned five-surface product interface, five commercial service templates, dynamic service-specific policy testing, and an explicitly unofficial Seeker Integration Lab while retaining the deployed Program evidence boundary and direct Devnet verification.
 
 The checksum belongs to the local debug build and may change after any source or dependency update.
 
@@ -49,7 +49,7 @@ JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home" \
 
 ```bash
 ~/Library/Android/sdk/platform-tools/adb install -r \
-  app/build/outputs/apk/debug/allowance-os-0.7.0-debug.apk
+  app/build/outputs/apk/debug/allowance-os-0.9.0-debug.apk
 ```
 
 7. Open **Allowance OS** on the phone.

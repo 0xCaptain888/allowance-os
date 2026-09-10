@@ -3,20 +3,24 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Allowance OS — Seeker Spending Control</title>
+  <title>Allowance OS — Payment Authorization for Web3 Services</title>
   <style>
-    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #0b1020; color: #eef2ff; }
-    body { max-width: 1120px; margin: 0 auto; padding: 20px 18px 64px; }
-    nav { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 32px; }
-    nav strong { letter-spacing: -.02em; }
+    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #060810; color: #f7f8ff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 12% 0%, #242050 0, transparent 34rem), radial-gradient(circle at 85% 12%, #0d594c55 0, transparent 30rem), #060810; }
+    main { max-width: 1160px; margin: 0 auto; padding: 20px 18px 72px; }
+    nav { position: sticky; top: 12px; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 52px; padding: 12px 14px; border: 1px solid #ffffff18; border-radius: 18px; background: #090d18dd; backdrop-filter: blur(18px); }
+    nav strong { letter-spacing: -.03em; font-size: 1.08rem; }
     .links { display: flex; gap: 10px; flex-wrap: wrap; }
     a { color: #79e6c1; text-decoration: none; font-weight: 750; }
-    .nav-link { border: 1px solid #283454; border-radius: 999px; padding: 8px 12px; font-size: .82rem; }
-    .hero { display: grid; grid-template-columns: 1.3fr .7fr; gap: 24px; align-items: end; }
-    h1 { font-size: clamp(2.6rem, 7vw, 5.6rem); line-height: .94; margin: 12px 0; letter-spacing: -.06em; }
-    .eyebrow { color: #79e6c1; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; font-size: .75rem; }
-    .lede { color: #b9c3dd; font-size: 1.15rem; line-height: 1.55; max-width: 680px; }
-    .card { border: 1px solid #283454; border-radius: 22px; background: linear-gradient(145deg, #141c34, #0d1428); padding: 22px; box-shadow: 0 20px 60px #0005; }
+    .nav-link { border: 1px solid #2b3552; border-radius: 999px; padding: 8px 12px; font-size: .82rem; transition: .2s ease; }
+    .nav-link:hover { border-color: #65f3c5; background: #65f3c512; }
+    .hero { display: grid; grid-template-columns: 1.25fr .75fr; gap: 30px; align-items: center; min-height: 440px; }
+    h1 { font-size: clamp(3.4rem, 9vw, 7rem); line-height: .86; margin: 18px 0 24px; letter-spacing: -.075em; background: linear-gradient(110deg, #fff 25%, #a9b8ff 60%, #65f3c5); -webkit-background-clip: text; color: transparent; }
+    h2 { letter-spacing: -.035em; }
+    .eyebrow { color: #65f3c5; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; font-size: .72rem; }
+    .lede { color: #aab4cc; font-size: 1.2rem; line-height: 1.6; max-width: 720px; }
+    .card { border: 1px solid #ffffff18; border-radius: 24px; background: linear-gradient(145deg, #171d31dd, #0c1120e8); padding: 22px; box-shadow: 0 24px 80px #0007; backdrop-filter: blur(16px); }
     .policy { display: grid; gap: 12px; }
     .row { display: flex; justify-content: space-between; gap: 20px; border-bottom: 1px solid #25304d; padding-bottom: 10px; }
     .row:last-child { border: 0; padding: 0; }
@@ -25,7 +29,8 @@
     .pill { display: inline-flex; border-radius: 999px; padding: 6px 10px; font-size: .78rem; font-weight: 800; }
     .verified { color: #061a14; background: #79e6c1; } .blocked { color: #2d1d02; background: #ffc86b; } .frozen { color: #2c0c19; background: #ff8cae; }
     .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 28px; }
-    button { border: 0; border-radius: 12px; padding: 11px 15px; font-weight: 800; cursor: pointer; background: #79e6c1; color: #061a14; }
+    button { border: 0; border-radius: 12px; padding: 11px 15px; font-weight: 800; cursor: pointer; background: #65f3c5; color: #061a14; transition: transform .18s ease, box-shadow .18s ease; }
+    button:hover { transform: translateY(-2px); box-shadow: 0 10px 28px #65f3c533; }
     button.secondary { background: #222d4b; color: #eef2ff; }
     .output { white-space: pre-wrap; min-height: 180px; color: #b9c3dd; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .83rem; line-height: 1.55; }
     .controls { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 18px; }
@@ -40,32 +45,71 @@
     .matrix > div:nth-child(3n) { border-right: 0; }
     .ok { color: #79e6c1; font-weight: 800; } .limited { color: #ffc86b; font-weight: 800; }
     .proof-state { border-radius: 14px; padding: 14px; background: #0d1428; border: 1px solid #283454; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .82rem; white-space: pre-wrap; }
-    @media (max-width: 800px) { .hero, .grid { grid-template-columns: 1fr; } }
+    .section-heading { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin: 72px 0 20px; }
+    .section-heading h2 { font-size: clamp(2rem, 4vw, 3.2rem); margin: 8px 0 0; }
+    .section-heading p { max-width: 560px; margin: 0; }
+    .service-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .service { min-height: 250px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: .2s ease; }
+    .service:hover, .service.active { transform: translateY(-5px); border-color: #65f3c588; box-shadow: 0 24px 60px #0009; }
+    .service-icon { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 15px; background: linear-gradient(135deg, #b78cff, #6f8cff 55%, #5ddcff); color: white; font-size: .78rem; font-weight: 900; }
+    .service h3 { margin: 5px 0 0; font-size: 1.12rem; }
+    .service .price { margin-top: auto; color: #65f3c5; font-size: 1.05rem; font-weight: 900; }
+    .service small { color: #8f9bb9; line-height: 1.45; }
+    .blueprint-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .blueprint h3 { display: flex; justify-content: space-between; gap: 12px; margin-top: 0; }
+    .blueprint-label { white-space: nowrap; color: #ffc86b; font-size: .66rem; letter-spacing: .08em; }
+    .pattern { padding: 12px; border-radius: 14px; background: #151c31; color: #c6cee0; font-size: .85rem; line-height: 1.5; }
+    .truth-note { border: 1px solid #ffc86b55; background: #ffc86b0d; border-radius: 16px; padding: 14px 16px; color: #d8c39c; }
+    @media (max-width: 980px) { .service-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 800px) { .hero, .grid, .blueprint-grid { grid-template-columns: 1fr; } nav { position: static; } .hero { min-height: auto; } }
+    @media (max-width: 560px) { .service-grid { grid-template-columns: 1fr; } .links { display: none; } }
   </style>
 </head>
 <body>
   <main>
     <nav><strong>Allowance OS</strong><div class="links"><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os">GitHub</a><a class="nav-link" href="https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet">Devnet Program</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/tree/main/mobile/android">Android MWA</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/docs/judge-guide.md">Judge Guide</a></div></nav>
     <section class="hero">
-      <div><div class="eyebrow">Solana Mobile spending control</div><h1>Allowance OS</h1><p class="lede">The mobile control center for safe on-chain subscriptions and agent spending. Approve once. Enforce every charge. Freeze bad evidence. Revoke anytime.</p></div>
-      <div class="card policy"><div class="row"><span class="muted">Subscriber</span><span class="value">alice.skr</span></div><div class="row"><span class="muted">Merchant</span><span class="value">ResearchPulse</span></div><div class="row"><span class="muted">Allowance</span><span class="value">2 USDC / week</span></div><div class="row"><span class="muted">Monthly cap</span><span class="value">8 USDC</span></div><div class="row"><span class="muted">Status</span><span class="pill verified">ACTIVE</span></div></div>
+      <div><div class="eyebrow">Payment authorization for Web3 services</div><h1>Allowance OS</h1><p class="lede">One mobile control layer for AI subscriptions, research, trading signals, automation bots, and paid APIs. Approve a bounded policy—not an unlimited future.</p></div>
+      <div class="card policy"><div class="row"><span class="muted">Active service</span><span id="heroService" class="value">AlphaBrief</span></div><div class="row"><span class="muted">Merchant</span><span id="heroMerchant" class="value">merchant:alphabrief</span></div><div class="row"><span class="muted">Per charge</span><span id="heroCharge" class="value">2 USDC</span></div><div class="row"><span class="muted">Period cap</span><span id="heroCap" class="value">8 USDC</span></div><div class="row"><span class="muted">Status</span><span class="pill verified">READY TEMPLATE</span></div></div>
+    </section>
+
+    <section id="services">
+      <div class="section-heading"><div><div class="eyebrow">Commercial proof, not a toy demo</div><h2>Five businesses. One allowance protocol.</h2></div><p class="muted">Choose a service to load its merchant, charge limit, period budget, and evidence requirements into the verifier below.</p></div>
+      <div class="service-grid">
+        <div class="card service" data-service="agentcloud" onclick="chooseService('agentcloud')"><div class="service-icon">AI</div><h3>AgentCloud</h3><small>Monthly operating allowance for an autonomous AI research agent.</small><div class="price">0.50 / 12 USDC</div><small>Run receipt + output hash</small></div>
+        <div class="card service active" data-service="alphabrief" onclick="chooseService('alphabrief')"><div class="service-icon">R</div><h3>AlphaBrief</h3><small>Pay for a delivered research report only after its content hash is bound.</small><div class="price">2 / 8 USDC</div><small>Report URI + content hash</small></div>
+        <div class="card service" data-service="signalwire" onclick="chooseService('signalwire')"><div class="service-icon">S</div><h3>SignalWire</h3><small>Capped trading signals with a publisher identity lock.</small><div class="price">0.25 / 5 USDC</div><small>Signal hash + publisher signature</small></div>
+        <div class="card service" data-service="autopilot" onclick="chooseService('autopilot')"><div class="service-icon">AP</div><h3>AutoPilot</h3><small>Bounded bot fees separated from trading principal and authority.</small><div class="price">1 / 20 USDC</div><small>Order receipt + verifier hash</small></div>
+        <div class="card service" data-service="datapipe" onclick="chooseService('datapipe')"><div class="service-icon">API</div><h3>DataPipe</h3><small>Meter paid API usage without exposing an unlimited approval.</small><div class="price">0.05 / 10 USDC</div><small>Usage root + metering receipt</small></div>
+      </div>
+    </section>
+
+    <section id="seeker-lab">
+      <div class="section-heading"><div><div class="eyebrow">Seeker integration lab</div><h2>Designed around real mobile categories.</h2></div><p class="muted">Blueprints show the adapter and evidence contract each integration would require.</p></div>
+      <p class="truth-note"><strong>Honest boundary:</strong> these are unofficial integration blueprints based on apps featured by Solana Mobile. They are not partnerships and are not presented as live third-party integrations.</p>
+      <div class="blueprint-grid">
+        <div class="card blueprint"><h3>Helium Mobile <span class="blueprint-label">BLUEPRINT · UNOFFICIAL</span></h3><p class="muted">Recurring mobile plan and add-on data allowance.</p><div class="pattern">Monthly cap → merchant binding → signed service-period receipt → settlement</div></div>
+        <div class="card blueprint"><h3>Parallel Colony <span class="blueprint-label">BLUEPRINT · UNOFFICIAL</span></h3><p class="muted">Game season pass, AI actions, and bounded item budgets.</p><div class="pattern">Season expiry → category caps → item delivery evidence → explicit high-value confirmation</div></div>
+        <div class="card blueprint"><h3>Amp Pay <span class="blueprint-label">BLUEPRINT · UNOFFICIAL</span></h3><p class="muted">Merchant subscriptions and repeat mobile purchases.</p><div class="pattern">Merchant-scoped allowance → checkout pre-flight → receipt hash → revocable repeat payment</div></div>
+        <div class="card blueprint"><h3>Moonwalk / Perena <span class="blueprint-label">BLUEPRINT · UNOFFICIAL</span></h3><p class="muted">Membership, challenge entry, stable-asset workflow fees.</p><div class="pattern">Expiry or program allowlist → fee-only cap → fulfillment or transaction evidence</div></div>
+      </div>
     </section>
     <section class="grid">
       <div class="card"><div class="eyebrow">01 · verified</div><h2>Normal charge</h2><p class="muted">Merchant, token, program, evidence, and limits all match.</p><button onclick="run('verified')">Run check</button></div>
-      <div class="card"><div class="eyebrow">02 · blocked</div><h2>Over the cap</h2><p class="muted">The Agent asks for 10 USDC against a 2 USDC per-charge limit.</p><button class="secondary" onclick="run('blocked')">Run check</button></div>
+      <div class="card"><div class="eyebrow">02 · blocked</div><h2>Over the cap</h2><p class="muted">The request exceeds the selected service's per-charge allowance.</p><button class="secondary" onclick="run('blocked')">Run check</button></div>
       <div class="card"><div class="eyebrow">03 · frozen</div><h2>Merchant changed</h2><p class="muted">The destination no longer matches the authorized merchant.</p><button class="secondary" onclick="run('frozen')">Run check</button></div>
     </section>
     <section class="card" style="margin-top:14px"><div class="row"><span><strong>Browser Evidence Verification</strong><br><span class="muted">This replay is SIMULATED. A real Android MWA wallet and Devnet Memo proof are now recorded separately; the browser replay never disguises simulated receipts as settlement.</span></span><button class="secondary" onclick="revoke()">Revoke allowance</button></div>
       <div class="controls">
         <div class="control"><label for="amount">Requested amount <span id="amountValue" class="control-value">1.0 USDC</span></label><input id="amount" type="range" min="0.5" max="12" step="0.5" value="1" oninput="syncControls()"></div>
         <div class="control"><label for="spent">Already spent this period <span id="spentValue" class="control-value">0.0 / 8.0 USDC</span></label><input id="spent" type="range" min="0" max="8" step="0.5" value="0" oninput="syncControls()"></div>
-        <div class="control"><label for="merchant">Merchant identity</label><select id="merchant" onchange="evaluateDynamic()"><option value="trusted">merchant:researchpulse</option><option value="mismatch">merchant:lookalike</option></select></div>
+        <div class="control"><label for="merchant">Merchant identity</label><select id="merchant" onchange="evaluateDynamic()"><option value="trusted">merchant:alphabrief</option><option value="mismatch">merchant:lookalike</option></select></div>
         <div class="control"><label for="evidence">Result evidence</label><select id="evidence" onchange="evaluateDynamic()"><option value="present">Evidence hash present</option><option value="missing">Evidence missing</option></select></div>
       </div>
       <button style="margin-top:16px" onclick="evaluateDynamic()">Run policy pre-flight</button>
       <div id="output" class="output">Choose a scenario above to produce a receipt.</div>
     </section>
-    <section class="card" style="margin-top:14px"><div class="eyebrow">Native mobile readiness</div><h2>One policy, two honest device modes.</h2><div class="matrix"><div class="muted">Capability</div><div class="muted">Android + Phantom</div><div class="muted">Seeker</div><div>Mobile Wallet Adapter</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Devnet signing</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Seed Vault</div><div class="limited">SEEKER ONLY</div><div class="ok">AVAILABLE</div><div>Genesis Token</div><div class="limited">NOT AVAILABLE</div><div class="ok">AVAILABLE</div></div><p class="muted">Verified build: 8 TypeScript tests + 6 Android tests + 5 Rust tests. No simulated hash is presented as a chain transaction.</p></section>
+    <section class="card" style="margin-top:14px"><div class="eyebrow">Native mobile readiness</div><h2>One policy, two honest device modes.</h2><div class="matrix"><div class="muted">Capability</div><div class="muted">Android + Phantom</div><div class="muted">Seeker</div><div>Mobile Wallet Adapter</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Devnet signing</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Seed Vault</div><div class="limited">SEEKER ONLY</div><div class="ok">AVAILABLE</div><div>Genesis Token</div><div class="limited">NOT AVAILABLE</div><div class="ok">AVAILABLE</div></div><p class="muted">Verified build: 8 TypeScript tests + 8 Android tests + 5 Rust tests. No simulated hash is presented as a chain transaction.</p></section>
     <section class="card" style="margin-top:14px">
       <div class="eyebrow">Live evidence · Solana Devnet</div>
       <h2>Verify the wallet proof without trusting us.</h2>
@@ -91,7 +135,15 @@
     </section>
   </main>
   <script>
-    const base = { allowanceId: 'allowance-researchpulse-001', merchant: 'merchant:researchpulse', token: 'USDC', program: 'program:allowance-os-devnet' };
+    const services = {
+      agentcloud: { name: 'AgentCloud', merchant: 'merchant:agentcloud', perCharge: .5, periodCap: 12, evidence: 'signed_run_receipt_and_output_hash', program: 'program:agentcloud-settlement' },
+      alphabrief: { name: 'AlphaBrief', merchant: 'merchant:alphabrief', perCharge: 2, periodCap: 8, evidence: 'report_uri_and_content_hash', program: 'Memo111111111111111111111111111111111111111' },
+      signalwire: { name: 'SignalWire', merchant: 'merchant:signalwire', perCharge: .25, periodCap: 5, evidence: 'signal_hash_and_publisher_signature', program: 'program:signal-delivery' },
+      autopilot: { name: 'AutoPilot', merchant: 'merchant:autopilot', perCharge: 1, periodCap: 20, evidence: 'order_receipt_and_verifier_hash', program: 'program:autopilot-fees' },
+      datapipe: { name: 'DataPipe', merchant: 'merchant:datapipe', perCharge: .05, periodCap: 10, evidence: 'usage_batch_root_and_metering_receipt', program: 'program:api-metering' }
+    };
+    let selectedService = 'alphabrief';
+    let base = { allowanceId: 'allowance-alphabrief-001', merchant: services.alphabrief.merchant, token: 'USDC', program: services.alphabrief.program };
     const recordedSignature = '4w1cjWABu9L9NGMe4NrRTkqFxZVnJBsdket94ifiuKrGaMsMDnYquFpirq4kte4hsCxRuT6Jo79U8zvKNgzQ3B9k';
     const programId = 'DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE';
     const allowanceAccount = 'BRqgbZzdZPrueoWEcjusZ49etotWfNGtu2Bs1HiQ7E5x';
@@ -106,9 +158,28 @@
       revoked: '5MpttoR2mfpDXhWq1B3nr6AWHC9AFCTsQ7626EXDEka6nWzgF3GdJGZnTxk9BmU4sBxiLjAAbbES9GXheGCqqysu'
     };
     const output = document.querySelector('#output');
-    function syncControls() { document.querySelector('#amountValue').textContent = Number(document.querySelector('#amount').value).toFixed(1) + ' USDC'; document.querySelector('#spentValue').textContent = Number(document.querySelector('#spent').value).toFixed(1) + ' / 8.0 USDC'; }
-    function evaluateDynamic() { syncControls(); const amount = Number(document.querySelector('#amount').value); const spent = Number(document.querySelector('#spent').value); const merchantMatches = document.querySelector('#merchant').value === 'trusted'; const evidenceBound = document.querySelector('#evidence').value === 'present'; const perChargeWithinPolicy = amount <= 2; const periodCapWithinPolicy = spent + amount <= 8; const frozen = !merchantMatches || !evidenceBound; const state = frozen ? 'FROZEN' : (perChargeWithinPolicy && periodCapWithinPolicy ? 'VERIFIED' : 'BLOCKED'); const reasons = []; if (!merchantMatches) reasons.push('merchant_identity_mismatch'); if (!evidenceBound) reasons.push('evidence_not_bound'); if (!perChargeWithinPolicy) reasons.push('per_charge_limit_exceeded'); if (!periodCapWithinPolicy) reasons.push('period_cap_exceeded'); const data = { ...base, amount, spentInPeriod: spent, merchant: merchantMatches ? base.merchant : 'merchant:lookalike', state, checks: { merchantMatches, evidenceBound, perChargeWithinPolicy, periodCapWithinPolicy, programAllowed: true }, evidenceHash: evidenceBound ? 'demo-' + state.toLowerCase() + '-evidence' : undefined, receiptType: 'SIMULATED', reasons, nextAction: state === 'VERIFIED' ? 'open_wallet_then_settle' : state === 'BLOCKED' ? 'reject_before_broadcast' : 'freeze_and_revoke' }; output.textContent = JSON.stringify({ receiptVersion: '1', ...data, txHash: state === 'VERIFIED' ? 'simulated:demo-receipt' : undefined }, null, 2); }
-    function run(kind) { document.querySelector('#amount').value = kind === 'blocked' ? 10 : 1; document.querySelector('#spent').value = kind === 'blocked' ? 1.5 : 0; document.querySelector('#merchant').value = kind === 'frozen' ? 'mismatch' : 'trusted'; document.querySelector('#evidence').value = 'present'; evaluateDynamic(); }
+    function chooseService(id) {
+      selectedService = id;
+      const service = services[id];
+      base = { allowanceId: `allowance-${id}-001`, merchant: service.merchant, token: 'USDC', program: service.program };
+      document.querySelectorAll('.service').forEach(card => card.classList.toggle('active', card.dataset.service === id));
+      document.querySelector('#heroService').textContent = service.name;
+      document.querySelector('#heroMerchant').textContent = service.merchant;
+      document.querySelector('#heroCharge').textContent = `${service.perCharge} USDC`;
+      document.querySelector('#heroCap').textContent = `${service.periodCap} USDC`;
+      const amount = document.querySelector('#amount');
+      const spent = document.querySelector('#spent');
+      amount.min = Math.min(.05, service.perCharge); amount.max = Math.max(5, service.perCharge * 4); amount.step = service.perCharge < .5 ? .05 : .5; amount.value = service.perCharge;
+      spent.max = service.periodCap; spent.step = service.periodCap <= 5 ? .25 : .5; spent.value = 0;
+      document.querySelector('#merchant').options[0].textContent = service.merchant;
+      document.querySelector('#merchant').value = 'trusted';
+      document.querySelector('#evidence').value = 'present';
+      evaluateDynamic();
+      document.querySelector('.controls').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    function syncControls() { const policy = services[selectedService]; document.querySelector('#amountValue').textContent = Number(document.querySelector('#amount').value).toFixed(2) + ' USDC'; document.querySelector('#spentValue').textContent = Number(document.querySelector('#spent').value).toFixed(2) + ' / ' + policy.periodCap + ' USDC'; }
+    function evaluateDynamic() { syncControls(); const policy = services[selectedService]; const amount = Number(document.querySelector('#amount').value); const spent = Number(document.querySelector('#spent').value); const merchantMatches = document.querySelector('#merchant').value === 'trusted'; const evidenceBound = document.querySelector('#evidence').value === 'present'; const perChargeWithinPolicy = amount <= policy.perCharge; const periodCapWithinPolicy = spent + amount <= policy.periodCap; const frozen = !merchantMatches || !evidenceBound; const state = frozen ? 'FROZEN' : (perChargeWithinPolicy && periodCapWithinPolicy ? 'VERIFIED' : 'BLOCKED'); const reasons = []; if (!merchantMatches) reasons.push('merchant_identity_mismatch'); if (!evidenceBound) reasons.push('evidence_not_bound'); if (!perChargeWithinPolicy) reasons.push('per_charge_limit_exceeded'); if (!periodCapWithinPolicy) reasons.push('period_cap_exceeded'); const data = { ...base, service: policy.name, amount, spentInPeriod: spent, periodCap: policy.periodCap, perChargeCap: policy.perCharge, merchant: merchantMatches ? base.merchant : 'merchant:lookalike', requiredEvidence: policy.evidence, state, checks: { merchantMatches, evidenceBound, perChargeWithinPolicy, periodCapWithinPolicy, programAllowed: true }, evidenceHash: evidenceBound ? 'demo-' + state.toLowerCase() + '-evidence' : undefined, receiptType: 'SIMULATED', reasons, nextAction: state === 'VERIFIED' ? 'open_wallet_then_settle' : state === 'BLOCKED' ? 'reject_before_broadcast' : 'freeze_and_revoke' }; output.textContent = JSON.stringify({ receiptVersion: '1', ...data, txHash: state === 'VERIFIED' ? 'simulated:demo-receipt' : undefined }, null, 2); }
+    function run(kind) { const policy = services[selectedService]; document.querySelector('#amount').value = kind === 'blocked' ? Math.max(policy.perCharge * 2, policy.perCharge + 1) : policy.perCharge; document.querySelector('#spent').value = 0; document.querySelector('#merchant').value = kind === 'frozen' ? 'mismatch' : 'trusted'; document.querySelector('#evidence').value = 'present'; evaluateDynamic(); }
     function revoke() { output.textContent = JSON.stringify({ action: 'REVOKE_ALLOWANCE', allowanceId: base.allowanceId, state: 'REVOKED', nextAction: 'deauthorize_via_mwa_and_seed_vault' }, null, 2); }
     async function verifyLiveProof() { const el = document.querySelector('#liveProof'); el.textContent = 'Querying https://api.devnet.solana.com …'; try { const response = await fetch('https://api.devnet.solana.com', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getSignatureStatuses', params: [[recordedSignature], { searchTransactionHistory: true }] }) }); if (!response.ok) throw new Error('RPC HTTP ' + response.status); const body = await response.json(); const status = body.result?.value?.[0]; if (!status) throw new Error('Signature not found on Devnet'); const passed = !status.err && ['confirmed', 'finalized'].includes(status.confirmationStatus); el.className = 'proof-state ' + (passed ? 'ok' : 'limited'); el.textContent = JSON.stringify({ evidenceLevel: 'LIVE_DEVNET_PROOF', verified: passed, confirmationStatus: status.confirmationStatus, slot: status.slot, confirmations: status.confirmations, executionError: status.err, signature: recordedSignature }, null, 2); } catch (error) { el.className = 'proof-state limited'; el.textContent = 'Verification unavailable: ' + error.message + '\nOpen the Explorer link above to cross-check manually.'; } }
     async function rpc(method, params) { const response = await fetch('https://api.devnet.solana.com', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: method, method, params }) }); if (!response.ok) throw new Error('RPC HTTP ' + response.status); const body = await response.json(); if (body.error) throw new Error(body.error.message); return body.result; }
