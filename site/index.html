@@ -129,7 +129,7 @@
       <div id="output" class="output">Choose a scenario above to produce a receipt.</div>
     </section>
     <section class="card" style="margin-top:14px">
-      <div class="eyebrow">Reference merchant integration · SDK v2</div>
+      <div class="eyebrow">Browser reference integration · simulated receipt v2</div>
       <h2>Buy an AlphaBrief report, then attack the payment flow.</h2>
       <p class="muted">The browser hashes delivered content, creates a five-minute charge request, verifies the policy, signs a merchant webhook, and unlocks the report. Retrying the identical request is idempotent; reusing its evidence under a new request is BLOCKED.</p>
       <div class="grid">
@@ -141,7 +141,7 @@
       <div id="alphaBriefReport" class="proof-state muted">The report preview remains locked until the receipt and webhook both verify.</div>
       <div id="alphaBriefReceipt" class="output">No request yet.</div>
     </section>
-    <section class="card" style="margin-top:14px"><div class="eyebrow">Native mobile readiness</div><h2>One policy, two honest device modes.</h2><div class="matrix"><div class="muted">Capability</div><div class="muted">Android + Phantom</div><div class="muted">Seeker</div><div>Mobile Wallet Adapter</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Devnet signing</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Seed Vault</div><div class="limited">SEEKER ONLY</div><div class="ok">AVAILABLE</div><div>Genesis Token</div><div class="limited">NOT AVAILABLE</div><div class="ok">AVAILABLE</div></div><p class="muted">Verified source coverage: 18 TypeScript tests + 12 Android tests + 16 Rust source tests. v0.11 encrypts the MWA reconnect token with Android Keystore and adds explicit wallet-action review. Delegated v2 is source-tested and clearly separated from the deployed v1 evidence. No simulated hash is presented as a chain transaction.</p></section>
+    <section class="card" style="margin-top:14px"><div class="eyebrow">Native mobile readiness</div><h2>One policy, two honest device modes.</h2><div class="matrix"><div class="muted">Capability</div><div class="muted">Android + Phantom</div><div class="muted">Seeker</div><div>Mobile Wallet Adapter</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Devnet signing</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Seed Vault</div><div class="limited">SEEKER ONLY</div><div class="ok">AVAILABLE</div><div>Genesis Token</div><div class="limited">NOT AVAILABLE</div><div class="ok">AVAILABLE</div></div><p class="muted">Verified source coverage: 21 TypeScript tests + 13 Android tests + 16 Rust source tests. SDK receipt v3 binds integer raw units to an exact mint; browser and Android local simulations remain explicitly labelled receipt v2. Delegated settlement v2 is source-tested and clearly separated from deployed v1 evidence. No simulated hash is presented as a chain transaction.</p></section>
     <section class="card" style="margin-top:14px">
       <div class="eyebrow">Live evidence · Solana Devnet</div>
       <h2>Verify the wallet proof without trusting us.</h2>

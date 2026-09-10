@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { stableHash } from './hash.js';
+import { canonicalJson, stableHash } from './hash.js';
 import type { Receipt, WebhookEnvelope } from './types.js';
 
 export function createWebhookEnvelope(receipt: Receipt, now = new Date()): WebhookEnvelope {
@@ -13,7 +13,7 @@ export function createWebhookEnvelope(receipt: Receipt, now = new Date()): Webho
 
 export function signWebhook(envelope: WebhookEnvelope, secret: string): string {
   if (secret.length < 16) throw new Error('WEBHOOK_SECRET_TOO_SHORT');
-  return `sha256=${createHmac('sha256', secret).update(JSON.stringify(envelope)).digest('hex')}`;
+  return `sha256=${createHmac('sha256', secret).update(canonicalJson(envelope)).digest('hex')}`;
 }
 
 export function verifyWebhookSignature(envelope: WebhookEnvelope, signature: string, secret: string): boolean {

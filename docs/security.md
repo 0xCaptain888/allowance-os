@@ -6,7 +6,7 @@
 - SPL Token CPI occurs only after every Program check passes;
 - identity/evidence mismatch freezes the allowance;
 - authority can revoke the allowance;
-- SDK v2 binds every request to a unique request ID, nonce, issue time, expiry, evidence URI, evidence type, and evidence hash;
+- SDK receipt v3 binds every request to a unique request ID, nonce, issue time, expiry, exact mint, integer raw amount, evidence URI, evidence type, and evidence hash;
 - identical request retries are idempotent;
 - evidence reuse under a new SDK request is blocked;
 - the Rust source rejects the last accepted evidence hash with Custom Error `14` (`DuplicateEvidence`).

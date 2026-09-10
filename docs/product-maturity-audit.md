@@ -8,11 +8,11 @@ Allowance OS is a strong hackathon proof and an increasingly credible Android re
 
 | Area | Current maturity | What is credible now | Remaining launch gate |
 | --- | ---: | --- | --- |
-| Core policy idea | 8/10 | Merchant, token, program, amount, period and evidence boundaries | Validate the model with real merchants and users |
+| Core policy idea | 8.5/10 | Merchant, exact mint, decimals, integer raw amount, program, period and evidence boundaries | Validate the model with real merchants and users |
 | Android UX | 7/10 | Bilingual five-surface app, service templates, MWA and evidence inspection | Onboarding, accessibility/device matrix and usability sessions |
 | Wallet security | 7.5/10 | No private-key custody; fail-closed Keystore session restoration and stale-identity clearing in v0.11.1 | Instrumented recovery tests, external mobile security review and compromised-device response |
 | Onchain enforcement | 7/10 | Public v1 Devnet settlement plus compiled/tested v2 delegate PDA, period rollover and recovery source | Deploy/verify v2, publish authority-free charge evidence, audit and multisig |
-| Merchant platform | 6/10 | SDK v2, idempotency, evidence replay protection and signed webhooks | Durable database, dashboard, key rotation, rate limits and merchant authentication |
+| Merchant platform | 6.5/10 | Integer raw-unit SDK, canonical nested hashes, idempotency, evidence replay protection and signed webhooks | Durable database, dashboard, key rotation, delivery retries, rate limits and merchant authentication |
 | Reliability | 5/10 | Unit tests and deterministic verifier | Instrumentation/E2E tests, RPC failover, offline UX and operational monitoring |
 | Distribution | 5/10 | Production and debug release channels are separated; production tags require protected signing | Configure the protected key, produce the first signed APK, capture screenshots, then complete Publisher Portal review |
 | Legal/support | 3/10 | Privacy disclosure and public issue tracker | Terms, jurisdiction review, incident response, support SLA and token/risk disclosures |

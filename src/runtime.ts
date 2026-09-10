@@ -1,4 +1,5 @@
 import { applyVerifiedCharge, evaluateCharge, issueReceipt } from './engine.js';
+import { stableHash } from './hash.js';
 import type { AllowancePolicy, ChargeRequest, Receipt } from './types.js';
 
 type StoredRequest = { fingerprint: string; receipt: Receipt };
@@ -25,7 +26,7 @@ export class AllowanceRuntime {
     const policy = this.policies.get(request.allowanceId);
     if (!policy) throw new Error('ALLOWANCE_NOT_FOUND');
 
-    const fingerprint = JSON.stringify(request);
+    const fingerprint = stableHash(request);
     const prior = this.requests.get(request.requestId);
     if (prior) {
       if (prior.fingerprint !== fingerprint) throw new Error('IDEMPOTENCY_KEY_CONFLICT');

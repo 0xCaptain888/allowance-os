@@ -468,7 +468,15 @@ private fun PolicyPage(state: AllowanceUiState, viewModel: AllowanceViewModel, s
         }
 
         ProductCard {
-            SectionTitle(t("请求模拟器", "REQUEST SIMULATOR", chinese), "PRE-FLIGHT")
+            SectionTitle(t("本地请求模拟器", "LOCAL REQUEST SIMULATOR", chinese), t("仅展示", "DISPLAY ONLY", chinese))
+            Notice(
+                t(
+                    "滑块金额和周期支出只用于本地策略演示，不是链上余额或真实账务。真实结算必须读取 Token Mint、Decimals 和整数 raw units。",
+                    "Slider values and period spend are local policy demonstrations, not onchain balances or authoritative accounting. Live settlement must use the token mint, decimals, and integer raw units.",
+                    chinese,
+                ),
+                Amber,
+            )
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(t("请求金额", "Requested amount", chinese), modifier = Modifier.weight(1f), color = Muted)
                 Text("${"%.1f".format(amount)} USDC", color = White, fontSize = 23.sp, fontWeight = FontWeight.Black)
@@ -516,7 +524,7 @@ private fun PolicyPage(state: AllowanceUiState, viewModel: AllowanceViewModel, s
 
         if (template.id == CommercialCatalog.DEFAULT_ID) {
             ProductCard {
-                SectionTitle(t("AlphaBrief 接入样板", "ALPHABRIEF REFERENCE FLOW", chinese), "SDK v2")
+                SectionTitle(t("AlphaBrief 接入样板", "ALPHABRIEF REFERENCE FLOW", chinese), t("本地收据 v2", "LOCAL RECEIPT v2", chinese))
                 Text(
                     t("报告先生成内容哈希，再经过请求 ID、Nonce、有效期、商户与预算检查；只有 VERIFIED 才解锁。", "The report is content-hashed, then checked for request ID, nonce, expiry, merchant, and budget; it unlocks only after VERIFIED.", chinese),
                     color = Muted,

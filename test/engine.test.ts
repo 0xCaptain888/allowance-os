@@ -17,37 +17,56 @@ import {
   unpauseDelegatedInstruction,
 } from '../src/delegated-protocol.js';
 import { PublicKey } from '@solana/web3.js';
+import { canonicalJson, stableHash } from '../src/hash.js';
 import type { AllowancePolicy, ChargeRequest } from '../src/types.js';
 
 const policy: AllowancePolicy = {
   allowanceId: 'test-1', subscriber: 'seeker:alice.skr', merchant: 'merchant:researchpulse', merchantName: 'ResearchPulse',
-  token: 'USDC', perCharge: 2, period: 'weekly', periodCap: 8, spentInPeriod: 0,
+  token: 'USDC', tokenMint: 'mint:usdc-test', tokenDecimals: 6,
+  perChargeRaw: '2000000', period: 'weekly', periodCapRaw: '8000000', spentInPeriodRaw: '0',
   expiresAt: '2026-10-09T00:00:00.000Z', allowedProgram: 'program:allowance-os-devnet', appReleaseHash: 'release:test',
 };
 const request = (overrides: Partial<ChargeRequest> = {}): ChargeRequest => ({
   requestId: 'req_alphabrief_0001', nonce: 1, allowanceId: policy.allowanceId, merchant: policy.merchant,
-  token: 'USDC', amount: 2, program: policy.allowedProgram, requestedAt: '2026-09-09T00:00:00.000Z',
+  token: 'USDC', tokenMint: policy.tokenMint, amountRaw: '2000000', program: policy.allowedProgram, requestedAt: '2026-09-09T00:00:00.000Z',
   expiresAt: '2026-09-09T00:05:00.000Z', evidenceHash: 'a'.repeat(64),
   evidenceUri: 'ipfs://alphabrief/report-001', evidenceType: 'content-delivery', ...overrides,
 });
 
 test('verified charge passes every policy check', () => assert.equal(evaluateCharge(policy, request(), new Date('2026-09-09T00:00:00.000Z')).state, 'VERIFIED'));
-test('over-cap charge is blocked', () => assert.equal(evaluateCharge(policy, request({ amount: 10 }), new Date('2026-09-09T00:00:00.000Z')).state, 'BLOCKED'));
-test('zero, negative, and non-finite charges are blocked', () => {
-  for (const amount of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
-    assert.equal(evaluateCharge(policy, request({ amount }), new Date('2026-09-09T00:00:00.000Z')).state, 'BLOCKED');
+test('over-cap charge is blocked', () => assert.equal(evaluateCharge(policy, request({ amountRaw: '10000000' }), new Date('2026-09-09T00:00:00.000Z')).state, 'BLOCKED'));
+test('zero, negative, decimal, malformed, and u64-overflow charges are blocked', () => {
+  for (const amountRaw of ['0', '-1', '1.5', '1e6', '', '18446744073709551616']) {
+    assert.equal(evaluateCharge(policy, request({ amountRaw }), new Date('2026-09-09T00:00:00.000Z')).state, 'BLOCKED');
   }
 });
 test('invalid policy budget freezes instead of authorizing', () => {
-  assert.equal(evaluateCharge({ ...policy, periodCap: 1 }, request(), new Date('2026-09-09T00:00:00.000Z')).state, 'FROZEN');
+  assert.equal(evaluateCharge({ ...policy, periodCapRaw: '1000000' }, request(), new Date('2026-09-09T00:00:00.000Z')).state, 'FROZEN');
+});
+test('invalid token metadata freezes the policy', () => {
+  assert.equal(evaluateCharge({ ...policy, tokenDecimals: 1.5 }, request(), new Date('2026-09-09T00:00:00.000Z')).state, 'FROZEN');
+  assert.equal(evaluateCharge({ ...policy, tokenMint: '' }, request(), new Date('2026-09-09T00:00:00.000Z')).state, 'FROZEN');
+});
+test('mint mismatch freezes even when the display symbol matches', () => {
+  const result = evaluateCharge(policy, request({ tokenMint: 'mint:lookalike' }), new Date('2026-09-09T00:00:00.000Z'));
+  assert.equal(result.state, 'FROZEN');
+  assert.ok(result.reasons.includes('token_mint_mismatch'));
 });
 test('merchant mismatch freezes the allowance', () => assert.equal(evaluateCharge(policy, request({ merchant: 'merchant:lookalike' }), new Date('2026-09-09T00:00:00.000Z')).state, 'FROZEN'));
 test('allowance ID mismatch freezes the request', () => assert.equal(evaluateCharge(policy, request({ allowanceId: 'other-allowance' }), new Date('2026-09-09T00:00:00.000Z')).state, 'FROZEN'));
-test('verified charge advances the period spend', () => assert.equal(applyVerifiedCharge(policy, request(), new Date('2026-09-09T00:00:00.000Z')).spentInPeriod, 2));
+test('verified charge advances raw period spend without floating point', () => assert.equal(applyVerifiedCharge(policy, request(), new Date('2026-09-09T00:00:00.000Z')).spentInPeriodRaw, '2000000'));
 test('charge instruction carries the policy hash', () => {
   const instruction = chargeAllowanceInstruction(policy, request());
   assert.equal(instruction.kind, 'chargeAllowance');
   if (instruction.kind === 'chargeAllowance') assert.equal(instruction.policyHash, policyHash(policy));
+});
+test('canonical hashes include nested values and ignore object key order', () => {
+  const left = { policy: { merchant: 'merchant:a', limits: { period: '8000000', perCharge: '2000000' } } };
+  const reordered = { policy: { limits: { perCharge: '2000000', period: '8000000' }, merchant: 'merchant:a' } };
+  const changed = { policy: { merchant: 'merchant:b', limits: { period: '8000000', perCharge: '2000000' } } };
+  assert.equal(canonicalJson(left), canonicalJson(reordered));
+  assert.equal(stableHash(left), stableHash(reordered));
+  assert.notEqual(stableHash(left), stableHash(changed));
 });
 test('standard Android can use MWA without claiming Seed Vault', () => {
   assert.deepEqual(capabilitySummary(standardAndroidProfile), {
@@ -66,7 +85,7 @@ test('revoke makes an allowance immediately inactive', () => {
 test('expired requests are blocked and never advance period spend', () => {
   const result = evaluateCharge(policy, request({ expiresAt: '2026-09-08T23:59:59.000Z' }), new Date('2026-09-09T00:00:00.000Z'));
   assert.equal(result.state, 'BLOCKED');
-  assert.equal(result.nextSpentInPeriod, 0);
+  assert.equal(result.nextSpentInPeriodRaw, '0');
   assert.ok(result.reasons.includes('request_expired'));
 });
 test('replayed evidence is blocked', () => {
@@ -81,7 +100,7 @@ test('SDK is idempotent for the same request and does not double-spend', () => {
   const retry = sdk.requestCharge(request(), new Date('2026-09-09T00:00:01.000Z'));
   assert.equal(first.receipt.state, 'VERIFIED');
   assert.equal(retry.receipt.idempotentReplay, true);
-  assert.equal(sdk.revokeAllowance(policy.allowanceId).spentInPeriod, 2);
+  assert.equal(sdk.revokeAllowance(policy.allowanceId).spentInPeriodRaw, '2000000');
   assert.equal(verifyWebhookSignature(first.webhook, first.webhookSignature, 'test-webhook-secret-32-characters'), true);
 });
 test('a new request cannot reuse delivered evidence', () => {

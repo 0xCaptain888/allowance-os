@@ -1,15 +1,20 @@
 export type AllowanceState = 'VERIFIED' | 'BLOCKED' | 'FROZEN' | 'REVOKED';
 
+/** Base-10 integer string in the token mint's smallest unit. */
+export type RawAmount = string;
+
 export type AllowancePolicy = {
   allowanceId: string;
   subscriber: string;
   merchant: string;
   merchantName: string;
   token: 'USDC' | 'SKR';
-  perCharge: number;
+  tokenMint: string;
+  tokenDecimals: number;
+  perChargeRaw: RawAmount;
   period: 'daily' | 'weekly' | 'monthly';
-  periodCap: number;
-  spentInPeriod: number;
+  periodCapRaw: RawAmount;
+  spentInPeriodRaw: RawAmount;
   periodStartedAt?: string;
   expiresAt: string;
   allowedProgram: string;
@@ -23,7 +28,8 @@ export type ChargeRequest = {
   allowanceId: string;
   merchant: string;
   token: AllowancePolicy['token'];
-  amount: number;
+  tokenMint: string;
+  amountRaw: RawAmount;
   program: string;
   requestedAt: string;
   expiresAt: string;
@@ -41,18 +47,20 @@ export type CheckResult = {
   state: AllowanceState;
   reasons: string[];
   checks: Record<string, boolean>;
-  nextSpentInPeriod: number;
+  nextSpentInPeriodRaw: RawAmount;
 };
 
 export type Receipt = {
-  receiptVersion: '2';
+  receiptVersion: '3';
   requestId: string;
   nonce: number;
   allowanceId: string;
   state: AllowanceState;
   merchant: string;
   token: AllowancePolicy['token'];
-  amount: number;
+  tokenMint: string;
+  tokenDecimals: number;
+  amountRaw: RawAmount;
   policyHash: string;
   evidenceHash: string;
   evidenceUri: string;

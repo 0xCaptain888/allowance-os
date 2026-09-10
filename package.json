@@ -1,6 +1,6 @@
 {
   "name": "allowance-os",
-  "version": "0.11.1",
+  "version": "0.12.0",
   "private": true,
   "description": "A Solana Mobile payment-authorization layer for Web3 services, subscriptions, agents, and metered APIs.",
   "type": "module",

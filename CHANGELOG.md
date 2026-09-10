@@ -2,6 +2,20 @@
 
 All notable Allowance OS Android releases are recorded here. Installable APK files and checksums are attached to the matching [GitHub Releases](https://github.com/0xCaptain888/allowance-os/releases).
 
+## Android / SDK v0.12.0 — 2026-09-10 (release candidate)
+
+- Replaced SDK floating-point payment fields with mint-bound base-10 integer raw-unit strings.
+- Bumped merchant receipts from schema v2 to v3 so consumers cannot silently mix numeric display amounts with raw-unit strings.
+- Added exact token mint and decimals binding to policies, requests, checks, and receipts.
+- Rejects zero, negative, decimal, scientific-notation, malformed, and `u64`-overflow raw amounts.
+- Freezes policies with invalid token metadata or invalid raw budget boundaries.
+- Replaced shallow JSON hashing with recursively canonical JSON that covers nested values and ignores object-key insertion order.
+- Uses canonical request hashes for idempotency and canonical payloads for webhook HMAC signatures.
+- Labels Android sliders and projected spend as local demonstrations rather than authoritative chain accounting.
+- Expanded TypeScript coverage from 18 to 21 tests.
+
+Release status: source and local debug build verified; production tag not created.
+
 ## Android v0.11.1 — 2026-09-10 (release candidate)
 
 - A restored wallet now requires both a stored public identity and a valid encrypted MWA reconnect token.

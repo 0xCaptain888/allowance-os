@@ -10,11 +10,11 @@ Verified locally on September 10, 2026:
 ./gradlew testDebugUnitTest assembleDebug
 BUILD SUCCESSFUL
 13 Android policy/session tests passed
-Artifact: app/build/outputs/apk/debug/allowance-os-0.11.1-debug.apk
-APK SHA-256: 39ff8c2fe237f1ba128eada3ccc50751a6888a1b301630a8fea76e2809be7592
+Artifact: app/build/outputs/apk/debug/allowance-os-0.12.0-debug.apk
+APK SHA-256: 85a052d9adcb27ec6ccd3028be8454fe16ca6d823397fb694775655cc0c0b238
 ```
 
-v0.11.1 requires a valid encrypted MWA reconnect token before restoring a connected wallet, clears stale public identity after Keystore recovery failure, fails closed when session persistence fails, and separates test-release tags from protected production releases. It retains the AlphaBrief flow, five commercial templates, Seeker Integration Lab, deployed Program evidence boundary, and direct Devnet verification.
+v0.12.0 requires a valid encrypted MWA reconnect token before restoring a connected wallet, clearly labels slider accounting as local-only, and separates test-release tags from protected production releases. The shared SDK now uses mint-bound integer raw units instead of floating-point payment values.
 
 The checksum belongs to the local debug build and may change after any source or dependency update.
 
@@ -49,7 +49,7 @@ JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home" \
 
 ```bash
 ~/Library/Android/sdk/platform-tools/adb install -r \
-  app/build/outputs/apk/debug/allowance-os-0.11.1-debug.apk
+  app/build/outputs/apk/debug/allowance-os-0.12.0-debug.apk
 ```
 
 7. Open **Allowance OS** on the phone.

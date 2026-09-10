@@ -86,7 +86,7 @@ The v2 source replaces recurring authority signatures with an SPL delegate PDA a
 
 ```text
 merchant output -> evidence hash -> expiring request ID + nonce
-  -> SDK policy decision -> receipt v2 -> signed webhook -> fulfillment unlock
+  -> SDK policy decision -> mint-bound integer receipt v3 -> signed webhook -> fulfillment unlock
                            -> idempotent retry returns stored receipt
                            -> reused evidence under new request is BLOCKED
 ```
