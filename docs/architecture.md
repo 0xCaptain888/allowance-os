@@ -8,6 +8,8 @@ The current deployed Program requires the authority signer for `Charge`. That is
 
 Delegated Settlement v2 now implements that missing architecture in compiled and tested source. A user signs `CreateDelegated` once, which delegates a hard lifetime amount to an allowance-scoped PDA. Later settlement requires separate executor and verifier signatures; the Program signs the SPL transfer as the PDA after enforcing the policy. The user authority is not an account in `ChargeDelegated`. Status: **SOURCE TESTED · NOT DEPLOYED**.
 
+The source declares the dedicated v2 Program ID `7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL`; the live v1 evidence remains under `DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`. The two identities are intentionally separated so judges cannot mistake old deployment evidence for v2 behavior.
+
 ```text
 Seeker Android App
   ├─ Allowance cards and history

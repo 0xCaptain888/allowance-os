@@ -32,6 +32,7 @@ Release status: source and local debug build verified; production tag not create
 ## Unreleased — Delegated Settlement v2 source
 
 - Added backward-compatible Program v2 instructions without changing legacy v1 Borsh discriminants.
+- Assigned a dedicated v2 Program identity so new deployment evidence cannot be confused with the live v1 binary.
 - Added an allowance-scoped SPL delegate PDA so later settlement does not require the user authority signer.
 - Added four-way authority/merchant/executor/verifier separation, sequential nonces, and per-charge, rolling-period, and lifetime caps.
 - Added immutable Evidence Record PDAs keyed by allowance plus the complete evidence hash; accepted charges and freezes now preserve full historical replay evidence onchain.
@@ -39,7 +40,7 @@ Release status: source and local debug build verified; production tag not create
 - Added authority-controlled executor rotation and authority+current-verifier controlled verifier rotation without changing legacy discriminants.
 - Added user pause/unpause, verifier evidence-bound freeze, authority+verifier unfreeze, and terminal revoke that removes the SPL Token delegation.
 - Added matching TypeScript instruction builders and expanded coverage to 22 TypeScript and 20 Rust tests.
-- Produced current `130,280`-byte Solana SBF binaries on macOS (`e0eb4726…e7d6`) and Ubuntu CI (`45a3996e…91dc`); both host-specific hashes are recorded without claiming cross-platform byte reproducibility.
+- Produced a current `130,280`-byte macOS Solana SBF binary (`e0eb4726…e7d6`); independent Ubuntu builds are recorded per pushed source revision without claiming cross-platform byte reproducibility.
 - Added a pinned CI SBF build job that uploads the deployable `.so` as a workflow artifact.
 - Added the full v2 architecture, account model, threat boundary, deployment checklist, and explicit `SOURCE TESTED · NOT DEPLOYED` label.
 

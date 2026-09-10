@@ -2,6 +2,7 @@
 
 Status: **SOURCE TESTED · NOT DEPLOYED**  
 Program crate: `allowance-os-program 0.2.0`  
+Declared v2 Program ID: `7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL`
 State version: `2`  
 Allowance state size: `332` bytes
 Evidence record size: `82` bytes
@@ -193,16 +194,16 @@ The source was compiled to Solana SBF artifacts using pinned `cargo-build-sbf 4.
 
 ```text
 macOS: 130,280 bytes · e0eb4726bdfda25fa2a377f347b9590087072e4ad1d9e455598760f6b865e7d6
-Ubuntu CI: 130,280 bytes · 45a3996ee011587e394951ee344742290c0aa7d0d132d972cb0168360df191dc
+Ubuntu CI: generated independently for the current pushed source revision
 ```
 
-The host-specific digests differ, so no byte-for-byte cross-platform reproducibility claim is made. The exact `.so` chosen for deployment must be hashed and compared with the deployed binary. The machine-readable record is [`evidence/delegated-v2-source-build.json`](../evidence/delegated-v2-source-build.json). Generated `.so` files and all build keypairs remain ignored local artifacts.
+No byte-for-byte cross-platform reproducibility claim is made. The exact `.so` chosen for deployment must be hashed and compared with the deployed binary. The machine-readable record is [`evidence/delegated-v2-source-build.json`](../evidence/delegated-v2-source-build.json). Generated `.so` files and all build keypairs remain ignored local artifacts.
 
 ## Deployment gate
 
 This document describes compiled and tested source, not a live v2 deployment. Before changing the status to `DEVNET VERIFIED`, the project must publish:
 
-1. the upgraded or newly deployed Program ID;
+1. the deployment transaction for the declared v2 Program ID;
 2. the deploy/upgrade transaction;
 3. a `CreateDelegated` transaction showing the SPL approval;
 4. a later `ChargeDelegated` transaction signed by executor and verifier without the user;

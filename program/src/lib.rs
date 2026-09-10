@@ -22,9 +22,9 @@ use solana_program::{
 };
 use spl_token::state::Account as TokenAccount;
 
-// Devnet program id derived from the local deployment keypair. The matching
-// explorer address and deployment transaction are recorded after deployment.
-solana_program::declare_id!("DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE");
+// Dedicated v2 Devnet program id derived from the ignored local deployment
+// keypair. Deployment evidence is published separately from the live v1 proof.
+solana_program::declare_id!("7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL");
 
 pub const STATE_SIZE: usize = 1 + (32 * 4) + (8 * 3) + 8 + 1 + 1 + (32 * 3);
 pub const DELEGATED_STATE_SIZE: usize = 332;
