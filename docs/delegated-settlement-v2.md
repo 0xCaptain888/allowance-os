@@ -159,14 +159,14 @@ Rust source tests cover:
 
 TypeScript tests additionally verify the production-facing instruction payload sizes, account order, signer flags, discriminants, PDA, malformed hashes, and integer ranges.
 
-The source was also compiled to a Solana SBF artifact using `cargo-build-sbf 4.3.0`, platform-tools `v1.57`, and Rust `1.95.0`:
+The source was compiled to Solana SBF artifacts using pinned `cargo-build-sbf 4.3.0`. The local macOS builder used platform-tools `v1.57` and Rust `1.95.0`:
 
 ```text
-Size:    92,704 bytes
-SHA-256: 9c36a9aaa91f40a9797c99876015ebcd2aaf284f796166719e2df1f19ee34fd5
+macOS:     92,704 bytes · 9c36a9aaa91f40a9797c99876015ebcd2aaf284f796166719e2df1f19ee34fd5
+Ubuntu CI: 92,704 bytes · 5aa5d33d45557266800dd3941731eb8e607d47c0030d6fba3b5a4ec41c19b02e
 ```
 
-The machine-readable record is [`evidence/delegated-v2-source-build.json`](../evidence/delegated-v2-source-build.json). The generated `.so` and all build keypairs remain ignored local artifacts.
+The host-specific digests differ, so no byte-for-byte cross-platform reproducibility claim is made. The exact `.so` chosen for deployment must be hashed and compared with the deployed binary. The machine-readable record is [`evidence/delegated-v2-source-build.json`](../evidence/delegated-v2-source-build.json). Generated `.so` files and all build keypairs remain ignored local artifacts.
 
 ## Deployment gate
 

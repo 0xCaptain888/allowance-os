@@ -30,7 +30,7 @@
 - Eighteen passing TypeScript tests, including malformed-amount, invalid-budget, idempotency, stale-request, signed-webhook, tamper, live-adapter, replay, and delegated instruction coverage.
 - npm dependency audit: 0 known vulnerabilities after compatible transitive overrides.
 - Native Solana Program v0.2.0 source compiled with 16 passing Rust tests, including v1 compatibility, delegated settlement safety boundaries, and evidence-bound freeze validation.
-- Solana SBF v2 binary built locally with `cargo-build-sbf 4.3.0` / platform-tools `v1.57`; 92,704 bytes, SHA-256 `9c36a9aaa91f40a9797c99876015ebcd2aaf284f796166719e2df1f19ee34fd5`.
+- Solana SBF v2 binary built locally and in GitHub CI with pinned `cargo-build-sbf 4.3.0`; both artifacts are 92,704 bytes. macOS SHA-256: `9c36a9aaa91f40a9797c99876015ebcd2aaf284f796166719e2df1f19ee34fd5`; Ubuntu CI SHA-256: `5aa5d33d45557266800dd3941731eb8e607d47c0030d6fba3b5a4ec41c19b02e`.
 - Upgradeable Program deployed to Solana Devnet at `DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`.
 - Real Devnet allowance account with public `CREATED`, `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED` evidence.
 - VERIFIED transfers exactly `1,000,000` raw SPL-token units through CPI; source balance changes `20 → 19`, merchant `0 → 1`.
@@ -69,7 +69,7 @@ The v0.11.0 tag workflow completed successfully on September 10, 2026. Local and
 
 The wallet/Memo evidence is recorded separately from program enforcement. Program deployment, real state transitions, and the SPL-token CPI settlement are recorded in `evidence/live-devnet-program.json`. The token is a project-created Devnet test mint and is not presented as canonical USDC.
 
-The v2 SBF artifact is recorded separately in `evidence/delegated-v2-source-build.json`. It proves buildability only; no v2 deployment or authority-free settlement transaction is claimed yet.
+The v2 SBF artifacts are recorded separately in `evidence/delegated-v2-source-build.json`. They prove buildability only; no v2 deployment or authority-free settlement transaction is claimed yet. The macOS and Ubuntu hashes differ, so the exact artifact chosen for deployment must be hashed and matched to the deployed binary.
 
 ## Production architecture gate
 
