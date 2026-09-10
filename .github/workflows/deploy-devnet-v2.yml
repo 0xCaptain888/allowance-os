@@ -1,0 +1,90 @@
+name: Deploy Delegated Settlement v2 to Devnet
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: allowance-os-devnet-v2-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: solana-devnet
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download independently built SBF artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: allowance-os-program-v2-sbf
+          path: program/target/deploy
+          run-id: 34451107078
+          github-token: ${{ github.token }}
+
+      - name: Install Agave CLI
+        shell: bash
+        run: |
+          curl -fL --retry 3 \
+            -o "$RUNNER_TEMP/solana-release.tar.bz2" \
+            https://github.com/anza-xyz/agave/releases/download/v4.2.2/solana-release-x86_64-unknown-linux-gnu.tar.bz2
+          mkdir -p "$RUNNER_TEMP/agave"
+          tar -xjf "$RUNNER_TEMP/solana-release.tar.bz2" -C "$RUNNER_TEMP/agave"
+          echo "$RUNNER_TEMP/agave/solana-release/bin" >> "$GITHUB_PATH"
+
+      - name: Restore ephemeral deployment signers
+        shell: bash
+        env:
+          DEPLOYER_KEYPAIR: ${{ secrets.SOLANA_DEVNET_DEPLOYER_KEYPAIR }}
+          PROGRAM_KEYPAIR: ${{ secrets.SOLANA_DEVNET_V2_PROGRAM_KEYPAIR }}
+        run: |
+          test -n "$DEPLOYER_KEYPAIR" || { echo "Missing deployer secret"; exit 1; }
+          test -n "$PROGRAM_KEYPAIR" || { echo "Missing program secret"; exit 1; }
+          printf '%s' "$DEPLOYER_KEYPAIR" > "$RUNNER_TEMP/deployer.json"
+          printf '%s' "$PROGRAM_KEYPAIR" > "$RUNNER_TEMP/program.json"
+          chmod 600 "$RUNNER_TEMP/deployer.json" "$RUNNER_TEMP/program.json"
+
+      - name: Verify deployment identity and artifact
+        shell: bash
+        run: |
+          test "$(solana address -k "$RUNNER_TEMP/deployer.json")" = "Hwr3facWMTBCJYbYPcRNLPKZspWDmSkizdi7f9tjUsYt"
+          test "$(solana address -k "$RUNNER_TEMP/program.json")" = "7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswD6xvL"
+          echo "Artifact digest: $(sha256sum program/target/deploy/allowance_os_program.so | cut -d' ' -f1)"
+          solana balance Hwr3facWMTBCJYbYPcRNLPKZspWDmSkizdi7f9tjUsYt --url devnet
+
+      - name: Deploy v2 through RPC
+        shell: bash
+        run: |
+          solana program deploy program/target/deploy/allowance_os_program.so \
+            --program-id "$RUNNER_TEMP/program.json" \
+            --keypair "$RUNNER_TEMP/deployer.json" \
+            --upgrade-authority "$RUNNER_TEMP/deployer.json" \
+            --url devnet \
+            --commitment confirmed \
+            --max-len 130280 \
+            --use-rpc \
+            --max-sign-attempts 8 \
+            --output json | tee deploy-output.json
+
+      - name: Record public program state
+        shell: bash
+        run: |
+          solana program show 7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswD6xvL \
+            --url devnet \
+            --keypair "$RUNNER_TEMP/deployer.json" \
+            --output json | tee program-state.json
+          solana balance Hwr3facWMTBCJYbYPcRNLPKZspWDmSkizdi7f9tjUsYt --url devnet | tee remaining-balance.txt
+
+      - name: Upload deployment evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: allowance-os-v2-devnet-deployment
+          path: |
+            deploy-output.json
+            program-state.json
+            remaining-balance.txt
+          if-no-files-found: error
