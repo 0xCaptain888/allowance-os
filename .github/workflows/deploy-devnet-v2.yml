@@ -41,18 +41,22 @@ jobs:
         env:
           DEPLOYER_KEYPAIR: ${{ secrets.SOLANA_DEVNET_DEPLOYER_KEYPAIR }}
           PROGRAM_KEYPAIR: ${{ secrets.SOLANA_DEVNET_V2_PROGRAM_KEYPAIR }}
+          BUFFER_KEYPAIR: ${{ secrets.SOLANA_DEVNET_V2_BUFFER_KEYPAIR }}
         run: |
           test -n "$DEPLOYER_KEYPAIR" || { echo "Missing deployer secret"; exit 1; }
           test -n "$PROGRAM_KEYPAIR" || { echo "Missing program secret"; exit 1; }
+          test -n "$BUFFER_KEYPAIR" || { echo "Missing buffer secret"; exit 1; }
           printf '%s' "$DEPLOYER_KEYPAIR" > "$RUNNER_TEMP/deployer.json"
           printf '%s' "$PROGRAM_KEYPAIR" > "$RUNNER_TEMP/program.json"
-          chmod 600 "$RUNNER_TEMP/deployer.json" "$RUNNER_TEMP/program.json"
+          printf '%s' "$BUFFER_KEYPAIR" > "$RUNNER_TEMP/buffer.json"
+          chmod 600 "$RUNNER_TEMP/deployer.json" "$RUNNER_TEMP/program.json" "$RUNNER_TEMP/buffer.json"
 
       - name: Verify deployment identity and artifact
         shell: bash
         run: |
           test "$(solana address -k "$RUNNER_TEMP/deployer.json")" = "Hwr3facWMTBCJYbYPcRNLPKZspWDmSkizdi7f9tjUsYt"
           test "$(solana address -k "$RUNNER_TEMP/program.json")" = "7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL"
+          test "$(solana address -k "$RUNNER_TEMP/buffer.json")" = "3WyJiKJjmcQnznH45Yxtha5Dmgt6ueM7CnGeeGUNGbWN"
           echo "Artifact digest: $(sha256sum program/target/deploy/allowance_os_program.so | cut -d' ' -f1)"
           solana balance Hwr3facWMTBCJYbYPcRNLPKZspWDmSkizdi7f9tjUsYt --url devnet
 
@@ -61,6 +65,7 @@ jobs:
         run: |
           solana program deploy program/target/deploy/allowance_os_program.so \
             --program-id "$RUNNER_TEMP/program.json" \
+            --buffer "$RUNNER_TEMP/buffer.json" \
             --keypair "$RUNNER_TEMP/deployer.json" \
             --upgrade-authority "$RUNNER_TEMP/deployer.json" \
             --url devnet \
