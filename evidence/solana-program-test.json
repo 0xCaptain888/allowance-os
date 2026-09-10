@@ -1,13 +1,14 @@
 {
   "evidenceType": "LOCAL_SOLANA_PROGRAM_TEST",
   "project": "Allowance OS",
-  "date": "2026-09-09",
-  "command": "cargo test --manifest-path program/Cargo.toml",
+  "date": "2026-09-10",
+  "command": "cargo test --config source.rsproxy.registry=sparse+https://rsproxy.cn/index/",
   "result": "PASS",
   "tests": {
-    "passed": 5,
+    "passed": 6,
     "failed": 0
   },
   "solanaProgramVersion": "1.18.26",
-  "truthBoundary": "This file proves native Rust compilation and unit tests. Deployment and live state-transition evidence are recorded separately in evidence/live-devnet-program.json."
+  "coverage": ["matching evidence", "mismatched evidence freeze", "over-cap rejection", "duplicate evidence rejection", "instruction serialization", "program id"],
+  "truthBoundary": "This file proves native Rust compilation and unit tests for the v0.10.0 source. Deployment and live state-transition evidence are recorded separately in evidence/live-devnet-program.json; the existing deployed binary predates duplicate-evidence protection."
 }

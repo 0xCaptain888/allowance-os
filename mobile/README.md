@@ -9,12 +9,12 @@ Verified locally on September 10, 2026:
 ```text
 ./gradlew testDebugUnitTest assembleDebug
 BUILD SUCCESSFUL
-8 Android policy tests passed
-Artifact: app/build/outputs/apk/debug/allowance-os-0.9.0-debug.apk
+10 Android policy tests passed
+Artifact: app/build/outputs/apk/debug/allowance-os-0.10.0-debug.apk
 APK SHA-256: 3bc974a09091315a52456fccc25bb3664a21d796344974844097728d3b17df82
 ```
 
-v0.9.0 adds a redesigned five-surface product interface, five commercial service templates, dynamic service-specific policy testing, and an explicitly unofficial Seeker Integration Lab while retaining the deployed Program evidence boundary and direct Devnet verification.
+v0.10.0 adds the AlphaBrief report purchase/unlock path, v2 request metadata, and interactive evidence-replay rejection while retaining the five commercial templates, Seeker Integration Lab, deployed Program evidence boundary, and direct Devnet verification.
 
 The checksum belongs to the local debug build and may change after any source or dependency update.
 
@@ -49,7 +49,7 @@ JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home" \
 
 ```bash
 ~/Library/Android/sdk/platform-tools/adb install -r \
-  app/build/outputs/apk/debug/allowance-os-0.9.0-debug.apk
+  app/build/outputs/apk/debug/allowance-os-0.10.0-debug.apk
 ```
 
 7. Open **Allowance OS** on the phone.

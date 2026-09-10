@@ -20,8 +20,9 @@
 - Official Solana Mobile Wallet Adapter 2.0.7 integration.
 - Phantom/MWA authorize, `signAndSendTransactions`, explorer evidence, and deauthorize implementation.
 - Android policy tests and successful debug APK build.
-- Eight passing TypeScript tests.
-- Native Solana program compiled with five passing Rust tests.
+- Fourteen passing TypeScript tests, including idempotency, stale-request, signed-webhook, tamper, live-adapter, and replay coverage.
+- npm dependency audit: 0 known vulnerabilities after compatible transitive overrides.
+- Native Solana program source compiled with six passing Rust tests, including duplicate-evidence rejection.
 - Upgradeable Program deployed to Solana Devnet at `DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`.
 - Real Devnet allowance account with public `CREATED`, `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED` evidence.
 - VERIFIED transfers exactly `1,000,000` raw SPL-token units through CPI; source balance changes `20 → 19`, merchant `0 → 1`.
@@ -30,19 +31,21 @@
 - Onchain evidence mismatch persists `frozen = true`; revoke persists `revoked = true`.
 - Rust formatting and multi-job CI workflow.
 
-## Android v0.9.0 build
+## Android v0.10.0 build
 
 ```text
-Artifact: mobile/android/app/build/outputs/apk/debug/allowance-os-0.9.0-debug.apk
-Size: 18 MB
-Version code: 9
-Version name: 0.9.0
-Android tests: 8 passed, 0 failed
-SHA-256: 3bc974a09091315a52456fccc25bb3664a21d796344974844097728d3b17df82
+Artifact: mobile/android/app/build/outputs/apk/debug/allowance-os-0.10.0-debug.apk
+Size: 18,975,074 bytes
+Version code: 10
+Version name: 0.10.0
+Android tests: 10 passed, 0 failed
+SHA-256: 8fc1b16e2ecae5bd451bc2110a8093c6f0b0992f8ce87ee00524a9e72c455be3
 ```
 
 ## External hardware step still required
 
 - Test Seed Vault and Genesis Token on actual compatible Solana Mobile hardware.
+- Build a production-signed APK and submit it through the Solana dApp Store Publisher Portal.
+- Upgrade the deployed Devnet Program after the ETJL7fK6… upgrade-authority signer is available; until then the live evidence remains the disclosed v0.9.0 binary.
 
 The wallet/Memo evidence is recorded separately from program enforcement. Program deployment, real state transitions, and the SPL-token CPI settlement are recorded in `evidence/live-devnet-program.json`. The token is a project-created Devnet test mint and is not presented as canonical USDC.

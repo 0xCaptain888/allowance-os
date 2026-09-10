@@ -17,9 +17,9 @@ const policy: AllowancePolicy = {
 };
 
 const scenarios: Array<[string, ChargeRequest]> = [
-  ['VERIFIED', { allowanceId: policy.allowanceId, merchant: policy.merchant, token: 'USDC', amount: 2, program: policy.allowedProgram, requestedAt: '2026-09-09T00:00:00.000Z', evidenceHash: 'a'.repeat(64) }],
-  ['BLOCKED', { allowanceId: policy.allowanceId, merchant: policy.merchant, token: 'USDC', amount: 10, program: policy.allowedProgram, requestedAt: '2026-09-09T00:01:00.000Z', evidenceHash: 'b'.repeat(64) }],
-  ['FROZEN', { allowanceId: policy.allowanceId, merchant: 'merchant:lookalike', token: 'USDC', amount: 2, program: policy.allowedProgram, requestedAt: '2026-09-09T00:02:00.000Z', evidenceHash: 'c'.repeat(64) }],
+  ['VERIFIED', { requestId: 'req_demo_verified', nonce: 1, allowanceId: policy.allowanceId, merchant: policy.merchant, token: 'USDC', amount: 2, program: policy.allowedProgram, requestedAt: '2026-09-09T00:00:00.000Z', expiresAt: '2026-09-09T00:05:00.000Z', evidenceHash: 'a'.repeat(64), evidenceUri: 'ipfs://demo/verified', evidenceType: 'content-delivery' }],
+  ['BLOCKED', { requestId: 'req_demo_blocked', nonce: 2, allowanceId: policy.allowanceId, merchant: policy.merchant, token: 'USDC', amount: 10, program: policy.allowedProgram, requestedAt: '2026-09-09T00:01:00.000Z', expiresAt: '2026-09-09T00:05:00.000Z', evidenceHash: 'b'.repeat(64), evidenceUri: 'ipfs://demo/blocked', evidenceType: 'content-delivery' }],
+  ['FROZEN', { requestId: 'req_demo_frozen', nonce: 3, allowanceId: policy.allowanceId, merchant: 'merchant:lookalike', token: 'USDC', amount: 2, program: policy.allowedProgram, requestedAt: '2026-09-09T00:02:00.000Z', expiresAt: '2026-09-09T00:05:00.000Z', evidenceHash: 'c'.repeat(64), evidenceUri: 'ipfs://demo/frozen', evidenceType: 'content-delivery' }],
 ];
 
 for (const [expected, request] of scenarios) {

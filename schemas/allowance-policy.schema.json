@@ -14,6 +14,7 @@
     "period": { "enum": ["daily", "weekly", "monthly"] },
     "periodCap": { "type": "number", "exclusiveMinimum": 0 },
     "spentInPeriod": { "type": "number", "minimum": 0 },
+    "periodStartedAt": { "type": "string", "format": "date-time" },
     "expiresAt": { "type": "string", "format": "date-time" },
     "allowedProgram": { "type": "string", "minLength": 1 },
     "appReleaseHash": { "type": "string", "minLength": 1 },

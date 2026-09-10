@@ -2,6 +2,17 @@
 
 All notable Allowance OS Android releases are recorded here. Installable APK files and checksums are attached to the matching [GitHub Releases](https://github.com/0xCaptain888/allowance-os/releases).
 
+## Android v0.10.0 — 2026-09-10
+
+- Added a complete AlphaBrief paid-research flow across the SDK, Android app, and public Demo.
+- Added request IDs, nonces, five-minute expiry, evidence URI/type, and v2 portable receipts.
+- Added idempotent retries, evidence-replay rejection, and HMAC-signed merchant webhooks.
+- Added Rust duplicate-evidence rejection as Custom Error `14` with a sixth native test.
+- Added security, privacy, SDK integration, and dApp Store submission documentation.
+- Increased TypeScript coverage from 8 to 14 tests and Android coverage from 8 to 10 tests.
+
+Release tag: `android-v0.10.0`
+
 ## Android v0.9.0 — 2026-09-10
 
 - Reframed Allowance OS as a reusable Web3 payment-authorization layer.

@@ -60,6 +60,12 @@ data class AllowanceUiState(
     val programSourceTokenRaw: ULong = 0uL,
     val programMerchantTokenRaw: ULong = 0uL,
     val selectedServiceId: String = CommercialCatalog.DEFAULT_ID,
+    val requestId: String = "req_alphabrief_mobile_001",
+    val requestNonce: Long = 1,
+    val requestExpiresAt: Long = 0,
+    val deliveryEvidenceHash: String = "",
+    val alphaBriefUnlocked: Boolean = false,
+    val replayRejected: Boolean = false,
 )
 
 class AllowanceViewModel(application: Application) : AndroidViewModel(application) {
@@ -167,6 +173,61 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         evaluate(amount, policy.merchant, "service-delivery-sha256", 0.0)
         evaluate(amount + maxOf(1.0, amount), policy.merchant, "service-delivery-sha256", 0.0)
         evaluate(amount, "merchant:lookalike", "service-delivery-sha256", 0.0)
+    }
+
+    fun runAlphaBriefDelivery() {
+        val now = System.currentTimeMillis()
+        val envelope = ChargeEnvelope(
+            requestId = "req_alphabrief_mobile_$now",
+            nonce = now,
+            requestedAtMillis = now,
+            expiresAtMillis = now + 5 * 60_000,
+            evidenceHash = AlphaBriefReference.evidenceHash,
+            evidenceUri = AlphaBriefReference.EVIDENCE_URI,
+        )
+        val decision = PolicyEngine.evaluateRequest(policy, policy.perChargeCap, policy.merchant, envelope, now)
+        _state.update {
+            it.copy(
+                allowanceState = decision.state,
+                decisionReason = decision.reason,
+                requestedAmount = policy.perChargeCap,
+                requestId = envelope.requestId,
+                requestNonce = envelope.nonce,
+                requestExpiresAt = envelope.expiresAtMillis,
+                deliveryEvidenceHash = envelope.evidenceHash,
+                alphaBriefUnlocked = decision.state == AllowanceState.VERIFIED,
+                replayRejected = false,
+            )
+        }
+        logEvent("ALPHABRIEF_UNLOCKED", decision.state, policy.perChargeCap, "AlphaBrief content hash verified and report unlocked")
+    }
+
+    fun replayAlphaBriefEvidence() {
+        val now = System.currentTimeMillis()
+        val envelope = ChargeEnvelope(
+            requestId = "req_alphabrief_replay_$now",
+            nonce = now + 1,
+            requestedAtMillis = now,
+            expiresAtMillis = now + 5 * 60_000,
+            evidenceHash = AlphaBriefReference.evidenceHash,
+            evidenceUri = AlphaBriefReference.EVIDENCE_URI,
+        )
+        val decision = PolicyEngine.evaluateRequest(
+            policy, policy.perChargeCap, policy.merchant, envelope, now,
+            usedEvidenceHashes = setOf(AlphaBriefReference.evidenceHash),
+        )
+        _state.update {
+            it.copy(
+                allowanceState = decision.state,
+                decisionReason = decision.reason,
+                requestId = envelope.requestId,
+                requestNonce = envelope.nonce,
+                requestExpiresAt = envelope.expiresAtMillis,
+                deliveryEvidenceHash = envelope.evidenceHash,
+                replayRejected = decision.state == AllowanceState.BLOCKED,
+            )
+        }
+        logEvent("REPLAY_REJECTED", decision.state, policy.perChargeCap, decision.reason)
     }
 
     fun evaluateCustom(amount: Double, merchantTrusted: Boolean, evidencePresent: Boolean, periodSpent: Double = 0.0) = evaluate(
@@ -444,7 +505,9 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         ).joinToString(",")
         return """
             {
-              "receiptVersion": "1",
+              "receiptVersion": "2",
+              "requestId": "${current.requestId}",
+              "nonce": ${current.requestNonce},
               "allowanceId": "${policy.allowanceId}",
               "state": "${current.allowanceState.name}",
               "amount": ${current.requestedAmount},
@@ -452,6 +515,9 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
               "token": "${policy.token}",
               "merchant": "${if (current.merchantTrusted) policy.merchant else "merchant:lookalike"}",
               "policyHash": "$policyHash",
+              "evidenceHash": "${current.deliveryEvidenceHash}",
+              "evidenceUri": "${if (current.deliveryEvidenceHash.isBlank()) "" else AlphaBriefReference.EVIDENCE_URI}",
+              "requestExpiresAt": ${current.requestExpiresAt},
               "checks": {$checks},
               "signature": "${current.signature}",
               "evidenceLevel": "${if (current.signature.isBlank()) "SIMULATED" else "LIVE_DEVNET_PROOF"}"

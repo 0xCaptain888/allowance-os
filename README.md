@@ -8,9 +8,11 @@
 
 Allowance OS is a Solana Mobile payment-authorization layer for Web3 services. It turns an open-ended wallet approval into a human-readable allowance with merchant, token, program, per-charge, period, expiry, and evidence boundaries—then applies that same model to AI subscriptions, paid research, trading signals, automation bots, and metered APIs.
 
+**v0.10.0 adds the missing merchant loop:** AlphaBrief delivers a report, hashes its content, submits an expiring request with an ID and nonce, receives a VERIFIED receipt plus signed webhook, and unlocks the report. Exact retries are idempotent; a new request reusing the same evidence is BLOCKED. Run it with `npm run demo:alphabrief` or attack it in the public Demo.
+
 ## Commercial product proof
 
-v0.9.0 replaces the single-use demo structure with a five-surface product: **Home → Services → Allowances → Activity → Evidence**.
+v0.10.0 keeps the five-surface product—**Home → Services → Allowances → Activity → Evidence**—and adds a complete merchant integration rather than another static use-case card.
 
 | Ready template | Commercial use | Payment boundary | Required evidence |
 | --- | --- | --- | --- |
@@ -29,8 +31,8 @@ The **Seeker Integration Lab** also maps Allowance OS to apps featured by Solana
 | Surface | What it proves | Status |
 | --- | --- | --- |
 | [Public Judge Demo](https://0xcaptain888.github.io/allowance-os/) | Instant `VERIFIED` / `BLOCKED` / `FROZEN` policy replay | GitHub Pages deployment |
-| `mobile/android` | Bilingual native Android product with commercial catalog, reusable allowances, Seeker blueprints, persistent activity audit, MWA authorization, and direct Devnet RPC verification | v0.9.0; five commercial templates |
-| `program/` | Native Solana create / SPL-token charge / evidence-freeze / revoke logic | Deployed on Devnet; 5 Rust tests passed |
+| `mobile/android` | Bilingual native Android product with commercial catalog, AlphaBrief unlock/replay lab, persistent activity audit, MWA authorization, and direct Devnet RPC verification | v0.10.0; 10 Android tests |
+| `program/` | Native Solana create / SPL-token charge / evidence-freeze / duplicate-evidence / revoke source | Existing v0.9.0 binary deployed; hardened source has 6 Rust tests |
 | Solana Explorer | Connected Devnet wallet and wallet-broadcast authorization proof | Live signature captured |
 | [Deployed allowance program](https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet) | Program-enforced state transitions and settlement | Live `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED` evidence |
 | SPL-token settlement | Token movement through CPI | Live Devnet transfer with independently readable pre/post balances |
@@ -79,6 +81,7 @@ The Android app is not a mockup. It uses Solana Mobile's official `mobile-wallet
 - Chinese and English product interfaces with an in-app language switch;
 - five product surfaces: Home, Services, Allowances, Activity, and Evidence;
 - five reusable commercial templates for AI Agent subscriptions, research reports, trading signals, automated trading bots, and paid APIs;
+- an AlphaBrief reference purchase that exposes request ID, nonce, expiry, content hash, unlock state, and evidence replay rejection;
 - an explicitly unofficial Seeker integration lab covering service subscriptions, games, commerce, fitness, and DeFi automation;
 - persistent Activity Log with decision counts, wallet events, and error history;
 - `Connect Phantom / MWA Wallet`;
@@ -111,10 +114,10 @@ cd mobile/android
 The resulting APK is:
 
 ```text
-mobile/android/app/build/outputs/apk/debug/allowance-os-0.9.0-debug.apk
+mobile/android/app/build/outputs/apk/debug/allowance-os-0.10.0-debug.apk
 ```
 
-SHA-256: `3bc974a09091315a52456fccc25bb3664a21d796344974844097728d3b17df82`
+SHA-256: `8fc1b16e2ecae5bd451bc2110a8093c6f0b0992f8ce87ee00524a9e72c455be3`
 
 See [`mobile/README.md`](mobile/README.md) for phone setup and [`docs/judge-guide.md`](docs/judge-guide.md) for the two-minute evaluation path.
 
@@ -124,8 +127,11 @@ See [`mobile/README.md`](mobile/README.md) for phone setup and [`docs/judge-guid
 - Per-charge and period caps.
 - Merchant, token, program, expiry, allowance-ID, and evidence checks.
 - Human-readable receipts for `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED`.
+- SDK v2 request IDs, nonces, request expiry, idempotent retries, evidence-replay rejection, and HMAC-signed merchant webhooks.
+- A signer-agnostic live adapter that accepts MWA or protected server executors without accepting wallet secrets.
+- End-to-end AlphaBrief paid-content integration in TypeScript, Android, and the browser Demo.
 - Native Solana instruction source for create, SPL-token CPI charge, evidence freeze, and revoke.
-- Reproducible Rust dependency lockfile and five passing native program tests.
+- Reproducible Rust dependency lockfile and six passing native program source tests.
 - Standard Android and Seeker device profiles.
 
 Run the TypeScript verifier:
@@ -135,6 +141,7 @@ npm install
 npm run typecheck
 npm test
 npm run demo
+npm run demo:alphabrief
 ```
 
 Reproduce the live Devnet settlement run with a funded test keypair and compatible token accounts:
@@ -156,7 +163,9 @@ There are four intentionally separate evidence levels:
 3. **PROGRAM-ENFORCED STATE TRANSITIONS** — deployed Rust Program with public create, verified, blocked, frozen, and revoke evidence.
 4. **SPL-TOKEN SETTLEMENT** — the VERIFIED transaction invokes the SPL Token Program and transfers exactly `1,000,000` raw units; BLOCKED and FROZEN are publicly shown to transfer zero.
 
-The deployed Rust Program ID is `DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`. Its upgrade authority remains the deployment wallet for hackathon iteration; this is disclosed rather than presented as immutable production infrastructure.
+The deployed Rust Program ID is `DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`. Its upgrade authority remains the deployment wallet for hackathon iteration; this is disclosed rather than presented as immutable production infrastructure. The deployed binary is still the v0.9.0 evidence build; replay protection is proven in v0.10.0 SDK/Android/browser behavior and Rust source tests, but is not claimed for that older deployed binary.
+
+See the [merchant SDK guide](docs/sdk-integration.md), [security notes](docs/security.md), [privacy policy](docs/privacy-policy.md), and [prepared dApp Store submission pack](docs/dapp-store-submission.md).
 
 ## Device modes
 

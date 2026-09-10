@@ -78,6 +78,7 @@ pub enum AllowanceError {
     InvalidTokenProgram,
     InvalidTokenAccount,
     InvalidMerchantAccount,
+    DuplicateEvidence,
 }
 
 impl From<AllowanceError> for ProgramError {
@@ -96,6 +97,7 @@ impl From<AllowanceError> for ProgramError {
             AllowanceError::InvalidTokenProgram => 11,
             AllowanceError::InvalidTokenAccount => 12,
             AllowanceError::InvalidMerchantAccount => 13,
+            AllowanceError::DuplicateEvidence => 14,
         })
     }
 }
@@ -133,6 +135,9 @@ fn evaluate_charge(
     }
     if evidence_hash == [0; 32] {
         return Err(AllowanceError::EvidenceMissing);
+    }
+    if state.last_evidence_hash != [0; 32] && evidence_hash == state.last_evidence_hash {
+        return Err(AllowanceError::DuplicateEvidence);
     }
     if evidence_hash != state.required_evidence_hash {
         return Ok(ChargeOutcome::FreezeEvidenceMismatch);
@@ -352,6 +357,16 @@ mod tests {
         assert_eq!(
             evaluate_charge(&active_state(), 1_900_000_000, 3_000_000, [9; 32]),
             Err(AllowanceError::PerChargeLimitExceeded)
+        );
+    }
+
+    #[test]
+    fn duplicate_evidence_is_rejected_before_transfer() {
+        let mut state = active_state();
+        state.last_evidence_hash = [7; 32];
+        assert_eq!(
+            evaluate_charge(&state, 1_900_000_000, 1_000_000, [7; 32]),
+            Err(AllowanceError::DuplicateEvidence)
         );
     }
 }

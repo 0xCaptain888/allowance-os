@@ -1,11 +1,12 @@
 {
   "name": "allowance-os",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "private": true,
   "description": "A Solana Mobile payment-authorization layer for Web3 services, subscriptions, agents, and metered APIs.",
   "type": "module",
   "scripts": {
     "demo": "tsx src/demo.ts",
+    "demo:alphabrief": "tsx examples/alphabrief/integration.ts",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test test/*.test.ts",
     "serve:site": "node scripts/serve-site.mjs",
@@ -20,5 +21,9 @@
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "undici": "^8.10.2"
+  },
+  "overrides": {
+    "stream-json": "3.6.0",
+    "uuid": "11.1.1"
   }
 }

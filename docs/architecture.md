@@ -47,3 +47,14 @@ revokeAllowance(allowance)  → authority persists REVOKED state
 Program ID: `DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE` on Solana Devnet.
 
 The same policy hash is exposed to the independent verifier. A UI-only cap is not considered a security boundary. For VERIFIED, the Program validates the authority, mint, source owner, merchant owner, per-charge cap, period cap, expiry, and required evidence hash before invoking the SPL Token Program. The allowed Program ID is committed in the policy state and exposed to independent verification. BLOCKED and FROZEN return before CPI, so they move no tokens. The recorded mint is a project-created Devnet test token, not canonical USDC.
+
+## Merchant delivery plane
+
+```text
+merchant output -> evidence hash -> expiring request ID + nonce
+  -> SDK policy decision -> receipt v2 -> signed webhook -> fulfillment unlock
+                           -> idempotent retry returns stored receipt
+                           -> reused evidence under new request is BLOCKED
+```
+
+The SDK reference runtime is in-memory for reproducible judging. Production deployments must persist its idempotency, nonce, evidence, policy, and receipt records transactionally.

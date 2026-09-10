@@ -1,0 +1,15 @@
+{
+  "status": "PREPARED_NOT_SUBMITTED",
+  "name": "Allowance OS",
+  "packageName": "com.captain.allowanceos",
+  "versionName": "0.10.0",
+  "versionCode": 10,
+  "category": ["finance", "developer-tools"],
+  "shortDescription": "Approve bounded Web3 service budgets, verify every charge, and revoke anytime.",
+  "website": "https://0xcaptain888.github.io/allowance-os/",
+  "support": "https://github.com/0xCaptain888/allowance-os/issues",
+  "privacyPolicy": "https://github.com/0xCaptain888/allowance-os/blob/main/docs/privacy-policy.md",
+  "releaseArtifact": "mobile/android/app/build/outputs/apk/debug/allowance-os-0.10.0-debug.apk",
+  "releaseArtifactStatus": "DEBUG_TEST_BUILD_NOT_FOR_STORE_SUBMISSION",
+  "screenshotsRequired": 8
+}

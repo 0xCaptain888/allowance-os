@@ -1,0 +1,17 @@
+{
+  "evidenceType": "LOCAL_SDK_V2_TEST",
+  "project": "Allowance OS",
+  "date": "2026-09-10",
+  "version": "0.10.0",
+  "commands": ["npm run typecheck", "npm test", "npm run demo:alphabrief", "npm audit"],
+  "result": "PASS",
+  "tests": { "passed": 14, "failed": 0 },
+  "audit": { "vulnerabilities": 0 },
+  "alphaBrief": {
+    "evidenceHash": "b81fee0aa66fc1a5bf813bcfe79be354e84a7f28b8f0056b1eea76dc0b6ff321",
+    "verifiedUnlock": true,
+    "idempotentRetry": true,
+    "replayedEvidenceState": "BLOCKED"
+  },
+  "truthBoundary": "This proves the local SDK reference integration and policy behavior. Its simulated receipt is not presented as a Solana transaction."
+}

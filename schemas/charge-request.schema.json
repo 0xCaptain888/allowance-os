@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://allowance-os.dev/schemas/charge-request.schema.json",
+  "title": "ChargeRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["requestId", "nonce", "allowanceId", "merchant", "token", "amount", "program", "requestedAt", "expiresAt", "evidenceHash", "evidenceUri", "evidenceType"],
+  "properties": {
+    "requestId": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9:_-]{7,127}$" },
+    "nonce": { "type": "integer", "minimum": 0 },
+    "allowanceId": { "type": "string", "minLength": 1 },
+    "merchant": { "type": "string", "minLength": 1 },
+    "token": { "enum": ["USDC", "SKR"] },
+    "amount": { "type": "number", "exclusiveMinimum": 0 },
+    "program": { "type": "string", "minLength": 1 },
+    "requestedAt": { "type": "string", "format": "date-time" },
+    "expiresAt": { "type": "string", "format": "date-time" },
+    "evidenceHash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+    "evidenceUri": { "type": "string", "minLength": 1 },
+    "evidenceType": { "enum": ["content-delivery", "agent-run", "signal", "order", "usage-batch"] }
+  }
+}

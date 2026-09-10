@@ -24,6 +24,15 @@ data class PolicyDecision(
     val reason: String,
 )
 
+data class ChargeEnvelope(
+    val requestId: String,
+    val nonce: Long,
+    val requestedAtMillis: Long,
+    val expiresAtMillis: Long,
+    val evidenceHash: String,
+    val evidenceUri: String,
+)
+
 object PolicyEngine {
     fun evaluate(
         policy: AllowancePolicy,
@@ -71,4 +80,31 @@ object PolicyEngine {
             .digest(canonical.encodeToByteArray())
             .joinToString("") { "%02x".format(it) }
     }
+
+    fun evaluateRequest(
+        policy: AllowancePolicy,
+        amount: Double,
+        merchant: String,
+        envelope: ChargeEnvelope,
+        nowMillis: Long,
+        usedEvidenceHashes: Set<String> = emptySet(),
+    ): PolicyDecision = when {
+        envelope.requestId.length < 8 -> PolicyDecision(AllowanceState.BLOCKED, "Request ID is invalid.")
+        envelope.nonce < 0 -> PolicyDecision(AllowanceState.BLOCKED, "Nonce is invalid.")
+        envelope.expiresAtMillis <= nowMillis || envelope.expiresAtMillis <= envelope.requestedAtMillis ->
+            PolicyDecision(AllowanceState.BLOCKED, "Charge request expired before settlement.")
+        envelope.evidenceHash in usedEvidenceHashes ->
+            PolicyDecision(AllowanceState.BLOCKED, "Evidence replay rejected; no second payment is permitted.")
+        else -> evaluate(policy, amount, merchant, envelope.evidenceHash)
+    }
+
+    fun sha256(value: String): String = MessageDigest.getInstance("SHA-256")
+        .digest(value.encodeToByteArray())
+        .joinToString("") { "%02x".format(it) }
+}
+
+object AlphaBriefReference {
+    const val REPORT = "Allowance-based payments let users approve bounded research purchases without granting unlimited merchant authority."
+    const val EVIDENCE_URI = "app://embedded/alphabrief-report-v1"
+    val evidenceHash: String get() = PolicyEngine.sha256(REPORT)
 }

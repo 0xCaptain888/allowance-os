@@ -36,8 +36,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          notes="docs/releases/${GITHUB_REF_NAME}.md"
+          args=(--title "Allowance OS Android ${GITHUB_REF_NAME#android-v}")
+          if [[ -f "$notes" ]]; then args+=(--notes-file "$notes"); else args+=(--generate-notes); fi
           gh release create "$GITHUB_REF_NAME" \
             mobile/android/app/build/outputs/apk/debug/*.apk \
             mobile/android/app/build/outputs/apk/debug/SHA256SUMS.txt \
-            --title "Allowance OS Android ${GITHUB_REF_NAME#android-v}" \
-            --generate-notes
+            "${args[@]}"

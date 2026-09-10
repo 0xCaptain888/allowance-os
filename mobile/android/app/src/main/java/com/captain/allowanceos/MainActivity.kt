@@ -120,7 +120,7 @@ private fun AppHeader(chinese: Boolean, onLanguageToggle: () -> Unit) {
         ) { Text("A", color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Black) }
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text("Allowance OS · v0.9.0", color = White, fontSize = 18.sp, fontWeight = FontWeight.Black)
+            Text("Allowance OS · v0.10.0", color = White, fontSize = 18.sp, fontWeight = FontWeight.Black)
             Text(t("Web3 服务支付与授权层", "Payment authorization for Web3 services", chinese), color = Muted, fontSize = 11.sp)
         }
         Row(
@@ -458,6 +458,29 @@ private fun PolicyPage(state: AllowanceUiState, viewModel: AllowanceViewModel, s
 
         DecisionCard(state, chinese)
 
+        if (template.id == CommercialCatalog.DEFAULT_ID) {
+            ProductCard {
+                SectionTitle(t("AlphaBrief 接入样板", "ALPHABRIEF REFERENCE FLOW", chinese), "SDK v2")
+                Text(
+                    t("报告先生成内容哈希，再经过请求 ID、Nonce、有效期、商户与预算检查；只有 VERIFIED 才解锁。", "The report is content-hashed, then checked for request ID, nonce, expiry, merchant, and budget; it unlocks only after VERIFIED.", chinese),
+                    color = Muted,
+                    fontSize = 13.sp,
+                )
+                ValueRow(t("请求 ID", "Request ID", chinese), short(state.requestId))
+                ValueRow("Nonce", state.requestNonce.toString())
+                ValueRow(t("内容哈希", "Content hash", chinese), short(state.deliveryEvidenceHash.ifBlank { AlphaBriefReference.evidenceHash }))
+                if (state.alphaBriefUnlocked) {
+                    Notice(t("报告已验证并解锁。", "Report verified and unlocked.", chinese), Mint)
+                    Text(AlphaBriefReference.REPORT, color = White, fontSize = 12.sp)
+                }
+                if (state.replayRejected) {
+                    Notice(t("相同证据的新请求已被拒绝，未产生第二次付款。", "A new request reusing the same evidence was rejected; no second payment was created.", chinese), Blue)
+                }
+                PrimaryButton(t("运行完整报告购买链路", "Run complete report purchase", chinese)) { viewModel.runAlphaBriefDelivery() }
+                SecondaryButton(Modifier.fillMaxWidth(), t("尝试重放同一证据", "Attempt evidence replay", chinese)) { viewModel.replayAlphaBriefEvidence() }
+            }
+        }
+
         ProductCard {
             SectionTitle(t("执行边界", "ENFORCEMENT BOUNDARIES", chinese), "4 CHECKS")
             CheckRow(t("商户绑定", "Merchant binding", chinese), trustedMerchant, t("身份变化即冻结", "Freeze on identity drift", chinese))
@@ -671,5 +694,7 @@ private fun eventTitle(kind: String, chinese: Boolean): String = when (kind) {
     "BALANCE_ERROR" -> t("余额刷新错误", "Balance refresh error", chinese)
     "PROOF_RPC_VERIFIED" -> t("链上证明已独立验证", "Proof independently verified", chinese)
     "PROOF_RPC_ERROR" -> t("链上证明验证失败", "Proof verification error", chinese)
+    "ALPHABRIEF_UNLOCKED" -> t("研究报告已解锁", "Research report unlocked", chinese)
+    "REPLAY_REJECTED" -> t("证据重放已拒绝", "Evidence replay rejected", chinese)
     else -> kind
 }

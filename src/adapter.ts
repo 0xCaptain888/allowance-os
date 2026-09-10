@@ -11,6 +11,10 @@ export type AllowanceAdapter = {
   revokeAllowance(policy: AllowancePolicy): Promise<{ state: 'REVOKED'; instruction: unknown }>;
 };
 
+export type SolanaInstructionExecutor = {
+  send(instruction: unknown): Promise<{ signature: string }>;
+};
+
 export class SimulatedAllowanceAdapter implements AllowanceAdapter {
   readonly mode = 'simulated' as const;
 
@@ -31,15 +35,31 @@ export class SimulatedAllowanceAdapter implements AllowanceAdapter {
 export class SolanaDevnetAdapter implements AllowanceAdapter {
   readonly mode = 'solana-devnet' as const;
 
-  async authorizeAllowance(_policy: AllowancePolicy): Promise<{ authorizationId: string; instruction: unknown }> {
-    throw new Error('LIVE_ADAPTER_NOT_CONFIGURED: MWA and Seed Vault authorization are required before broadcasting');
+  constructor(private readonly executor?: SolanaInstructionExecutor) {}
+
+  private configuredExecutor(): SolanaInstructionExecutor {
+    if (!this.executor) {
+      throw new Error('LIVE_ADAPTER_NOT_CONFIGURED: inject an MWA or server signer executor; credentials are never stored by the SDK');
+    }
+    return this.executor;
   }
 
-  async executeCharge(_policy: AllowancePolicy, _request: ChargeRequest): Promise<Receipt> {
-    throw new Error('LIVE_ADAPTER_NOT_CONFIGURED: no live Solana transaction has been broadcast');
+  async authorizeAllowance(policy: AllowancePolicy): Promise<{ authorizationId: string; instruction: unknown }> {
+    const instruction = createAllowanceInstruction(policy);
+    const { signature } = await this.configuredExecutor().send(instruction);
+    return { authorizationId: signature, instruction };
   }
 
-  async revokeAllowance(_policy: AllowancePolicy): Promise<{ state: 'REVOKED'; instruction: unknown }> {
-    throw new Error('LIVE_ADAPTER_NOT_CONFIGURED: revoke requires a signed Solana instruction');
+  async executeCharge(policy: AllowancePolicy, request: ChargeRequest): Promise<Receipt> {
+    const result = evaluateCharge(policy, request);
+    if (result.state !== 'VERIFIED') return issueReceipt(policy, request, result);
+    const { signature } = await this.configuredExecutor().send(chargeAllowanceInstruction(policy, request));
+    return { ...issueReceipt(policy, request, result), txHash: signature };
+  }
+
+  async revokeAllowance(policy: AllowancePolicy): Promise<{ state: 'REVOKED'; instruction: unknown }> {
+    const instruction = revokeAllowanceInstruction(revokeAllowance(policy));
+    await this.configuredExecutor().send(instruction);
+    return { state: 'REVOKED', instruction };
   }
 }

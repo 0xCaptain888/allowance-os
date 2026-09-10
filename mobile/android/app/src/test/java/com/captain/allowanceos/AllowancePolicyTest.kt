@@ -65,4 +65,17 @@ class AllowancePolicyTest {
             assertEquals("${template.name} should pass its own template", AllowanceState.VERIFIED, decision.state)
         }
     }
+
+    @Test
+    fun expiredChargeRequestIsBlocked() {
+        val envelope = ChargeEnvelope("req_expired_001", 1, 100, 200, AlphaBriefReference.evidenceHash, AlphaBriefReference.EVIDENCE_URI)
+        assertEquals(AllowanceState.BLOCKED, PolicyEngine.evaluateRequest(policy, 1.0, policy.merchant, envelope, 201).state)
+    }
+
+    @Test
+    fun duplicateEvidenceIsBlockedWithoutASecondPayment() {
+        val envelope = ChargeEnvelope("req_replay_001", 2, 100, 500, AlphaBriefReference.evidenceHash, AlphaBriefReference.EVIDENCE_URI)
+        val decision = PolicyEngine.evaluateRequest(policy, 1.0, policy.merchant, envelope, 200, setOf(AlphaBriefReference.evidenceHash))
+        assertEquals(AllowanceState.BLOCKED, decision.state)
+    }
 }
