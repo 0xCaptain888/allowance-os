@@ -1,10 +1,15 @@
 package com.captain.allowanceos
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.BackHandler
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -62,6 +67,14 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AllowanceNotifications.createChannel(this)
+        if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS,
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1500)
+        }
         val sender = ActivityResultSender(this)
         setContent {
             MaterialTheme(colors = darkColors(background = Ink, surface = Panel, primary = Mint)) {
@@ -126,7 +139,7 @@ private fun AllowanceApp(viewModel: AllowanceViewModel, sender: ActivityResultSe
                     Text(t("在开始前，请先确认当前产品边界：", "Before continuing, understand the current product boundary:", chinese), color = White)
                     BoundaryRow("DEVNET", t("所有钱包与链上操作均位于 Solana Devnet。", "All wallet and onchain actions use Solana Devnet.", chinese), Blue)
                     BoundaryRow("NO CUSTODY", t("私钥始终留在钱包中；应用只保存加密的 MWA 重连令牌。", "Private keys remain in the wallet; the app stores only an encrypted MWA reconnect token.", chinese), Mint)
-                    BoundaryRow("PRE-PRODUCTION", t("Memo 是授权证明，不是支付；自动周期扣款架构尚未上线。", "A Memo is authorization proof, not payment; autonomous recurring settlement is not yet live.", chinese), Amber)
+                    BoundaryRow("DEVNET V2", t("Delegated v2 已完成真实测试币结算；手机端仍不会静默扣款。", "Delegated v2 has real test-token settlement evidence; the mobile app still never silently debits a wallet.", chinese), Amber)
                 }
             },
             confirmButton = {
@@ -181,23 +194,106 @@ private fun OverviewPage(
 ) {
     val clipboard = LocalClipboardManager.current
     val activeTemplate = CommercialCatalog.byId(state.selectedServiceId)
+    val habits = viewModel.dailyHabits()
     PageColumn {
-        Text(t("所有 Web3 服务，一个授权中心", "One authorization layer for every Web3 service", chinese), color = White, fontSize = 30.sp, fontWeight = FontWeight.Black)
+        Text(t("Daily Habits · 每日资金安全", "Daily Habits · money safety", chinese), color = White, fontSize = 30.sp, fontWeight = FontWeight.Black)
         Text(
-            t("订阅、报告、信号、交易机器人和 API，都使用可见、可验证、可撤销的支付边界。", "Subscriptions, reports, signals, trading bots, and APIs share visible, verifiable, revocable payment boundaries.", chinese),
+            t("先看今天会花什么、哪里接近预算、服务是否真正交付，再决定是否继续付款。", "See what may charge, what is nearing budget, and what was actually delivered before more money moves.", chinese),
             color = Muted,
             fontSize = 15.sp,
         )
+
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            MetricCard(Modifier.weight(1f), "%.2f".format(habits.todaySpend), t("今日", "TODAY", chinese), "TEST", Mint)
+            MetricCard(Modifier.weight(1f), "%.2f".format(habits.weekSpend), t("本周", "THIS WEEK", chinese), "TEST", Blue)
+            MetricCard(Modifier.weight(1f), "%.2f".format(habits.blockedSpend), t("已拦截", "BLOCKED", chinese), "TEST", Amber)
+        }
+
+        ProductCard {
+            SectionTitle(t("即将扣款", "UPCOMING CHARGES", chinese), t("预计 · 需证据", "PROJECTED · EVIDENCE", chinese))
+            habits.upcomingCharges.forEach { charge ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(charge.serviceName, color = White, fontSize = 17.sp, fontWeight = FontWeight.Black)
+                        Text(
+                            java.text.SimpleDateFormat("MM-dd HH:mm", java.util.Locale.US).format(java.util.Date(charge.dueAt)) +
+                                " · " + short(charge.merchant),
+                            color = Muted,
+                            fontSize = 11.sp,
+                        )
+                    }
+                    Text("${charge.amount} ${charge.token}", color = Mint, fontWeight = FontWeight.Black)
+                }
+            }
+            Notice(
+                t("这是基于当前模板的预计服务窗口，不是已排队的链上自动扣款。结算前仍必须收到合格 evidence。", "This is a projected service window from the active policy, not a queued onchain auto-debit. Qualified evidence is still required before settlement.", chinese),
+                Blue,
+            )
+        }
+
+        ProductCard {
+            SectionTitle(t("预算与异常雷达", "BUDGET & ANOMALY RADAR", chinese), if (habits.budgetPressure || habits.merchantAnomaly) t("需要关注", "ATTENTION", chinese) else t("健康", "HEALTHY", chinese))
+            ValueRow(t("本周预算使用", "Weekly budget used", chinese), "${"%.0f".format(habits.budgetUsedRatio * 100)}% · ${"%.2f".format(habits.weekSpend)} / ${activeTemplate.periodCap}")
+            LinearProgressIndicator(
+                progress = habits.budgetUsedRatio.toFloat(),
+                modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(8.dp)),
+                color = if (habits.budgetPressure) Amber else Mint,
+                backgroundColor = Line,
+            )
+            if (habits.budgetPressure) Notice(t("下一笔请求将接近预算阈值，请先审查。", "The next request approaches the budget threshold. Review it first.", chinese), Amber)
+            if (habits.merchantAnomaly) Notice(t("检测到冻结或商户异常事件；已建议暂停并复核证据。", "A freeze or merchant anomaly was detected; pause and inspect evidence.", chinese), Rose)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                StateAction(
+                    Modifier.weight(1f),
+                    if (state.locallyPaused) t("RESUME", "RESUME", chinese) else t("一键 PAUSE", "ONE-TAP PAUSE", chinese),
+                    if (state.locallyPaused) Mint else Rose,
+                ) { viewModel.toggleLocalPause() }
+                SecondaryButton(Modifier.weight(1f), t("查看策略", "Review policy", chinese)) { navigate(AppPage.ALLOWANCES) }
+            }
+            Text(
+                t("Pause 当前阻止本 App 发起新请求；它不会伪装成链上暂停。链上 v2 Pause 仍需钱包所有者广播。", "Pause currently stops new requests inside this app; it is not presented as an onchain pause. A v2 onchain pause still requires the wallet owner to broadcast it.", chinese),
+                color = Muted,
+                fontSize = 10.sp,
+            )
+            SecondaryButton(Modifier.fillMaxWidth(), t("运行每日安全检查并发送提醒", "Run daily safety check & notify", chinese)) {
+                viewModel.runDailySafetyCheck()
+            }
+        }
+
+        ProductCard {
+            SectionTitle(t("已交付服务与支付时间线", "DELIVERY & PAYMENT TIMELINE", chinese), "ALPHABRIEF · LIVE DEVNET")
+            TimelineStep("01", t("购买服务", "Service purchased", chinese), t("创建独立 v2 allowance", "A dedicated v2 allowance was created", chinese), true)
+            TimelineStep("02", t("报告交付", "Report delivered", chinese), t("508 词报告 + 3 个来源，内容哈希已固定", "508-word report + 3 sources, content hash bound", chinese), true)
+            TimelineStep("03", t("独立验证与结算", "Independent verify + settle", chinese), t("8 项检查通过，Executor + Verifier 自动结算 2.0 测试币", "8 checks passed; executor + verifier settled 2.0 test tokens", chinese), true)
+            TimelineStep("04", t("坏结果冻结", "Bad output frozen", chinese), t("3 项检查失败，FROZEN 且资金移动为 0", "3 checks failed; FROZEN with zero token movement", chinese), true)
+            if (!state.alphaBriefLiveProofSynced) {
+                PrimaryButton(t("同步公开链上证据并通知", "Sync public proofs & notify", chinese)) { viewModel.syncAlphaBriefLiveProof() }
+            } else {
+                Notice(t("公开交易已同步到本机时间线，并已触发交付/冻结通知。", "Public transactions are linked to the device timeline and delivery/freeze notifications were emitted.", chinese), Mint)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                SecondaryButton(Modifier.weight(1f), t("结算证据", "Settlement", chinese)) { navigate(AppPage.EVIDENCE) }
+                SecondaryButton(Modifier.weight(1f), t("完整记录", "Activity", chinese)) { navigate(AppPage.ACTIVITY) }
+            }
+        }
+
+        ProductCard {
+            SectionTitle(t("每周 Allowance 安全报告", "WEEKLY ALLOWANCE SAFETY REPORT", chinese), t("可导出", "EXPORTABLE", chinese))
+            Text(viewModel.weeklySafetyReport(), color = Muted, fontSize = 11.sp)
+            SecondaryButton(Modifier.fillMaxWidth(), t("复制周报", "Copy weekly report", chinese)) {
+                clipboard.setText(AnnotatedString(viewModel.weeklySafetyReport()))
+            }
+        }
 
         ProductCard {
             SectionTitle(t("当前运行模式", "CURRENT OPERATING MODE", chinese), t("预生产", "PRE-PRODUCTION", chinese))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TinyTag("SOLANA DEVNET", Blue)
                 TinyTag(t("非托管", "NON-CUSTODIAL", chinese), Mint)
-                TinyTag(t("不自动扣款", "NO AUTO-DEBIT", chinese), Amber)
+                TinyTag(t("无静默扣款", "NO SILENT DEBIT", chinese), Amber)
             }
             Text(
-                t("策略回放、钱包 Memo 证明与历史 Program 结算是三个独立证据层。当前 App 不会自动从钱包扣款。", "Policy replay, wallet Memo proof, and recorded Program settlement are three separate evidence layers. This app does not automatically debit a wallet.", chinese),
+                t("策略回放、钱包 Memo 和 v2 Program 结算是独立证据层。自动结算已在 Devnet 由 Executor + Verifier 完成，但手机端不会静默扣款。", "Policy replay, wallet Memo, and v2 Program settlement are separate evidence layers. Executor + verifier settlement is live on Devnet, while the mobile app never silently debits a wallet.", chinese),
                 color = Muted,
                 fontSize = 12.sp,
             )
@@ -776,6 +872,7 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
 @Composable
 private fun ActivityPage(state: AllowanceUiState, viewModel: AllowanceViewModel, chinese: Boolean) {
     val clipboard = LocalClipboardManager.current
+    val uriHandler = LocalUriHandler.current
     PageColumn {
         Row(verticalAlignment = Alignment.Bottom) {
             Column(modifier = Modifier.weight(1f)) {
@@ -803,6 +900,31 @@ private fun ActivityPage(state: AllowanceUiState, viewModel: AllowanceViewModel,
         }
 
         ProductCard {
+            SectionTitle(t("AlphaBrief 真实商业链路", "ALPHABRIEF LIVE COMMERCE", chinese), "DEVNET · VERIFIED + FROZEN")
+            Text(
+                t("真实报告交付后，独立 verifier 检查商户、时效、正文、章节、来源与 URL，再由 v2 Executor + Verifier 完成结算。随后坏输出触发 FROZEN，资金移动为 0。", "After a real report delivery, an independent verifier checks merchant, freshness, substance, sections, sources, and URLs before v2 executor + verifier settlement. A later bad output triggers FROZEN with zero token movement.", chinese),
+                color = Muted,
+                fontSize = 13.sp,
+            )
+            ValueRow("Program", short(AlphaBriefLiveEvidence.PROGRAM_ID))
+            ValueRow("Allowance", short(AlphaBriefLiveEvidence.ALLOWANCE))
+            ValueRow(t("内容哈希", "Content hash", chinese), short(AlphaBriefLiveEvidence.CONTENT_HASH))
+            ValueRow(t("结算 evidence", "Settlement evidence", chinese), short(AlphaBriefLiveEvidence.ACCEPTED_EVIDENCE_HASH))
+            ValueRow(t("冻结 evidence", "Freeze evidence", chinese), short(AlphaBriefLiveEvidence.BAD_OUTPUT_EVIDENCE_HASH))
+            BoundaryRow("VERIFIED", t("2.0 项目测试币完成真实 SPL 结算", "2.0 project test tokens settled through SPL", chinese), Mint)
+            BoundaryRow("FROZEN", t("坏输出失败 3 项检查；代币移动为 0", "Bad output failed 3 checks; token movement was zero", chinese), Rose)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                SecondaryButton(Modifier.weight(1f), t("打开结算交易", "Open settlement", chinese)) {
+                    uriHandler.openUri("https://explorer.solana.com/tx/${AlphaBriefLiveEvidence.SETTLEMENT_SIGNATURE}?cluster=devnet")
+                }
+                SecondaryButton(Modifier.weight(1f), t("打开冻结交易", "Open freeze", chinese)) {
+                    uriHandler.openUri("https://explorer.solana.com/tx/${AlphaBriefLiveEvidence.FREEZE_SIGNATURE}?cluster=devnet")
+                }
+            }
+            Notice(t("资产是项目自建的 6 位精度 Devnet 测试 mint，不是官方 USDC，也不代表 Mainnet 生产就绪。", "The asset is a project-created 6-decimal Devnet test mint, not canonical USDC or a Mainnet production claim.", chinese), Blue)
+        }
+
+        ProductCard {
             SectionTitle(t("审计说明", "AUDIT NOTES", chinese), t("设备本地", "DEVICE LOCAL", chinese))
             Text(t("活动记录保存在本机，仅用于演示可审计性；它不会伪装成链上事件。", "Activity entries are stored on-device for auditability and are never presented as onchain events.", chinese), color = Muted, fontSize = 13.sp)
             BoundaryRow("LOCAL AUDIT", t("策略判断、MWA 状态和错误回放", "Policy decisions, MWA state, and error replay", chinese), Blue)
@@ -825,7 +947,10 @@ private fun AuditEventRow(event: AuditEvent, chinese: Boolean) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(eventTitle(event.kind, chinese), color = White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
             Text(event.message, color = Muted, fontSize = 11.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            if (event.amount > 0.0) Text("${"%.1f".format(event.amount)} USDC", color = White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            if (event.amount > 0.0) {
+                val tokenLabel = if (event.kind == "ALPHABRIEF_LIVE_SETTLED") "TEST" else "USDC"
+                Text("${"%.1f".format(event.amount)} $tokenLabel", color = White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            }
             if (event.signature.isNotBlank()) Text(short(event.signature), color = Mint, fontSize = 10.sp, maxLines = 1)
         }
         Text(date, color = Muted, fontSize = 10.sp)
@@ -845,5 +970,12 @@ private fun eventTitle(kind: String, chinese: Boolean): String = when (kind) {
     "PROOF_RPC_ERROR" -> t("链上证明验证失败", "Proof verification error", chinese)
     "ALPHABRIEF_UNLOCKED" -> t("研究报告已解锁", "Research report unlocked", chinese)
     "REPLAY_REJECTED" -> t("证据重放已拒绝", "Evidence replay rejected", chinese)
+    "ALPHABRIEF_LIVE_SETTLED" -> t("AlphaBrief 已交付并结算", "AlphaBrief delivered and settled", chinese)
+    "ALPHABRIEF_BAD_OUTPUT_FROZEN" -> t("坏结果触发冻结", "Bad output frozen", chinese)
+    "LOCAL_SAFETY_PAUSED" -> t("本地安全暂停", "Local safety pause", chinese)
+    "LOCAL_SAFETY_RESUMED" -> t("本地安全恢复", "Local safety resumed", chinese)
+    "DAILY_SAFETY_CHECK" -> t("每日安全检查", "Daily safety check", chinese)
+    "LOCAL_PAUSE_BLOCKED_REQUEST" -> t("暂停已拦截请求", "Pause blocked request", chinese)
+    "ALPHABRIEF_PROOF_SYNC_ERROR" -> t("AlphaBrief 证据同步失败", "AlphaBrief proof sync failed", chinese)
     else -> kind
 }

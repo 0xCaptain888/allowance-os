@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "1",
+  "capturedAt": "2026-09-10T12:41:13.492Z",
+  "network": "solana-devnet",
+  "status": "ALPHABRIEF_LIVE_COMMERCIAL_FLOW_VERIFIED",
+  "truthBoundary": "Real Solana Devnet settlement using a project-created 6-decimal test mint. This is not canonical USDC, Mainnet, or a production security audit.",
+  "service": {
+    "id": "alphabrief",
+    "title": "Solana Mobile Recurring Commerce Risk Brief",
+    "deliveryId": "ab_solana_mobile_risk_20260910",
+    "priceRaw": "2000000",
+    "reportPath": "examples/alphabrief/deliveries/solana-mobile-commerce-risk-2026-09-10.md"
+  },
+  "program": {
+    "programId": "7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL",
+    "allowance": "3qwvvsNcS32z2B3B4m3hQRFxkjs5cUceCAhUMUMKwgUZ",
+    "delegatePda": "ENYMrNJvtfSpuFxmLBnLmkjPKknDcW3T2L7CeAAHLGLM",
+    "policyHash": "957a8f5404e4d065dfe72dc22b87c54c2daf272f870613e078972469e192ab3b"
+  },
+  "actors": {
+    "subscriber": "Hwr3facWMTBCJYbYPcRNLPKZspWDmSkizdi7f9tjUsYt",
+    "merchant": "D3XJqkeFiPNtuwKkyeJfVG1Gjvi88AV6fiNs29ukjKm6",
+    "executor": "GhzAsrL6Eqq16orx9cakR1YMod3KHGG1x7t8rfTrmSu7",
+    "verifier": "2aZsxC7GEFv8J8fXUdzUdD2L9d8S9GiMtnevEZmVcjx8"
+  },
+  "assets": {
+    "mint": "5DjzwQJKDzFWZzzskvywSYjhekUyWQJxbjgpCw58EruY",
+    "sourceTokenAccount": "2tcvpxEnrsGQ5ZP5sxznzQsHBUj89duCXwBBjXHVB89U",
+    "merchantTokenAccount": "5C2duN5xV3xojxjDqR5ziKW8W77V1Frgoaw6UwPKAwtx",
+    "decimals": 6,
+    "disclosure": "Project-created Devnet test mint; not canonical USDC."
+  },
+  "acceptedDelivery": {
+    "wordCount": 508,
+    "contentHash": "e9c1a18eab9356d64f6f448e0ee3200e202f908223bc0284f9f3278c10e5841e",
+    "evidenceHash": "d6cb3d5b51e711668ac6e9d506118666daad80913bd273b788ec06f71d4a345c",
+    "evidenceRecordPda": "HXxs5MGfLGLZrgkep5XTu5aA8CCQyJnS56faijGLh5rs",
+    "checks": {
+      "merchantBound": true,
+      "deliveryIdValid": true,
+      "generatedAtValid": true,
+      "deliveryFresh": true,
+      "contentSubstantial": true,
+      "requiredSectionsPresent": true,
+      "sourcesSufficient": true,
+      "sourceUrisValid": true
+    },
+    "authoritySignedCharge": false,
+    "sourceTokenDeltaRaw": "-2000000",
+    "merchantTokenDeltaRaw": "+2000000"
+  },
+  "badOutput": {
+    "wordCount": 13,
+    "evidenceHash": "8d8b0b90773781ddd2b956cd690a7f18f25d3a84262ed12fe7f779c6bd371733",
+    "evidenceRecordPda": "C254KVEQi3aAvP1jdAx9UjLAvnFPb2Ed6LNaVRTzztFw",
+    "failedChecks": ["contentSubstantial", "requiredSectionsPresent", "sourcesSufficient"],
+    "tokenMovementRaw": "0",
+    "finalState": {
+      "frozen": true,
+      "nextNonce": "1",
+      "spentLifetimeRaw": "2000000"
+    }
+  },
+  "transactions": {
+    "purchase": "4PoTejEJfrkJcNiCXSyvmypejWPW4dDh3C49Mi9GgkXpiZhK4NBgq5BGcJwuNM6BXCg725YcPJLEk5UN7BhbKcfB",
+    "settlement": "5xSyTrMr1iZ47VJcZKfLjLmE5E1XrzYABhWD7fJJsgz7SbKnhqewvHLNNBo3Lcs5uDNfVxmrwzVPMm4yZtY4K1qB",
+    "badOutputFreeze": "39oy73khQh35jYZdrHtxXXxJnmFPpPRfRFQBD1gTAwthvq8GMMKfoDrhxedVnFERyXDCyexL11HYotmuWSG7WHSG"
+  },
+  "notificationIntents": ["SERVICE_DELIVERED", "ALLOWANCE_FROZEN"]
+}

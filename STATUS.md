@@ -13,6 +13,9 @@
 - Explicit standard Android and Seeker capability profiles.
 - Native Kotlin/Compose Android client.
 - Commercial Services catalog with five reusable allowance templates.
+- AlphaBrief promoted from a template to a real end-to-end Devnet commercial chain: substantive report delivery, deterministic content/evidence hashes, independent verification, v2 authority-free settlement, device notification intent, and bad-output FROZEN containment.
+- Public AlphaBrief settlement moves exactly `2,000,000` raw project test-token units; the bad-output freeze moves zero.
+- Android Daily Habits dashboard with upcoming charges, today/week verified spend, budget pressure, merchant anomalies, one-tap local Pause, delivered-service/payment timeline, local notifications, and weekly safety report.
 - Seeker Integration Lab with explicitly unofficial blueprints for apps featured by Solana Mobile.
 - Period-aware policy studio with current-period spend input and projected cap meter.
 - Judge mode that records VERIFIED, BLOCKED, and FROZEN outcomes in a persistent local Activity Log.
@@ -30,7 +33,7 @@
 - Persistent Chinese/English preference, cleartext-traffic denial, and adaptive launcher icon.
 - Fail-closed production signing configuration and local signed-release builder.
 - Android policy tests and successful debug APK build.
-- Twenty-four passing TypeScript tests, including malformed-amount, invalid-budget, idempotency, persistence/restart, webhook rotation/timestamp/replay, tamper, live-adapter, evidence PDA, and delegated instruction coverage.
+- Twenty-six passing TypeScript tests, including AlphaBrief delivery-verifier acceptance/rejection, malformed amounts, invalid budgets, idempotency, persistence/restart, webhook rotation/timestamp/replay, tamper, live-adapter, evidence PDA, and delegated instruction coverage.
 - Atomic JSON-backed single-process merchant reference storage behind a pluggable runtime store.
 - Stateful webhook verification with time tolerance, replay rejection, and overlapping-secret rotation.
 - npm dependency audit: 0 known vulnerabilities after compatible transitive overrides.
@@ -48,15 +51,15 @@
 - Onchain evidence mismatch persists `frozen = true`; revoke persists `revoked = true`.
 - Rust formatting and multi-job CI workflow.
 
-## Android v0.14.0 local build
+## Android v0.15.0 local build
 
 ```text
-Artifact: mobile/android/app/build/outputs/apk/debug/allowance-os-0.14.0-debug.apk
-Size: 18,813,650 bytes
-Version code: 15
-Version name: 0.14.0
-Android tests: 15 passed, 0 failed
-SHA-256: 3aeb6479969d116d637858031bd8de07f0818c2e04f92ba447b5870919c51dcf
+Artifact: mobile/android/app/build/outputs/apk/debug/allowance-os-0.15.0-debug.apk
+Size: 19,104,570 bytes
+Version code: 16
+Version name: 0.15.0
+Android tests: 18 passed, 0 failed
+SHA-256: 2feaad9180dee1b3c4c72796ed7a3789d9f21bb16ed94c5c5c20fa7d1ead6a05
 ```
 
 Latest published GitHub Actions APK:
@@ -70,7 +73,7 @@ Authority: SHA256SUMS.txt attached to android-test-v0.14.0
 
 Public QA release: https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.14.0
 
-The v0.14.0 test release and its checksum were produced by GitHub Actions run `34474593759`. Local and CI debug APK hashes differ because they use different debug signing keys. Production distribution still requires one protected release signing key.
+The v0.14.0 test release and its checksum were produced by GitHub Actions run `34474593759`. The local v0.15.0 source and APK are verified; its public QA asset remains pending the tag workflow. Local and CI debug APK hashes differ because they use different debug signing keys. Production distribution still requires one protected release signing key.
 
 ## External and production steps still required
 
@@ -81,6 +84,8 @@ The v0.14.0 test release and its checksum were produced by GitHub Actions run `3
 The wallet/Memo evidence is recorded separately from program enforcement. Program deployment, real state transitions, and the SPL-token CPI settlement are recorded in `evidence/live-devnet-program.json`. The token is a project-created Devnet test mint and is not presented as canonical USDC.
 
 The v2 source artifacts are recorded in `evidence/delegated-v2-source-build.json`; deployment, exact Ubuntu artifact match, authority-free settlement, recovery controls, role rotation, and revoke evidence are recorded in `evidence/live-devnet-v2.json`. The macOS and Ubuntu source-build hashes differ, so only the exact Ubuntu artifact is claimed to match the deployed binary.
+
+The live commercial proof is recorded in `evidence/live-alphabrief-v2.json`. Its report, accepted evidence hash, rejected evidence hash, Evidence Record PDAs, three public transactions, actor separation, and exact token deltas are independently reviewable. The asset is a project-created Devnet test mint, not canonical USDC.
 
 ## Production architecture gate
 

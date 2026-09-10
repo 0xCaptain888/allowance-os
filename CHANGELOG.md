@@ -1,5 +1,17 @@
 # Changelog
 
+## Android / SDK v0.15.0 — 2026-09-10
+
+- Turned AlphaBrief into a complete live commercial chain: purchase, substantive report delivery, deterministic evidence hash, independent verification, Delegated Settlement v2 settlement, notification intent, and bad-output freeze.
+- Published a real authority-free AlphaBrief settlement of `2,000,000` raw project test-token units and a later verifier freeze with zero token movement.
+- Added `evidence/live-alphabrief-v2.json`, the delivered report, an independent verifier, a reproducible live runner, and two new TypeScript tests.
+- Rebuilt Android Home as Daily Habits with upcoming charges, today/week spend, budget pressure, merchant anomaly alerts, one-tap local Pause, delivery/payment timeline, Android notifications, and an exportable weekly safety report.
+- Added three Android Daily Habits tests and bumped Android to version code `16` / version name `0.15.0`.
+- Updated the public Demo to lead with the real AlphaBrief commerce chain and a browser-safe Daily Habits preview.
+- Kept boundaries explicit: browser and local dashboard actions do not move funds; Pause is local until an authority broadcasts the v2 pause instruction; the live asset is a project-created Devnet test mint, not canonical USDC.
+
+Local QA build verified. Public `android-test-v0.15.0` asset is pending the tag workflow; no production-signed release is claimed.
+
 ## Android / SDK v0.14.0 — 2026-09-10
 
 - Deployed Delegated Settlement v2 to Solana Devnet at `7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL`.

@@ -30,6 +30,11 @@
       "status": "DEVNET_VERIFIED"
     },
     {
+      "path": "evidence/live-alphabrief-v2.json",
+      "type": "REAL_SERVICE_DELIVERY_VERIFICATION_SETTLEMENT_AND_BAD_OUTPUT_FREEZE",
+      "status": "DEVNET_VERIFIED"
+    },
+    {
       "path": "evidence/android-build.json",
       "type": "LOCAL_ANDROID_DEBUG_BUILD",
       "status": "BUILD_VERIFIED_NOT_PRODUCTION_SIGNED"

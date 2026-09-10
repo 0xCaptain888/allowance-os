@@ -10,6 +10,8 @@ The policy binds:
 merchant + token + program + per-charge cap + period cap + expiry + evidence
 ```
 
+The decisive commercial proof is AlphaBrief: a real report is delivered, independently verified, settled through v2, then a later bad output is frozen with zero token movement.
+
 ## 2. Replay the safety matrix in 40 seconds
 
 Open `site/index.html` and run:
@@ -27,19 +29,30 @@ Build or install the Android app from `mobile/android`:
 
 1. Use the header switch to inspect the complete Chinese or English interface.
 2. On **Overview**, tap **Connect Phantom / MWA Wallet** and approve Solana Devnet authorization.
-3. Tap **Judge mode** to generate the three policy outcomes and open **Activity**; the audit trail should contain VERIFIED, BLOCKED, and FROZEN decisions.
-4. On **Policy**, change the requested amount, current-period spend, merchant identity, and evidence availability.
-5. Run `BLOCKED` or `FROZEN` and confirm Phantom is not opened.
-6. Run `VERIFIED`, then publish the real Devnet authorization proof.
-7. Approve the transaction in Phantom.
-8. On **Evidence**, run **Independent RPC Verification** and inspect confirmation status plus slot without leaving the app.
-9. Copy the portable JSON receipt and its SHA-256 fingerprint, then open the signature in Solana Explorer for a second source.
-10. Open **Activity**, export the complete audit trail as JSON, and compare its displayed SHA-256 fingerprint before sharing it with another reviewer.
-11. Test **Reconnect**, **Forget local wallet session**, and **Revoke & deauthorize** without exposing a wallet key.
+3. On **Daily Habits**, inspect upcoming charges, today/week spend, budget pressure, merchant anomaly status, and the weekly safety report.
+4. Tap **Sync public proofs & notify** to link the real AlphaBrief settlement and freeze signatures into the device timeline and trigger local delivery/freeze notifications.
+5. Use **One-tap Pause** and confirm the UI labels it as a local request stop—not an onchain pause transaction.
+6. Tap **Judge mode** to generate the three policy outcomes and open **Activity**; the audit trail should contain VERIFIED, BLOCKED, and FROZEN decisions.
+7. On **Policy**, change the requested amount, current-period spend, merchant identity, and evidence availability.
+8. Run `BLOCKED` or `FROZEN` and confirm Phantom is not opened.
+9. Run `VERIFIED`, then publish the real Devnet authorization proof and approve it in Phantom.
+10. On **Evidence**, run **Independent RPC Verification**, inspect the AlphaBrief live-commerce card, and open both settlement and freeze transactions.
+11. Copy the portable JSON receipt and Activity audit fingerprint; test reconnect and safe local-session reset without exposing a wallet key.
 
-The Android v0.14 source contains a strict 332-byte Delegated Allowance v2 state decoder plus pause, unpause, revoke, executor-rotation, and verifier-rotation instruction encoders. Its Evidence page links directly to the deployed v2 Program and authority-free settlement. The codecs are tested; not every v2 authority control is wired to mobile broadcasting yet.
+The Android v0.15 source contains a strict 332-byte Delegated Allowance v2 state decoder plus pause, unpause, revoke, executor-rotation, and verifier-rotation instruction encoders. Its Evidence and Activity pages link directly to the AlphaBrief allowance, accepted/frozen evidence hashes, and public transactions. The codecs are tested; not every v2 authority control is wired to mobile broadcasting yet.
 
-## 4. Inspect the real Program path
+## 4. Verify the real AlphaBrief chain
+
+| Step | Proof | Expected result |
+| --- | --- | --- |
+| Purchase | [`4PoT…KcfB`](https://explorer.solana.com/tx/4PoTejEJfrkJcNiCXSyvmypejWPW4dDh3C49Mi9GgkXpiZhK4NBgq5BGcJwuNM6BXCg725YcPJLEk5UN7BhbKcfB?cluster=devnet) | Dedicated v2 allowance exists |
+| Delivery | [`examples/alphabrief/deliveries/...md`](../examples/alphabrief/deliveries/solana-mobile-commerce-risk-2026-09-10.md) | 508 words, required sections, 3 sources |
+| Settle | [`5xSy…K1qB`](https://explorer.solana.com/tx/5xSyTrMr1iZ47VJcZKfLjLmE5E1XrzYABhWD7fJJsgz7SbKnhqewvHLNNBo3Lcs5uDNfVxmrwzVPMm4yZtY4K1qB?cluster=devnet) | Executor + verifier; subscriber absent; 2,000,000 raw units move |
+| Freeze | [`39oy…WHSG`](https://explorer.solana.com/tx/39oy73khQh35jYZdrHtxXXxJnmFPpPRfRFQBD1gTAwthvq8GMMKfoDrhxedVnFERyXDCyexL11HYotmuWSG7WHSG?cluster=devnet) | Bad output creates freeze evidence; zero token movement |
+
+Read [`evidence/live-alphabrief-v2.json`](../evidence/live-alphabrief-v2.json) for every actor, hash, PDA, check, and balance delta.
+
+## 5. Inspect the real Program path
 
 The deployed Devnet Program is [`DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`](https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet).
 
@@ -62,7 +75,7 @@ The deployed Devnet Program is [`DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`](
 
 The current submission does not conflate these levels.
 
-## 5. Verify approve-once / settle-later v2
+## 6. Verify approve-once / settle-later v2
 
 The dedicated v2 Program is [`7zARK…xvL`](https://explorer.solana.com/address/7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL?cluster=devnet).
 

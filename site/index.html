@@ -63,20 +63,53 @@
     .blueprint-label { white-space: nowrap; color: #ffc86b; font-size: .66rem; letter-spacing: .08em; }
     .pattern { padding: 12px; border-radius: 14px; background: #151c31; color: #c6cee0; font-size: .85rem; line-height: 1.5; }
     .truth-note { border: 1px solid #ffc86b55; background: #ffc86b0d; border-radius: 16px; padding: 14px 16px; color: #d8c39c; }
+    .habit-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 18px 0; }
+    .habit { border-radius: 18px; padding: 16px; background: #0d1428; border: 1px solid #283454; }
+    .habit b { display: block; margin-top: 8px; font-size: 1.55rem; letter-spacing: -.04em; }
+    .timeline { display: grid; gap: 10px; margin: 18px 0; }
+    .timeline-step { display: grid; grid-template-columns: 42px 1fr auto; gap: 12px; align-items: center; padding: 13px; border-radius: 15px; background: #0d1428; border: 1px solid #283454; }
+    .timeline-step i { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: #79e6c122; color: #79e6c1; font-style: normal; font-weight: 900; }
+    .budget-meter { height: 9px; overflow: hidden; border-radius: 99px; background: #242d46; margin: 9px 0 5px; }
+    .budget-meter span { display: block; width: 25%; height: 100%; background: linear-gradient(90deg, #79e6c1, #6f8cff); }
     @media (max-width: 980px) { .service-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 800px) { .hero, .grid, .blueprint-grid { grid-template-columns: 1fr; } nav { position: static; } .hero { min-height: auto; } }
+    @media (max-width: 800px) { .hero, .grid, .blueprint-grid, .habit-grid { grid-template-columns: 1fr; } nav { position: static; } .hero { min-height: auto; } .timeline-step { grid-template-columns: 42px 1fr; } .timeline-step .pill { grid-column: 2; justify-self: start; } }
     @media (max-width: 560px) { .service-grid { grid-template-columns: 1fr; } .links { display: none; } }
   </style>
 </head>
 <body>
   <main>
-    <nav><strong>Allowance OS · Android v0.14</strong><div class="links"><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os">GitHub</a><a class="nav-link" href="https://explorer.solana.com/address/7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL?cluster=devnet">Delegated v2 Program</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/evidence/live-devnet-v2.json">v2 Evidence</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/tree/main/mobile/android">Android MWA</a></div></nav>
+    <nav><strong>Allowance OS · Android v0.15</strong><div class="links"><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os">GitHub</a><a class="nav-link" href="#live-commerce">Live AlphaBrief</a><a class="nav-link" href="https://explorer.solana.com/address/7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL?cluster=devnet">Delegated v2 Program</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/evidence/live-alphabrief-v2.json">Commercial Evidence</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/tree/main/mobile/android">Android MWA</a></div></nav>
     <section class="hero">
       <div><div class="eyebrow">Payment authorization for Web3 services</div><h1>Allowance OS</h1><p class="lede">One mobile control layer for AI subscriptions, research, trading signals, automation bots, and paid APIs. Approve a bounded policy—not an unlimited future.</p></div>
       <div class="card policy"><div class="row"><span class="muted">Active service</span><span id="heroService" class="value">AlphaBrief</span></div><div class="row"><span class="muted">Merchant</span><span id="heroMerchant" class="value">merchant:alphabrief</span></div><div class="row"><span class="muted">Per charge</span><span id="heroCharge" class="value">2 USDC</span></div><div class="row"><span class="muted">Period cap</span><span id="heroCap" class="value">8 USDC</span></div><div class="row"><span class="muted">Status</span><span class="pill verified">READY TEMPLATE</span></div></div>
     </section>
 
-    <p class="truth-note"><strong>Pre-production boundary:</strong> this public site is an interactive policy and evidence verifier. Browser receipts are simulated; the recorded Program transactions are real Devnet evidence. The current deployment is not yet an autonomous recurring-payment service.</p>
+    <p class="truth-note"><strong>Pre-production boundary:</strong> this public site never moves funds. Browser policy receipts remain simulated, while the linked AlphaBrief delivery, v2 settlement, and bad-output freeze are real Solana Devnet evidence using a project-created test mint—not canonical USDC or Mainnet.</p>
+
+    <section id="live-commerce" class="card" style="margin-top:14px">
+      <div class="section-heading"><div><div class="eyebrow">AlphaBrief · real service commerce</div><h2>A delivered report—not another template.</h2></div><span class="pill verified">LIVE DEVNET VERIFIED</span></div>
+      <p class="muted">A subscriber purchased a substantive 508-word risk brief. An independent verifier checked merchant binding, delivery identity, time, freshness, substance, required sections, sources, and source URLs. Only then did Delegated Settlement v2 move 2.0 project test tokens without the user signing the charge. A later bad output failed three checks, created immutable freeze evidence, and moved zero tokens.</p>
+      <div class="habit-grid">
+        <div class="habit"><span class="muted">Today · verified spend</span><b>2.00 TEST</b><small class="muted">One delivered AlphaBrief</small></div>
+        <div class="habit"><span class="muted">This week</span><b>2.00 / 8.00</b><div class="budget-meter"><span></span></div><small class="muted">25% of policy cap</small></div>
+        <div class="habit"><span class="muted">Upcoming charge</span><b>2.00 TEST</b><small class="muted">Projected; evidence required</small></div>
+        <div class="habit"><span class="muted">Safety state</span><b id="webPauseState">FROZEN</b><small class="muted">Bad output contained</small></div>
+      </div>
+      <div class="timeline">
+        <div class="timeline-step"><i>1</i><div><strong>Purchase service</strong><br><span class="muted">Dedicated v2 allowance created for AlphaBrief</span></div><a class="pill verified" href="https://explorer.solana.com/tx/4PoTejEJfrkJcNiCXSyvmypejWPW4dDh3C49Mi9GgkXpiZhK4NBgq5BGcJwuNM6BXCg725YcPJLEk5UN7BhbKcfB?cluster=devnet" target="_blank" rel="noreferrer">PUBLIC TX</a></div>
+        <div class="timeline-step"><i>2</i><div><strong>Deliver + independently verify</strong><br><span class="muted">508 words · 3 sources · 8/8 checks passed · evidence d6cb…345c</span></div><a class="pill verified" href="https://github.com/0xCaptain888/allowance-os/blob/main/examples/alphabrief/deliveries/solana-mobile-commerce-risk-2026-09-10.md">READ REPORT</a></div>
+        <div class="timeline-step"><i>3</i><div><strong>v2 automatic settlement</strong><br><span class="muted">Executor + verifier; subscriber authority absent from charge</span></div><a class="pill verified" href="https://explorer.solana.com/tx/5xSyTrMr1iZ47VJcZKfLjLmE5E1XrzYABhWD7fJJsgz7SbKnhqewvHLNNBo3Lcs5uDNfVxmrwzVPMm4yZtY4K1qB?cluster=devnet" target="_blank" rel="noreferrer">+2.0 TEST</a></div>
+        <div class="timeline-step"><i>4</i><div><strong>Bad output → FROZEN</strong><br><span class="muted">Substance, sections, and sources failed; zero token movement</span></div><a class="pill frozen" href="https://explorer.solana.com/tx/39oy73khQh35jYZdrHtxXXxJnmFPpPRfRFQBD1gTAwthvq8GMMKfoDrhxedVnFERyXDCyexL11HYotmuWSG7WHSG?cluster=devnet" target="_blank" rel="noreferrer">ZERO MOVEMENT</a></div>
+      </div>
+      <div class="row"><span><strong>Daily Habits safety action</strong><br><span class="muted">Preview a one-tap local pause. This browser action never changes onchain state.</span></span><button id="webPauseButton" class="secondary" onclick="toggleWebPause()">Pause local requests</button></div>
+      <div class="grid">
+        <div><span class="pill verified">DELIVERY</span><h3>Service received</h3><p class="muted">Content and source quality are bound before payment.</p></div>
+        <div><span class="pill blocked">WEEKLY REPORT</span><h3>2.00 spent · 0 blocked</h3><p class="muted">1 verified delivery · 1 frozen anomaly · 25% budget used.</p></div>
+        <div><span class="pill frozen">ALERTS</span><h3>Android local notifications</h3><p class="muted">Upcoming charge, budget pressure, merchant anomaly, settlement, freeze, and pause events.</p></div>
+      </div>
+      <p class="truth-note"><strong>Asset boundary:</strong> the 6-decimal mint is project-created on Devnet. “TEST” deliberately replaces “USDC” in this live proof.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/evidence/live-alphabrief-v2.json">Machine-readable evidence</a><a class="nav-link" href="https://explorer.solana.com/address/3qwvvsNcS32z2B3B4m3hQRFxkjs5cUceCAhUMUMKwgUZ?cluster=devnet">Allowance account</a><a class="nav-link" href="https://explorer.solana.com/address/HXxs5MGfLGLZrgkep5XTu5aA8CCQyJnS56faijGLh5rs?cluster=devnet">Accepted evidence PDA</a></div>
+    </section>
 
     <section class="card" style="margin-top:14px">
       <div class="section-heading"><div><div class="eyebrow">Delegated Settlement v2 · Solana Devnet</div><h2>Approve once. Settle later without the user online.</h2></div><span class="pill verified">FULL MATRIX VERIFIED</span></div>
@@ -153,9 +186,9 @@
       <div id="alphaBriefReport" class="proof-state muted">The report preview remains locked until the receipt and webhook both verify.</div>
       <div id="alphaBriefReceipt" class="output">No request yet.</div>
     </section>
-    <section class="card" style="margin-top:14px"><div class="eyebrow">Native mobile readiness</div><h2>One policy, two honest device modes.</h2><div class="matrix"><div class="muted">Capability</div><div class="muted">Android + Phantom</div><div class="muted">Seeker</div><div>Mobile Wallet Adapter</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Devnet signing</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Seed Vault</div><div class="limited">SEEKER ONLY</div><div class="ok">AVAILABLE</div><div>Genesis Token</div><div class="limited">NOT AVAILABLE</div><div class="ok">AVAILABLE</div></div><p class="muted">Verified coverage: 24 TypeScript tests + 15 Android tests + 20 Rust tests. The public v2 Devnet matrix proves immutable evidence history, governed role rotation, authority-free later settlement, and SPL-delegate removal. Browser and Android local simulations remain explicitly labelled; no simulated hash is presented as a chain transaction.</p></section>
+    <section class="card" style="margin-top:14px"><div class="eyebrow">Native mobile readiness</div><h2>One policy, two honest device modes.</h2><div class="matrix"><div class="muted">Capability</div><div class="muted">Android + Phantom</div><div class="muted">Seeker</div><div>Mobile Wallet Adapter</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Devnet signing</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Seed Vault</div><div class="limited">SEEKER ONLY</div><div class="ok">AVAILABLE</div><div>Genesis Token</div><div class="limited">NOT AVAILABLE</div><div class="ok">AVAILABLE</div></div><p class="muted">Verified coverage: 26 TypeScript tests + 18 Android tests + 20 Rust tests. The Android Daily Habits dashboard adds upcoming charges, today/week spend, budget and merchant alerts, local pause, delivery/payment timeline, notifications, and a weekly safety report. Browser and Android local calculations remain explicitly labelled; no simulated hash is presented as a chain transaction.</p></section>
     <section class="card" style="margin-top:14px">
-      <div class="eyebrow">v0.14 live delegated settlement</div>
+      <div class="eyebrow">v0.15 live commercial settlement</div>
       <h2>Built to survive restarts, retries, and evidence review.</h2>
       <div class="grid">
         <div><span class="pill verified">MERCHANT</span><h3>Restart-safe reference store</h3><p class="muted">Policies, idempotency fingerprints, nonces, evidence hashes, spend, and revocation state can be persisted atomically.</p></div>
@@ -214,6 +247,8 @@
     const output = document.querySelector('#output');
     const alphaBriefContent = 'Allowance-based payments reduce repeated wallet prompts without giving a merchant unlimited authority. The report is delivered first, hashed, policy-checked, and unlocked only after a VERIFIED receipt exists.';
     let alphaBriefSession = null;
+    let webPaused = false;
+    function toggleWebPause() { webPaused = !webPaused; document.querySelector('#webPauseState').textContent = webPaused ? 'PAUSED LOCAL' : 'FROZEN'; document.querySelector('#webPauseButton').textContent = webPaused ? 'Resume local requests' : 'Pause local requests'; }
     async function sha256(value) { const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)); return Array.from(new Uint8Array(bytes)).map(byte => byte.toString(16).padStart(2, '0')).join(''); }
     async function webhookSignature(payload) { const key = await crypto.subtle.importKey('raw', new TextEncoder().encode('allowance-os-public-demo-key'), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']); const signature = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(JSON.stringify(payload))); return 'sha256=' + Array.from(new Uint8Array(signature)).map(byte => byte.toString(16).padStart(2, '0')).join(''); }
     async function purchaseAlphaBrief() { const evidenceHash = await sha256(alphaBriefContent); const requestedAt = new Date(); const request = { requestId: 'req_web_' + crypto.randomUUID().replaceAll('-', ''), nonce: Date.now(), allowanceId: 'allowance-alphabrief-001', merchant: 'merchant:alphabrief', token: 'USDC', amount: 2, program: services.alphabrief.program, requestedAt: requestedAt.toISOString(), expiresAt: new Date(requestedAt.getTime() + 300000).toISOString(), evidenceHash, evidenceUri: 'demo://embedded/alphabrief-report-v1', evidenceType: 'content-delivery' }; const receipt = { receiptVersion: '2', ...request, state: 'VERIFIED', checks: { requestIdBound: true, nonceUnused: true, requestFresh: true, merchantMatches: true, perChargeWithinPolicy: true, periodCapWithinPolicy: true, evidenceBound: true, evidenceUnused: true }, receiptType: 'SIMULATED_REFERENCE', reasons: [] }; const webhook = { eventType: 'allowance.charge.completed', requestId: request.requestId, state: receipt.state, evidenceHash }; const signature = await webhookSignature(webhook); alphaBriefSession = { request, receipt, webhook, signature }; document.querySelector('#reportState').textContent = 'UNLOCKED'; document.querySelector('#requestState').textContent = 'VERIFIED'; document.querySelector('#replayState').textContent = 'ARMED'; document.querySelector('#alphaBriefReport').className = 'proof-state ok'; document.querySelector('#alphaBriefReport').textContent = alphaBriefContent; document.querySelector('#alphaBriefReceipt').textContent = JSON.stringify({ receipt, signedWebhook: { payload: webhook, signature }, disclosure: 'SIMULATED reference integration; no chain transaction is claimed.' }, null, 2); }

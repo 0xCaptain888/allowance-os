@@ -26,6 +26,7 @@ import {
 } from '../src/delegated-protocol.js';
 import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { canonicalJson, stableHash } from '../src/hash.js';
+import { verifyAlphaBriefDelivery, type AlphaBriefDelivery } from '../src/alphabrief.js';
 import type { AllowancePolicy, ChargeRequest } from '../src/types.js';
 
 const policy: AllowancePolicy = {
@@ -75,6 +76,39 @@ test('canonical hashes include nested values and ignore object key order', () =>
   assert.equal(canonicalJson(left), canonicalJson(reordered));
   assert.equal(stableHash(left), stableHash(reordered));
   assert.notEqual(stableHash(left), stableHash(changed));
+});
+test('AlphaBrief verifier binds substantial sourced delivery into settlement evidence', () => {
+  const content = [
+    '# Executive Summary', 'useful '.repeat(50),
+    '## Risk Findings', 'risk '.repeat(50),
+    '## Recommendations', 'action '.repeat(50),
+    '## Sources', 'source '.repeat(50),
+  ].join('\n');
+  const delivery: AlphaBriefDelivery = {
+    schemaVersion: '1', serviceId: 'alphabrief', deliveryId: 'ab_live_delivery_001',
+    subscriber: 'wallet:subscriber', merchant: 'merchant:alphabrief', title: 'Risk brief',
+    generatedAt: '2026-09-10T00:00:00.000Z', content,
+    sources: [
+      { label: 'Solana', uri: 'https://solana.com/docs', capturedAt: '2026-09-10T00:00:00.000Z' },
+      { label: 'Solana Mobile', uri: 'https://docs.solanamobile.com', capturedAt: '2026-09-10T00:00:00.000Z' },
+    ],
+  };
+  const result = verifyAlphaBriefDelivery(delivery, new Date('2026-09-10T01:00:00.000Z'));
+  assert.equal(result.passed, true);
+  assert.equal(result.evidenceHash.length, 64);
+  assert.equal(result.reasons.length, 0);
+});
+test('AlphaBrief verifier rejects bad output before payment evidence is accepted', () => {
+  const delivery: AlphaBriefDelivery = {
+    schemaVersion: '1', serviceId: 'alphabrief', deliveryId: 'ab_bad_output_001',
+    subscriber: 'wallet:subscriber', merchant: 'merchant:alphabrief', title: 'Empty result',
+    generatedAt: '2026-09-10T00:00:00.000Z', content: 'Tool call succeeded.', sources: [],
+  };
+  const result = verifyAlphaBriefDelivery(delivery, new Date('2026-09-10T01:00:00.000Z'));
+  assert.equal(result.passed, false);
+  assert.ok(result.reasons.includes('contentSubstantial'));
+  assert.ok(result.reasons.includes('requiredSectionsPresent'));
+  assert.ok(result.reasons.includes('sourcesSufficient'));
 });
 test('standard Android can use MWA without claiming Seed Vault', () => {
   assert.deepEqual(capabilitySummary(standardAndroidProfile), {

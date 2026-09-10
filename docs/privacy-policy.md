@@ -13,6 +13,7 @@ The app may process and store locally:
 - the latest public Devnet transaction signature;
 - locally generated policy decisions and audit events;
 - selected service template and language preference.
+- local notification permission and locally computed Daily Habits summaries, including upcoming-charge projections and weekly safety reports.
 
 The app queries public Solana Devnet RPC endpoints for balances, transaction status, transaction data, and Program account state. Public wallet addresses and transaction signatures submitted to a blockchain are public by design.
 

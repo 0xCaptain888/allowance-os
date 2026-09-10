@@ -90,6 +90,8 @@ data class AllowanceUiState(
     val deliveryEvidenceHash: String = "",
     val alphaBriefUnlocked: Boolean = false,
     val replayRejected: Boolean = false,
+    val alphaBriefLiveProofSynced: Boolean = false,
+    val locallyPaused: Boolean = false,
 )
 
 class AllowanceViewModel(application: Application) : AndroidViewModel(application) {
@@ -153,6 +155,8 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
             auditEvents = loadEvents(),
             selectedServiceId = preferences.getString(KEY_SELECTED_SERVICE, CommercialCatalog.DEFAULT_ID)
                 ?: CommercialCatalog.DEFAULT_ID,
+            alphaBriefLiveProofSynced = preferences.getBoolean(KEY_ALPHABRIEF_SYNCED, false),
+            locallyPaused = preferences.getBoolean(KEY_LOCAL_PAUSED, false),
         ),
     )
     val state: StateFlow<AllowanceUiState> = _state
@@ -252,6 +256,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun runAlphaBriefDelivery() {
+        if (blockIfLocallyPaused(policy.perChargeCap)) return
         val now = System.currentTimeMillis()
         val envelope = ChargeEnvelope(
             requestId = "req_alphabrief_mobile_$now",
@@ -279,6 +284,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun replayAlphaBriefEvidence() {
+        if (blockIfLocallyPaused(policy.perChargeCap)) return
         val now = System.currentTimeMillis()
         val envelope = ChargeEnvelope(
             requestId = "req_alphabrief_replay_$now",
@@ -306,6 +312,124 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         logEvent("REPLAY_REJECTED", decision.state, policy.perChargeCap, decision.reason)
     }
 
+    fun syncAlphaBriefLiveProof() {
+        if (_state.value.alphaBriefLiveProofSynced) return
+        viewModelScope.launch {
+            setLoading("Verifying AlphaBrief settlement and freeze on Solana Devnet…")
+            runCatching {
+                val settlement = rpc.signatureStatus(AlphaBriefLiveEvidence.SETTLEMENT_SIGNATURE)
+                val freeze = rpc.signatureStatus(AlphaBriefLiveEvidence.FREEZE_SIGNATURE)
+                check(settlement.succeeded && settlement.confirmation in setOf("CONFIRMED", "FINALIZED")) {
+                    "The recorded AlphaBrief settlement is not confirmed successfully"
+                }
+                check(freeze.succeeded && freeze.confirmation in setOf("CONFIRMED", "FINALIZED")) {
+                    "The recorded AlphaBrief freeze is not confirmed successfully"
+                }
+            }.onSuccess {
+                preferences.edit().putBoolean(KEY_ALPHABRIEF_SYNCED, true).apply()
+                logEvent(
+                    "ALPHABRIEF_LIVE_SETTLED",
+                    AllowanceState.VERIFIED,
+                    AlphaBriefLiveEvidence.PRICE,
+                    "RPC-confirmed Devnet proof: independently verified delivery settled through delegated v2.",
+                    AlphaBriefLiveEvidence.SETTLEMENT_SIGNATURE,
+                )
+                logEvent(
+                    "ALPHABRIEF_BAD_OUTPUT_FROZEN",
+                    AllowanceState.FROZEN,
+                    0.0,
+                    "RPC-confirmed Devnet proof: bad output froze the allowance; published evidence records zero token movement.",
+                    AlphaBriefLiveEvidence.FREEZE_SIGNATURE,
+                )
+                _state.update {
+                    it.copy(
+                        loading = false,
+                        loadingMessage = "",
+                        alphaBriefLiveProofSynced = true,
+                        deliveryEvidenceHash = AlphaBriefLiveEvidence.ACCEPTED_EVIDENCE_HASH,
+                        allowanceState = AllowanceState.FROZEN,
+                        decisionReason = "RPC-confirmed AlphaBrief settlement and bad-output freeze proofs are linked to this device timeline.",
+                    )
+                }
+                AllowanceNotifications.notify(
+                    getApplication(),
+                    1501,
+                    "AlphaBrief delivered and settled",
+                    "Independent verification passed. The RPC-confirmed Devnet v2 settlement is now in your timeline.",
+                )
+                AllowanceNotifications.notify(
+                    getApplication(),
+                    1502,
+                    "Allowance frozen after bad output",
+                    "A later AlphaBrief result failed verification. The published freeze path moved zero tokens.",
+                )
+            }.onFailure { error ->
+                fail(error.message ?: "Unable to verify the AlphaBrief public proofs", "ALPHABRIEF_PROOF_SYNC_ERROR")
+            }
+        }
+    }
+
+    fun toggleLocalPause() {
+        val paused = !_state.value.locallyPaused
+        preferences.edit().putBoolean(KEY_LOCAL_PAUSED, paused).apply()
+        _state.update {
+            it.copy(
+                locallyPaused = paused,
+                decisionReason = if (paused) {
+                    "Local safety pause enabled. New app-side requests are stopped; this is not an onchain pause transaction."
+                } else {
+                    "Local safety pause disabled. Onchain state remains unchanged."
+                },
+            )
+        }
+        logEvent(
+            if (paused) "LOCAL_SAFETY_PAUSED" else "LOCAL_SAFETY_RESUMED",
+            AllowanceState.IDLE,
+            message = if (paused) "New local requests paused; no onchain transaction broadcast" else "Local requests resumed; no onchain transaction broadcast",
+        )
+        AllowanceNotifications.notify(
+            getApplication(),
+            1503,
+            if (paused) "Allowance requests paused locally" else "Allowance requests resumed locally",
+            if (paused) "Allowance OS will stop new app-side requests. Onchain allowance state is unchanged." else "Local request processing is active again.",
+        )
+    }
+
+    fun dailyHabits(): DailyHabitsSnapshot = DailyHabitsEngine.snapshot(
+        events = _state.value.auditEvents,
+        service = CommercialCatalog.byId(_state.value.selectedServiceId),
+    )
+
+    fun weeklySafetyReport(): String = DailyHabitsEngine.weeklyReport(dailyHabits(), _state.value.locallyPaused)
+
+    fun runDailySafetyCheck() {
+        val habits = dailyHabits()
+        val next = habits.upcomingCharges.first()
+        AllowanceNotifications.notify(
+            getApplication(),
+            1510,
+            "Upcoming allowance request",
+            "${next.serviceName} may request ${next.amount} ${next.token}; delivery evidence is required before settlement.",
+        )
+        if (habits.budgetPressure) {
+            AllowanceNotifications.notify(
+                getApplication(),
+                1511,
+                "Allowance budget needs review",
+                "This week's spend plus the next request is approaching the active policy threshold.",
+            )
+        }
+        if (habits.merchantAnomaly) {
+            AllowanceNotifications.notify(
+                getApplication(),
+                1512,
+                "Merchant anomaly detected",
+                "A recent FROZEN or identity-mismatch event needs review before the next payment.",
+            )
+        }
+        logEvent("DAILY_SAFETY_CHECK", AllowanceState.IDLE, message = "Upcoming charge, budget pressure, and merchant anomalies checked locally")
+    }
+
     fun evaluateCustom(amount: Double, merchantTrusted: Boolean, evidencePresent: Boolean, periodSpent: Double = 0.0) = evaluate(
         amount = amount,
         merchant = if (merchantTrusted) policy.merchant else "merchant:lookalike",
@@ -314,6 +438,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
     )
 
     private fun evaluate(amount: Double, merchant: String, evidence: String, periodSpent: Double = 0.0) {
+        if (blockIfLocallyPaused(amount)) return
         val decision = PolicyEngine.evaluate(policy, amount, merchant, evidence, periodSpent)
         _state.update {
             it.copy(
@@ -345,6 +470,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun publishDevnetProof(sender: ActivityResultSender) {
         val current = _state.value
+        if (blockIfLocallyPaused(current.requestedAmount)) return
         val preflight = PolicyEngine.evaluate(
             policy = policy,
             amount = current.requestedAmount,
@@ -435,6 +561,8 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                         decisionReason = "MWA wallet session was deauthorized. Any onchain allowance remains unchanged until separately revoked.",
                         auditEvents = loadEvents(),
                         selectedServiceId = CommercialCatalog.byId(_state.value.selectedServiceId).id,
+                        alphaBriefLiveProofSynced = preferences.getBoolean(KEY_ALPHABRIEF_SYNCED, false),
+                        locallyPaused = preferences.getBoolean(KEY_LOCAL_PAUSED, false),
                     )
                     logEvent("MWA_DISCONNECTED", AllowanceState.IDLE, message = "MWA wallet session deauthorized; onchain allowance unchanged")
                 }
@@ -452,6 +580,8 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
             decisionReason = "Local wallet session cleared. This does not revoke an onchain allowance.",
             auditEvents = loadEvents(),
             selectedServiceId = CommercialCatalog.byId(_state.value.selectedServiceId).id,
+            alphaBriefLiveProofSynced = preferences.getBoolean(KEY_ALPHABRIEF_SYNCED, false),
+            locallyPaused = preferences.getBoolean(KEY_LOCAL_PAUSED, false),
         )
         logEvent("LOCAL_SESSION_CLEARED", AllowanceState.IDLE, message = "Local wallet session forgotten")
     }
@@ -465,6 +595,22 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                 decisionReason = reason ?: it.decisionReason,
             )
         }
+    }
+
+    private fun blockIfLocallyPaused(amount: Double): Boolean {
+        if (!_state.value.locallyPaused) return false
+        val reason = "Local safety pause blocked this app-side request. No wallet or onchain action was invoked."
+        _state.update {
+            it.copy(
+                allowanceState = AllowanceState.BLOCKED,
+                decisionReason = reason,
+                requestedAmount = amount,
+                signature = "",
+                error = "",
+            )
+        }
+        logEvent("LOCAL_PAUSE_BLOCKED_REQUEST", AllowanceState.BLOCKED, amount, reason)
+        return true
     }
 
     private fun fail(message: String, kind: String = "ERROR") {
@@ -500,8 +646,8 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun clearAuditEvents() {
-        preferences.edit().remove(KEY_EVENTS).apply()
-        _state.update { it.copy(auditEvents = emptyList()) }
+        preferences.edit().remove(KEY_EVENTS).remove(KEY_ALPHABRIEF_SYNCED).apply()
+        _state.update { it.copy(auditEvents = emptyList(), alphaBriefLiveProofSynced = false) }
     }
 
     fun auditExport(): String {
@@ -687,6 +833,8 @@ $events
         private const val KEY_SELECTED_SERVICE = "selected_service"
         private const val KEY_LANGUAGE_CHINESE = "language_chinese"
         private const val KEY_ONBOARDING_COMPLETE = "onboarding_complete_v1"
+        private const val KEY_ALPHABRIEF_SYNCED = "alphabrief_live_proof_synced_v1"
+        private const val KEY_LOCAL_PAUSED = "local_safety_paused"
         const val RECORDED_LIVE_SIGNATURE = "4w1cjWABu9L9NGMe4NrRTkqFxZVnJBsdket94ifiuKrGaMsMDnYquFpirq4kte4hsCxRuT6Jo79U8zvKNgzQ3B9k"
     }
 }

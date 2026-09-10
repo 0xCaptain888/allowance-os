@@ -8,7 +8,7 @@
 
 Allowance OS is a Solana Mobile payment-authorization layer for Web3 services. It turns an open-ended wallet approval into a human-readable allowance with merchant, token, program, per-charge, period, expiry, and evidence boundaries—then applies that same model to AI subscriptions, paid research, trading signals, automation bots, and metered APIs.
 
-**v0.14.0 publishes the missing approve-once / settle-later proof:** Delegated Settlement v2 is deployed on Solana Devnet, its dumped Program bytes exactly match the public Ubuntu CI artifact, and a complete public control matrix proves authority-free later settlement, fail-closed blocking, pause/unpause, evidence-bound freeze, dual-signature recovery, role rotation, and terminal SPL-delegate revocation.
+**v0.15.0 turns AlphaBrief from a template into a complete commercial proof:** a real 508-word report is delivered, content-hashed, checked by an independent verifier, settled by Delegated Settlement v2 without the subscriber signing the charge, and followed by a bad-output attempt that freezes the allowance with zero token movement. Android now presents the result through a Daily Habits safety dashboard.
 
 **Delegated Settlement v2 is Devnet deployed and matrix-verified:** a user approves an allowance-scoped SPL delegate PDA once; later `ChargeDelegated` settlement requires the configured executor and independent verifier, enforces sequential nonces plus per-charge/period/lifetime caps, and does not include the user authority as a signer. Every accepted charge or freeze creates an immutable evidence PDA keyed by the full evidence hash. Read the [v2 specification](docs/delegated-settlement-v2.md) and [machine-readable live evidence](evidence/live-devnet-v2.json).
 
@@ -20,7 +20,7 @@ The deployed `130,280`-byte Program dumps to SHA-256 `45a3996ee011587e394951ee34
 
 ## Commercial product proof
 
-v0.14.0 keeps the five-surface product—**Home → Services → Allowances → Activity → Evidence**—and adds direct visibility into the live v2 Program, its authority-free charge, and the public safety-control matrix.
+v0.15.0 keeps the five-surface product—**Home → Services → Allowances → Activity → Evidence**—but stops presenting every commercial example as equivalent. AlphaBrief is the live reference integration; the other four remain reusable templates.
 
 | Ready template | Commercial use | Payment boundary | Required evidence |
 | --- | --- | --- | --- |
@@ -30,7 +30,30 @@ v0.14.0 keeps the five-surface product—**Home → Services → Allowances → 
 | AutoPilot | automated trading bot | 1 USDC/fee; 20 USDC/week | strategy ID + order receipt + verifier hash |
 | DataPipe | paid API | 0.05 USDC/batch; 10 USDC/month | usage root + metering receipt |
 
-The Android app can filter these services, apply any template, inspect its merchant/program/evidence boundaries, and replay `VERIFIED`, `BLOCKED`, and `FROZEN` requests against its own limits.
+The Android app can filter these services, apply any template, inspect its merchant/program/evidence boundaries, and replay `VERIFIED`, `BLOCKED`, and `FROZEN` requests against its own limits. Only AlphaBrief currently carries a full delivery → verification → settlement → bad-output freeze proof.
+
+### Live AlphaBrief commercial chain
+
+```text
+purchase service
+  → deliver a sourced 508-word report
+  → SHA-256 content + settlement evidence hashes
+  → independent verifier passes 8 delivery checks
+  → v2 executor + verifier settle 2.0 project test tokens
+  → Android delivery notification + activity timeline
+  → later bad output fails 3 checks
+  → verifier freezes allowance; zero tokens move
+```
+
+| Step | Public proof | Result |
+| --- | --- | --- |
+| Purchase | [`4PoT…KcfB`](https://explorer.solana.com/tx/4PoTejEJfrkJcNiCXSyvmypejWPW4dDh3C49Mi9GgkXpiZhK4NBgq5BGcJwuNM6BXCg725YcPJLEk5UN7BhbKcfB?cluster=devnet) | Dedicated AlphaBrief v2 allowance created |
+| Delivery | [Risk brief](examples/alphabrief/deliveries/solana-mobile-commerce-risk-2026-09-10.md) | 508 words, required sections, and 3 captured sources |
+| Independent verifier | Evidence `d6cb…345c` · PDA [`HXxs…h5rs`](https://explorer.solana.com/address/HXxs5MGfLGLZrgkep5XTu5aA8CCQyJnS56faijGLh5rs?cluster=devnet) | 8/8 checks pass |
+| Automatic v2 settlement | [`5xSy…K1qB`](https://explorer.solana.com/tx/5xSyTrMr1iZ47VJcZKfLjLmE5E1XrzYABhWD7fJJsgz7SbKnhqewvHLNNBo3Lcs5uDNfVxmrwzVPMm4yZtY4K1qB?cluster=devnet) | Executor + verifier sign; subscriber authority absent; `2,000,000` raw units move |
+| Bad output | Evidence `8d8b…1733` · [`39oy…WHSG`](https://explorer.solana.com/tx/39oy73khQh35jYZdrHtxXXxJnmFPpPRfRFQBD1gTAwthvq8GMMKfoDrhxedVnFERyXDCyexL11HYotmuWSG7WHSG?cluster=devnet) | 3 checks fail; allowance becomes FROZEN; zero token movement |
+
+The complete record is [`evidence/live-alphabrief-v2.json`](evidence/live-alphabrief-v2.json). The settled asset is a project-created 6-decimal Solana Devnet test mint, **not canonical USDC**.
 
 The **Seeker Integration Lab** also maps Allowance OS to apps featured by Solana Mobile, including Helium Mobile, Parallel Colony, Amp Pay, Moonwalk Fitness, and Perena. Every third-party card is explicitly labeled `BLUEPRINT · UNOFFICIAL`; it does not imply partnership or live integration. See [the UI and Seeker research note](docs/product-ui-and-seeker-research.md).
 
@@ -39,7 +62,7 @@ The **Seeker Integration Lab** also maps Allowance OS to apps featured by Solana
 | Surface | What it proves | Status |
 | --- | --- | --- |
 | [Public Judge Demo](https://0xcaptain888.github.io/allowance-os/) | Instant `VERIFIED` / `BLOCKED` / `FROZEN` policy replay | GitHub Pages deployment |
-| `mobile/android` | Bilingual native Android product with commercial catalog, AlphaBrief unlock/replay lab, fail-closed encrypted MWA session, JSON audit export, v2 state/control codecs, bounded RPC retry, and public v2 evidence links | v0.14.0; 15 Android tests |
+| `mobile/android` | Bilingual native Android product with Daily Habits, upcoming charges, today/week spend, budget/anomaly alerts, local pause, delivery/payment timeline, notifications, weekly report, MWA, and public v2 evidence | v0.15.0; 18 Android tests |
 | `program/` | Backward-compatible v1 plus deployed Delegated Settlement v2 with PDA authority, executor/verifier separation, immutable evidence records, governed role rotation, three-level caps, period rollover, recovery and SPL revoke | Devnet deployed; 20 Rust tests; full control matrix verified |
 | Solana Explorer | Connected Devnet wallet and wallet-broadcast authorization proof | Live signature captured |
 | [Deployed allowance program](https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet) | Program-enforced state transitions and settlement | Live `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED` evidence |
@@ -120,6 +143,9 @@ The Android app is not a mockup. It uses Solana Mobile's official `mobile-wallet
 - a pre-sign review that clearly shows network, payload, and `0 USDC` asset movement for the current Memo proof;
 - separate language and controls for disconnecting MWA versus revoking an onchain allowance;
 - five product surfaces: Home, Services, Allowances, Activity, and Evidence;
+- a Daily Habits dashboard with upcoming charge projections, today/week verified spend, budget pressure, merchant anomaly alerts, one-tap local Pause, and a delivered-service/payment timeline;
+- Android local notifications for upcoming requests, settlement, budget pressure, merchant anomalies, bad-output freeze, and pause/resume;
+- an exportable weekly allowance safety report derived only from settlement-class audit events, never from simulated VERIFIED replays;
 - five reusable commercial templates for AI Agent subscriptions, research reports, trading signals, automated trading bots, and paid APIs;
 - an AlphaBrief reference purchase that exposes request ID, nonce, expiry, content hash, unlock state, and evidence replay rejection;
 - an explicitly unofficial Seeker integration lab covering service subscriptions, games, commerce, fitness, and DeFi automation;
@@ -157,12 +183,12 @@ cd mobile/android
 The resulting APK is:
 
 ```text
-mobile/android/app/build/outputs/apk/debug/allowance-os-0.14.0-debug.apk
+mobile/android/app/build/outputs/apk/debug/allowance-os-0.15.0-debug.apk
 ```
 
-Latest clean local v0.14.0 debug build SHA-256: `3aeb6479969d116d637858031bd8de07f0818c2e04f92ba447b5870919c51dcf` (`18,813,650` bytes). The machine-readable build record is [`evidence/android-build.json`](evidence/android-build.json).
+Latest clean local v0.15.0 debug build SHA-256: `2feaad9180dee1b3c4c72796ed7a3789d9f21bb16ed94c5c5c20fa7d1ead6a05` (`19,104,570` bytes). The machine-readable build record is [`evidence/android-build.json`](evidence/android-build.json).
 
-Latest public QA asset: [`android-test-v0.14.0`](https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.14.0), CI SHA-256 `d5fae3fecefc5260460ad4e22284e1e08375bf06a41cdb1b096198cb6c7a25ef`. Local and CI debug hashes differ because each environment uses its own debug signing key. `android-v*` is reserved for protected production-signed releases; `android-test-v*` assets are explicitly labelled as Devnet QA builds.
+The latest public QA asset remains [`android-test-v0.14.0`](https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.14.0) until the v0.15.0 tag workflow publishes its CI-built APK and checksum. Local and CI debug hashes differ because each environment uses its own debug signing key. `android-v*` is reserved for protected production-signed releases; `android-test-v*` assets are explicitly labelled as Devnet QA builds.
 
 See [`mobile/README.md`](mobile/README.md) for phone setup and [`docs/judge-guide.md`](docs/judge-guide.md) for the two-minute evaluation path.
 
@@ -177,6 +203,8 @@ See [`mobile/README.md`](mobile/README.md) for phone setup and [`docs/judge-guid
 - Stateful webhook verification with timestamp tolerance, event replay rejection, and overlapping old/new secrets for safe rotation.
 - A signer-agnostic live adapter that accepts MWA or protected server executors without accepting wallet secrets.
 - End-to-end AlphaBrief paid-content integration in TypeScript, Android, and the browser Demo.
+- Independent AlphaBrief delivery verifier with merchant, ID, timestamp, freshness, substance, section, source-count, and source-URL checks.
+- Reproducible live AlphaBrief runner that creates a fresh allowance, settles accepted delivery, freezes bad output, and asserts exact token deltas.
 - Backward-compatible Delegated Settlement v2 instruction builders for TypeScript and Rust.
 - Allowance-scoped SPL delegate PDA, four-way actor separation, sequential nonce, deterministic period rollover, three-level caps, immutable per-evidence PDAs, pause, evidence-bound freeze, dual-signature unfreeze, governed executor/verifier rotation, and delegate-removing revoke.
 - Reproducible Rust dependency lockfile and 20 passing native Program source tests.
@@ -190,6 +218,7 @@ npm run typecheck
 npm test
 npm run demo
 npm run demo:alphabrief
+npm run devnet:alphabrief-live
 ```
 
 Reproduce the live Devnet settlement run with a funded test keypair and compatible token accounts:

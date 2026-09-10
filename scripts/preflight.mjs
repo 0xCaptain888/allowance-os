@@ -22,6 +22,8 @@ const sbfArtifactMatches = !sbfArtifactPath || !existsSync(sbfArtifactPath) || (
   && readFileSync(sbfArtifactPath).byteLength === sourceBuildEvidence?.builds?.localMacOs?.sizeBytes
 );
 const sbfBuilderVersion = commandOutput(cargoBuildSbfPath, ['--version']);
+const recordedSbfBuilderPinned = sourceBuildEvidence?.builds?.githubUbuntu?.cargoBuildSbf === '4.3.0'
+  && sourceBuildEvidence?.builds?.localMacOs?.cargoBuildSbf === '4.3.0';
 
 const checks = [
   ['typescript sources', existsSync('src/engine.ts')],
@@ -36,6 +38,12 @@ const checks = [
   ['Evidence truth index', existsSync('evidence/index.json')],
   ['Merchant SDK runtime', existsSync('src/sdk.ts') && existsSync('src/runtime.ts')],
   ['AlphaBrief reference integration', existsSync('examples/alphabrief/integration.ts')],
+  ['AlphaBrief independent delivery verifier', existsSync('src/alphabrief.ts')],
+  ['AlphaBrief live commercial runner', existsSync('scripts/run-alphabrief-live.ts')],
+  ['AlphaBrief delivered report', existsSync('examples/alphabrief/deliveries/solana-mobile-commerce-risk-2026-09-10.md')],
+  ['AlphaBrief live Devnet evidence', existsSync('evidence/live-alphabrief-v2.json')],
+  ['Android Daily Habits dashboard', existsSync('mobile/android/app/src/main/java/com/captain/allowanceos/DailyHabits.kt')],
+  ['Android local notifications', existsSync('mobile/android/app/src/main/java/com/captain/allowanceos/AllowanceNotifications.kt')],
   ['Security and privacy disclosures', existsSync('docs/security.md') && existsSync('docs/privacy-policy.md')],
   ['Security reporting and operations runbook', existsSync('SECURITY.md') && existsSync('docs/operations.md')],
   ['dApp Store submission pack', existsSync('dapp-store/listing.json') && existsSync('docs/dapp-store-submission.md')],
@@ -48,7 +56,7 @@ const checks = [
   ['Delegated v2 live Devnet evidence', existsSync('evidence/live-devnet-v2.json')],
   ['Delegated v2 source hashes match evidence', sourceHashesMatch],
   ['Local SBF artifact matches evidence when present', sbfArtifactMatches],
-  ['Pinned cargo-build-sbf 4.3.0', sbfBuilderVersion.includes('cargo-build-sbf 4.3.0')],
+  ['Recorded SBF artifacts used pinned cargo-build-sbf 4.3.0', recordedSbfBuilderPinned],
   ['Encrypted Android session store', existsSync('mobile/android/app/src/main/java/com/captain/allowanceos/SecureSessionStore.kt')],
   ['Production Android builder', existsSync('scripts/build-production-android.mjs')],
   ['Device capability boundary', existsSync('mobile/README.md')],

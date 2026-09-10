@@ -1,6 +1,6 @@
 {
   "name": "allowance-os",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "private": true,
   "description": "A Solana Mobile payment-authorization layer for Web3 services, subscriptions, agents, and metered APIs.",
   "type": "module",
@@ -14,6 +14,8 @@
     "devnet:live": "tsx scripts/run-live-devnet.ts",
     "devnet:delegated": "tsx scripts/run-delegated-devnet.ts",
     "devnet:delegated-matrix": "tsx scripts/run-delegated-devnet-matrix.ts",
+    "devnet:alphabrief-live": "tsx scripts/run-alphabrief-live.ts",
+    "devnet:alphabrief-setup": "tsx scripts/setup-alphabrief-devnet.ts",
     "android:test": "cd mobile/android && ./gradlew testDebugUnitTest",
     "android:build": "cd mobile/android && ./gradlew testDebugUnitTest assembleDebug",
     "android:release": "node scripts/build-production-android.mjs"
@@ -28,5 +30,6 @@
   "overrides": {
     "stream-json": "3.6.0",
     "uuid": "11.1.1"
-  }
+  },
+  "dependencies": {}
 }

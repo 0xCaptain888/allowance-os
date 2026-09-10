@@ -14,24 +14,26 @@ Official publishing guidance requires a release-ready signed APK, listing metada
 - Support URL: `https://github.com/0xCaptain888/allowance-os/issues`
 - Website: `https://0xcaptain888.github.io/allowance-os/`
 - Privacy policy: `docs/privacy-policy.md`
-- Version: `0.14.0` / code `15`
+- Version: `0.15.0` / code `16`
 
 ## Required preview asset plan
 
 Capture these from the final signed release on a supported Android device:
 
 1. Home: connected wallet and selected service;
-2. Services: five commercial templates;
-3. Allowance: adjustable policy and VERIFIED result;
-4. AlphaBrief: report unlocked after content-hash verification;
-5. Replay attack: evidence reuse BLOCKED;
-6. Evidence: live Devnet matrix and truth boundary;
-7. Activity: local audit trail;
-8. Settings/session controls: deauthorize and forget local session.
+2. Daily Habits: upcoming charges, spend summaries, alerts, local Pause, delivery timeline, notifications, and weekly report;
+3. Services: AlphaBrief live proof plus four commercial templates;
+4. Allowance: adjustable policy and VERIFIED result;
+5. AlphaBrief: report unlocked after content-hash verification;
+6. Replay attack: evidence reuse BLOCKED;
+7. Evidence: live Devnet matrix and truth boundary;
+8. Activity: local audit trail;
+9. Settings/session controls: deauthorize and forget local session.
 
 ## Permissions and data safety
 
 - Internet: required for wallet association and Solana RPC reads/broadcasts.
+- Notifications: optional local reminders for upcoming requests, budget pressure, merchant anomalies, delivery, settlement, freeze, and pause state.
 - No location, contacts, camera, microphone, SMS, or storage permission requested.
 - No seed phrase or private key access.
 - Public address, wallet label, auth token, signatures, preferences, and audit events remain in Android app-local storage.

@@ -9,12 +9,12 @@ Verified locally on September 10, 2026:
 ```text
 ./gradlew testDebugUnitTest assembleDebug
 BUILD SUCCESSFUL
-15 Android policy/session/protocol tests passed
-Artifact: app/build/outputs/apk/debug/allowance-os-0.14.0-debug.apk
+18 Android policy/session/protocol/Daily Habits tests passed
+Artifact: app/build/outputs/apk/debug/allowance-os-0.15.0-debug.apk
 APK SHA-256: 463ad7ad745c78040c4618e5b9688def42ab29edc4a8619d28ca163fd0d38a08
 ```
 
-v0.14.0 exposes the deployed Delegated Settlement v2 Program and authority-free settlement/revoke evidence, alongside the strict v2 state decoder, native pause/unpause/revoke/role-rotation encoders, bounded RPC retries, and portable JSON Activity exports. Not every v2 control is wired to mobile broadcasting yet. Existing encrypted MWA session and integer-money boundaries remain enforced.
+v0.15.0 adds Daily Habits and a linked real AlphaBrief commercial proof: upcoming charges, today/week verified spend, budget and merchant alerts, local Pause, delivery/payment timeline, Android notifications, weekly safety reports, and public v2 settlement/freeze links. Not every v2 control is wired to mobile broadcasting yet. Existing encrypted MWA session and integer-money boundaries remain enforced.
 
 The checksum belongs to the local debug build and may change after any source or dependency update.
 
@@ -49,7 +49,7 @@ JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home" \
 
 ```bash
 ~/Library/Android/sdk/platform-tools/adb install -r \
-  app/build/outputs/apk/debug/allowance-os-0.14.0-debug.apk
+  app/build/outputs/apk/debug/allowance-os-0.15.0-debug.apk
 ```
 
 7. Open **Allowance OS** on the phone.

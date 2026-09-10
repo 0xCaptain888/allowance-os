@@ -4,13 +4,13 @@
   "date": "2026-09-10",
   "command": "./gradlew testDebugUnitTest assembleDebug",
   "result": "BUILD_SUCCESSFUL",
-  "testCount": 15,
+  "testCount": 18,
   "testFailures": 0,
-  "versionCode": 15,
-  "versionName": "0.14.0",
-  "artifact": "mobile/android/app/build/outputs/apk/debug/allowance-os-0.14.0-debug.apk",
-  "artifactSize": "18813650 bytes",
-  "sha256": "3aeb6479969d116d637858031bd8de07f0818c2e04f92ba447b5870919c51dcf",
+  "versionCode": 16,
+  "versionName": "0.15.0",
+  "artifact": "mobile/android/app/build/outputs/apk/debug/allowance-os-0.15.0-debug.apk",
+  "artifactSize": "19104570 bytes",
+  "sha256": "2feaad9180dee1b3c4c72796ed7a3789d9f21bb16ed94c5c5c20fa7d1ead6a05",
   "publicQaRelease": {
     "tag": "android-test-v0.14.0",
     "workflowRunId": 34474593759,
@@ -19,5 +19,5 @@
     "sha256": "d5fae3fecefc5260460ad4e22284e1e08375bf06a41cdb1b096198cb6c7a25ef",
     "note": "The local and CI debug APK hashes differ because each environment uses its own debug signing key."
   },
-  "truthBoundary": "This records a clean local Android build plus the public CI QA artifact metadata. Neither APK is production-signed, a Solana transaction, or a deployed-program receipt."
+  "truthBoundary": "This records the clean local v0.15.0 Android build. The nested publicQaRelease remains the latest previously published v0.14.0 CI artifact until the v0.15.0 tag workflow completes. Neither APK is production-signed, a Solana transaction, or a deployed-program receipt."
 }
