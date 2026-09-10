@@ -11,7 +11,7 @@ Verified locally on September 10, 2026:
 BUILD SUCCESSFUL
 15 Android policy/session/protocol tests passed
 Artifact: app/build/outputs/apk/debug/allowance-os-0.13.0-debug.apk
-APK SHA-256: a35e6d3d7182b90c20cf814417018a13420ff19d4c8a833e2827928c48d77a03
+APK SHA-256: 463ad7ad745c78040c4618e5b9688def42ab29edc4a8619d28ca163fd0d38a08
 ```
 
 v0.13.0 adds a strict Delegated Settlement v2 state decoder, native pause/unpause/revoke/role-rotation encoders, bounded RPC retries, and portable JSON Activity exports. These codecs are source-tested but are not shown as live controls until v2 is deployed. Existing encrypted MWA session and integer-money boundaries remain enforced.

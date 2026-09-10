@@ -26,7 +26,7 @@ Android: 15 passed, 0 failed
 Rust: 20 passed, 0 failed (unchanged v2 Program suite)
 APK: mobile/android/app/build/outputs/apk/debug/allowance-os-0.13.0-debug.apk
 Size: 18,813,650 bytes
-SHA-256: a35e6d3d7182b90c20cf814417018a13420ff19d4c8a833e2827928c48d77a03
+SHA-256: 463ad7ad745c78040c4618e5b9688def42ab29edc4a8619d28ca163fd0d38a08
 ```
 
 ## Public QA release

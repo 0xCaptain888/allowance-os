@@ -52,7 +52,7 @@ Size: 18,813,650 bytes
 Version code: 14
 Version name: 0.13.0
 Android tests: 15 passed, 0 failed
-SHA-256: a35e6d3d7182b90c20cf814417018a13420ff19d4c8a833e2827928c48d77a03
+SHA-256: 463ad7ad745c78040c4618e5b9688def42ab29edc4a8619d28ca163fd0d38a08
 ```
 
 Published GitHub Actions APK:

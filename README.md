@@ -144,7 +144,7 @@ The resulting APK is:
 mobile/android/app/build/outputs/apk/debug/allowance-os-0.13.0-debug.apk
 ```
 
-Local v0.13.0 debug build SHA-256: `a35e6d3d7182b90c20cf814417018a13420ff19d4c8a833e2827928c48d77a03`
+Latest clean local v0.13.0 debug build SHA-256: `463ad7ad745c78040c4618e5b9688def42ab29edc4a8619d28ca163fd0d38a08`
 
 Latest public QA asset: [`android-test-v0.13.0`](https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.13.0), CI SHA-256 `d9d5f8e57ed358e09a780ca8d4097437fdb618a453a3beee72d67854a72c07b2`. Local and CI debug hashes differ because each environment uses its own debug signing key. `android-v*` is reserved for protected production-signed releases; `android-test-v*` assets are explicitly labelled as Devnet QA builds.
 
