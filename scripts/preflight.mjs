@@ -1,4 +1,5 @@
-import { existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -10,6 +11,17 @@ const solanaPath = process.env.SOLANA_BIN
   ?? join(homedir(), '.local', 'share', 'solana', 'install', 'active_release', 'bin', 'solana');
 const cargoBuildSbfPath = process.env.CARGO_BUILD_SBF_BIN
   ?? join(homedir(), '.local', 'share', 'solana', 'install', 'active_release', 'bin', 'cargo-build-sbf');
+const sourceBuildEvidence = readJson('evidence/delegated-v2-source-build.json');
+const sourceFileEntries = Object.entries(sourceBuildEvidence?.sourceFiles ?? {});
+const sourceHashesMatch = sourceFileEntries.length > 0 && sourceFileEntries.every(([path, expected]) => (
+  existsSync(path) && sha256(path) === expected
+));
+const sbfArtifactPath = sourceBuildEvidence?.builds?.localMacOs?.artifact;
+const sbfArtifactMatches = !sbfArtifactPath || !existsSync(sbfArtifactPath) || (
+  sha256(sbfArtifactPath) === sourceBuildEvidence?.builds?.localMacOs?.sha256
+  && readFileSync(sbfArtifactPath).byteLength === sourceBuildEvidence?.builds?.localMacOs?.sizeBytes
+);
+const sbfBuilderVersion = commandOutput(cargoBuildSbfPath, ['--version']);
 
 const checks = [
   ['typescript sources', existsSync('src/engine.ts')],
@@ -30,6 +42,9 @@ const checks = [
   ['Delegated v2 TypeScript builders', existsSync('src/delegated-protocol.ts')],
   ['Delegated v2 Devnet runner', existsSync('scripts/run-delegated-devnet.ts')],
   ['Delegated v2 source-build evidence', existsSync('evidence/delegated-v2-source-build.json')],
+  ['Delegated v2 source hashes match evidence', sourceHashesMatch],
+  ['Local SBF artifact matches evidence when present', sbfArtifactMatches],
+  ['Pinned cargo-build-sbf 4.3.0', sbfBuilderVersion.includes('cargo-build-sbf 4.3.0')],
   ['Encrypted Android session store', existsSync('mobile/android/app/src/main/java/com/captain/allowanceos/SecureSessionStore.kt')],
   ['Production Android builder', existsSync('scripts/build-production-android.mjs')],
   ['Device capability boundary', existsSync('mobile/README.md')],
@@ -43,4 +58,16 @@ for (const [name, ok] of checks) console.log(`${ok ? 'READY' : 'BLOCKED'}\t${nam
 
 function command(program, args) {
   try { execFileSync(program, args, { stdio: 'ignore' }); return true; } catch { return false; }
+}
+
+function commandOutput(program, args) {
+  try { return execFileSync(program, args, { encoding: 'utf8' }); } catch { return ''; }
+}
+
+function sha256(path) {
+  return createHash('sha256').update(readFileSync(path)).digest('hex');
+}
+
+function readJson(path) {
+  try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
 }

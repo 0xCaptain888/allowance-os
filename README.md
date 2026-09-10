@@ -10,9 +10,9 @@ Allowance OS is a Solana Mobile payment-authorization layer for Web3 services. I
 
 **v0.12.0 hardens money, hashes, wallet sessions, and release identity:** SDK payment values are base-10 integer raw units bound to an exact mint and decimals; nested canonical hashes now cover the entire payload; restored wallets require a valid encrypted MWA token; and production tags can no longer publish debug-signed APKs.
 
-**Delegated Settlement v2 is now source-tested:** a user approves an allowance-scoped SPL delegate PDA once; later `ChargeDelegated` settlement requires the configured executor and independent verifier, enforces sequential nonces plus per-charge/period/lifetime caps, and does not include the user authority as a signer. Pause, evidence-bound freeze, dual-signature unfreeze, and token-delegate revoke are implemented. Read the [v2 specification](docs/delegated-settlement-v2.md).
+**Delegated Settlement v2 is now source-tested:** a user approves an allowance-scoped SPL delegate PDA once; later `ChargeDelegated` settlement requires the configured executor and independent verifier, enforces sequential nonces plus per-charge/period/lifetime caps, and does not include the user authority as a signer. Every accepted charge or freeze creates an immutable evidence PDA keyed by the full evidence hash. Pause, evidence-bound freeze, dual-signature unfreeze, terminal token-delegate revoke, and governed executor/verifier rotation are implemented. Read the [v2 specification](docs/delegated-settlement-v2.md).
 
-The v2 source also produces a `92,704`-byte Solana SBF binary. The macOS build SHA-256 is `9c36a9aaa91f40a9797c99876015ebcd2aaf284f796166719e2df1f19ee34fd5`; the successful Ubuntu CI build SHA-256 is `5aa5d33d45557266800dd3941731eb8e607d47c0030d6fba3b5a4ec41c19b02e`. Both use pinned `cargo-build-sbf 4.3.0`, but the bytes differ across hosts, so the repository makes no cross-platform reproducibility claim. Both are recorded as [source-build evidence](evidence/delegated-v2-source-build.json), not deployment evidence.
+The current v2 source produces a `130,280`-byte Solana SBF binary on macOS with pinned `cargo-build-sbf 4.3.0`; SHA-256 is `e0eb4726bdfda25fa2a377f347b9590087072e4ad1d9e455598760f6b865e7d6`. The independent Ubuntu CI build is recorded separately after each source revision, and no cross-platform byte-for-byte reproducibility claim is made. See [source-build evidence](evidence/delegated-v2-source-build.json); this is build evidence, not deployment evidence.
 
 > **Pre-production disclosure:** v2 is **SOURCE TESTED · NOT DEPLOYED**. The repository proves policy evaluation, real MWA signing, deployed v1 Devnet state transitions, and a recorded v1 SPL-token transfer. The current deployed Program still requires the authority signer for `Charge`; do not interpret the v2 source as live recurring settlement until new public transactions and a matching binary hash are published. See the [maturity audit](docs/product-maturity-audit.md).
 
@@ -38,7 +38,7 @@ The **Seeker Integration Lab** also maps Allowance OS to apps featured by Solana
 | --- | --- | --- |
 | [Public Judge Demo](https://0xcaptain888.github.io/allowance-os/) | Instant `VERIFIED` / `BLOCKED` / `FROZEN` policy replay | GitHub Pages deployment |
 | `mobile/android` | Bilingual native Android product with commercial catalog, AlphaBrief unlock/replay lab, fail-closed encrypted MWA session, explicit action review, persistent activity audit, and direct Devnet RPC verification | v0.12.0; 13 Android tests |
-| `program/` | Backward-compatible v1 plus Delegated Settlement v2 with PDA authority, executor/verifier separation, three-level caps, period rollover, recovery and SPL revoke | v2 source tested with 16 Rust tests; not deployed |
+| `program/` | Backward-compatible v1 plus Delegated Settlement v2 with PDA authority, executor/verifier separation, immutable evidence records, governed role rotation, three-level caps, period rollover, recovery and SPL revoke | v2 source tested with 20 Rust tests; not deployed |
 | Solana Explorer | Connected Devnet wallet and wallet-broadcast authorization proof | Live signature captured |
 | [Deployed allowance program](https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet) | Program-enforced state transitions and settlement | Live `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED` evidence |
 | SPL-token settlement | Token movement through CPI | Live Devnet transfer with independently readable pre/post balances |
@@ -88,6 +88,7 @@ User signs CreateDelegated once
   → Executor requests a later charge
   → independent Verifier attests delivery
   → Program enforces nonce + per-charge + period + lifetime policy
+  → immutable Evidence Record PDA commits hash + allowance + nonce + time
   → PDA signs SPL transfer; user is offline
 ```
 
@@ -153,8 +154,8 @@ See [`mobile/README.md`](mobile/README.md) for phone setup and [`docs/judge-guid
 - A signer-agnostic live adapter that accepts MWA or protected server executors without accepting wallet secrets.
 - End-to-end AlphaBrief paid-content integration in TypeScript, Android, and the browser Demo.
 - Backward-compatible Delegated Settlement v2 instruction builders for TypeScript and Rust.
-- Allowance-scoped SPL delegate PDA, executor/verifier separation, sequential nonce, deterministic period rollover, three-level caps, pause, evidence-bound freeze, dual-signature unfreeze, and delegate-removing revoke.
-- Reproducible Rust dependency lockfile and 16 passing native Program source tests.
+- Allowance-scoped SPL delegate PDA, four-way actor separation, sequential nonce, deterministic period rollover, three-level caps, immutable per-evidence PDAs, pause, evidence-bound freeze, dual-signature unfreeze, governed executor/verifier rotation, and delegate-removing revoke.
+- Reproducible Rust dependency lockfile and 20 passing native Program source tests.
 - Standard Android and Seeker device profiles.
 
 Run the TypeScript verifier:
@@ -191,7 +192,7 @@ MERCHANT_TOKEN_ACCOUNT=<merchant-token-account> \
 npm run devnet:delegated
 ```
 
-The second transaction is fee-paid and signed by the executor plus verifier; the authority keypair is deliberately absent. The runner fails unless the token deltas, nonce, lifetime spend, actor separation, and v2 state all match. It cannot run accidentally against an unspecified deployment because `DELEGATED_PROGRAM_ID` is mandatory.
+The second transaction is fee-paid and signed by the executor plus verifier; the authority keypair is deliberately absent. The runner fails unless the token deltas, nonce, lifetime spend, actor separation, v2 state, and immutable Evidence Record PDA all match. It cannot run accidentally against an unspecified deployment because `DELEGATED_PROGRAM_ID` is mandatory.
 
 ## Truth boundary
 

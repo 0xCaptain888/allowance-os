@@ -10,13 +10,16 @@ import {
   chargeDelegatedInstruction,
   createDelegatedInstruction,
   delegatedAuthority,
+  evidenceRecordAddress,
   freezeDelegatedInstruction,
   pauseDelegatedInstruction,
   revokeDelegatedInstruction,
+  rotateExecutorInstruction,
+  rotateVerifierInstruction,
   unfreezeDelegatedInstruction,
   unpauseDelegatedInstruction,
 } from '../src/delegated-protocol.js';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { canonicalJson, stableHash } from '../src/hash.js';
 import type { AllowancePolicy, ChargeRequest } from '../src/types.js';
 
@@ -141,6 +144,7 @@ test('delegated v2 builders preserve signer separation and stable discriminants'
   const policyHash = new Uint8Array(32).fill(3);
   const evidenceHash = new Uint8Array(32).fill(7);
   const [delegate] = delegatedAuthority(programId, allowance);
+  const [evidenceRecord] = evidenceRecordAddress(programId, allowance, evidenceHash);
 
   const create = createDelegatedInstruction({
     programId,
@@ -179,9 +183,13 @@ test('delegated v2 builders preserve signer separation and stable discriminants'
   assert.equal(charge.data.length, 49);
   assert.equal(charge.keys[0].pubkey.equals(executor), true);
   assert.equal(charge.keys[0].isSigner, true);
+  assert.equal(charge.keys[0].isWritable, true);
   assert.equal(charge.keys[1].pubkey.equals(verifier), true);
   assert.equal(charge.keys[1].isSigner, true);
   assert.equal(charge.keys.some(key => key.pubkey.equals(authority)), false);
+  assert.equal(charge.keys[7].pubkey.equals(evidenceRecord), true);
+  assert.equal(charge.keys[7].isWritable, true);
+  assert.equal(charge.keys[8].pubkey.equals(SystemProgram.programId), true);
 
   assert.equal(pauseDelegatedInstruction(programId, authority, allowance).data[0], 5);
   assert.equal(unpauseDelegatedInstruction(programId, authority, allowance).data[0], 6);
@@ -190,6 +198,30 @@ test('delegated v2 builders preserve signer separation and stable discriminants'
   assert.equal(freeze.data.length, 33);
   assert.equal(unfreezeDelegatedInstruction({ programId, authority, verifier, allowance }).data[0], 8);
   assert.equal(revokeDelegatedInstruction({ programId, authority, allowance, sourceToken }).data[0], 9);
+  const newExecutor = PublicKey.unique();
+  const newVerifier = PublicKey.unique();
+  const rotateExecutor = rotateExecutorInstruction({ programId, authority, allowance, newExecutor });
+  const rotateVerifier = rotateVerifierInstruction({ programId, authority, currentVerifier: verifier, allowance, newVerifier });
+  assert.equal(rotateExecutor.data[0], 10);
+  assert.equal(new PublicKey(rotateExecutor.data.subarray(1)).equals(newExecutor), true);
+  assert.equal(rotateVerifier.data[0], 11);
+  assert.equal(rotateVerifier.keys[1].pubkey.equals(verifier), true);
+  assert.equal(rotateVerifier.keys[1].isSigner, true);
+  assert.equal(new PublicKey(rotateVerifier.data.subarray(1)).equals(newVerifier), true);
+});
+
+test('evidence record PDAs bind allowance and complete evidence hash', () => {
+  const programId = PublicKey.unique();
+  const allowance = PublicKey.unique();
+  const firstHash = new Uint8Array(32).fill(1);
+  const secondHash = new Uint8Array(32).fill(2);
+  const [first] = evidenceRecordAddress(programId, allowance, firstHash);
+  const [same] = evidenceRecordAddress(programId, allowance, firstHash);
+  const [differentEvidence] = evidenceRecordAddress(programId, allowance, secondHash);
+  const [differentAllowance] = evidenceRecordAddress(programId, PublicKey.unique(), firstHash);
+  assert.equal(first.equals(same), true);
+  assert.equal(first.equals(differentEvidence), false);
+  assert.equal(first.equals(differentAllowance), false);
 });
 
 test('delegated v2 builders reject malformed hashes and integer ranges', () => {

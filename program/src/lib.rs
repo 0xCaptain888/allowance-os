@@ -16,6 +16,8 @@ use solana_program::{
     program_error::ProgramError,
     program_pack::Pack,
     pubkey::Pubkey,
+    system_instruction, system_program,
+    sysvar::rent::Rent,
     sysvar::Sysvar,
 };
 use spl_token::state::Account as TokenAccount;
@@ -27,6 +29,8 @@ solana_program::declare_id!("DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE");
 pub const STATE_SIZE: usize = 1 + (32 * 4) + (8 * 3) + 8 + 1 + 1 + (32 * 3);
 pub const DELEGATED_STATE_SIZE: usize = 332;
 pub const DELEGATE_SEED: &[u8] = b"allowance-delegate";
+pub const EVIDENCE_RECORD_SIZE: usize = 82;
+pub const EVIDENCE_SEED: &[u8] = b"allowance-evidence";
 
 #[derive(Debug, borsh_derive::BorshSerialize, borsh_derive::BorshDeserialize, PartialEq, Eq)]
 pub struct AllowanceState {
@@ -78,6 +82,18 @@ pub struct AllowanceStateV2 {
     pub last_evidence_hash: [u8; 32],
 }
 
+#[derive(
+    Debug, borsh_derive::BorshSerialize, borsh_derive::BorshDeserialize, PartialEq, Eq, Clone,
+)]
+pub struct EvidenceRecordV2 {
+    pub version: u8,
+    pub allowance: Pubkey,
+    pub evidence_hash: [u8; 32],
+    pub kind: u8,
+    pub nonce: u64,
+    pub created_at: i64,
+}
+
 #[derive(Debug, borsh_derive::BorshSerialize, borsh_derive::BorshDeserialize, PartialEq, Eq)]
 pub enum AllowanceInstruction {
     Create {
@@ -120,6 +136,12 @@ pub enum AllowanceInstruction {
     },
     UnfreezeDelegated,
     RevokeDelegated,
+    RotateExecutor {
+        new_executor: Pubkey,
+    },
+    RotateVerifier {
+        new_verifier: Pubkey,
+    },
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -146,6 +168,8 @@ pub enum AllowanceError {
     InvalidDelegatePda,
     InvalidSourceToken,
     InvalidStateVersion,
+    InvalidEvidenceRecord,
+    InvalidSystemProgram,
 }
 
 impl From<AllowanceError> for ProgramError {
@@ -173,6 +197,8 @@ impl From<AllowanceError> for ProgramError {
             AllowanceError::InvalidDelegatePda => 20,
             AllowanceError::InvalidSourceToken => 21,
             AllowanceError::InvalidStateVersion => 22,
+            AllowanceError::InvalidEvidenceRecord => 23,
+            AllowanceError::InvalidSystemProgram => 24,
         })
     }
 }
@@ -291,6 +317,150 @@ fn validate_freeze_evidence(
         return Err(AllowanceError::DuplicateEvidence);
     }
     Ok(())
+}
+
+fn validate_new_executor(
+    state: &AllowanceStateV2,
+    new_executor: &Pubkey,
+) -> Result<(), AllowanceError> {
+    if state.revoked {
+        return Err(AllowanceError::Revoked);
+    }
+    if *new_executor == Pubkey::default()
+        || *new_executor == state.authority
+        || *new_executor == state.merchant
+        || *new_executor == state.verifier
+    {
+        return Err(AllowanceError::InvalidExecutor);
+    }
+    Ok(())
+}
+
+fn validate_initial_roles(
+    authority: &Pubkey,
+    merchant: &Pubkey,
+    executor: &Pubkey,
+    verifier: &Pubkey,
+) -> Result<(), AllowanceError> {
+    let roles = [authority, merchant, executor, verifier];
+    if roles.iter().any(|role| **role == Pubkey::default()) {
+        return Err(AllowanceError::InvalidPolicy);
+    }
+    for left in 0..roles.len() {
+        for right in (left + 1)..roles.len() {
+            if roles[left] == roles[right] {
+                return Err(AllowanceError::InvalidPolicy);
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_new_verifier(
+    state: &AllowanceStateV2,
+    new_verifier: &Pubkey,
+) -> Result<(), AllowanceError> {
+    if state.revoked {
+        return Err(AllowanceError::Revoked);
+    }
+    if *new_verifier == Pubkey::default()
+        || *new_verifier == state.authority
+        || *new_verifier == state.merchant
+        || *new_verifier == state.executor
+    {
+        return Err(AllowanceError::InvalidVerifier);
+    }
+    Ok(())
+}
+
+fn create_evidence_record<'a>(
+    program_id: &Pubkey,
+    payer: &AccountInfo<'a>,
+    allowance: &AccountInfo<'a>,
+    evidence_record: &AccountInfo<'a>,
+    system_program_account: &AccountInfo<'a>,
+    evidence_hash: [u8; 32],
+    kind: u8,
+    nonce: u64,
+    created_at: i64,
+) -> ProgramResult {
+    require_signer(payer, AllowanceError::InvalidEvidenceRecord)?;
+    if system_program_account.key != &system_program::id() {
+        return Err(AllowanceError::InvalidSystemProgram.into());
+    }
+    let (expected_record, bump) =
+        evidence_record_address(program_id, allowance.key, &evidence_hash);
+    if evidence_record.key != &expected_record {
+        return Err(AllowanceError::InvalidEvidenceRecord.into());
+    }
+    if evidence_record.owner == program_id {
+        return Err(AllowanceError::DuplicateEvidence.into());
+    }
+    if evidence_record.owner != &system_program::id() || evidence_record.data_len() != 0 {
+        return Err(AllowanceError::InvalidEvidenceRecord.into());
+    }
+
+    let required_lamports = Rent::get()?.minimum_balance(EVIDENCE_RECORD_SIZE);
+    let bump_seed = [bump];
+    let signer_seeds: &[&[u8]] = &[
+        EVIDENCE_SEED,
+        allowance.key.as_ref(),
+        evidence_hash.as_ref(),
+        &bump_seed,
+    ];
+    if evidence_record.lamports() == 0 {
+        let create = system_instruction::create_account(
+            payer.key,
+            evidence_record.key,
+            required_lamports,
+            EVIDENCE_RECORD_SIZE as u64,
+            program_id,
+        );
+        invoke_signed(
+            &create,
+            &[
+                payer.clone(),
+                evidence_record.clone(),
+                system_program_account.clone(),
+            ],
+            &[signer_seeds],
+        )?;
+    } else {
+        let top_up = required_lamports.saturating_sub(evidence_record.lamports());
+        if top_up > 0 {
+            invoke(
+                &system_instruction::transfer(payer.key, evidence_record.key, top_up),
+                &[
+                    payer.clone(),
+                    evidence_record.clone(),
+                    system_program_account.clone(),
+                ],
+            )?;
+        }
+        invoke_signed(
+            &system_instruction::allocate(evidence_record.key, EVIDENCE_RECORD_SIZE as u64),
+            &[evidence_record.clone(), system_program_account.clone()],
+            &[signer_seeds],
+        )?;
+        invoke_signed(
+            &system_instruction::assign(evidence_record.key, program_id),
+            &[evidence_record.clone(), system_program_account.clone()],
+            &[signer_seeds],
+        )?;
+    }
+
+    let record = EvidenceRecordV2 {
+        version: 1,
+        allowance: *allowance.key,
+        evidence_hash,
+        kind,
+        nonce,
+        created_at,
+    };
+    let mut data = evidence_record.data.borrow_mut();
+    record
+        .serialize(&mut &mut data[..])
+        .map_err(|_| ProgramError::AccountDataTooSmall)
 }
 
 fn evaluate_charge(
@@ -492,13 +662,9 @@ pub fn process_instruction(
             require_program_account(allowance, program_id)?;
 
             let now = Clock::get()?.unix_timestamp;
-            if merchant == Pubkey::default()
-                || executor == Pubkey::default()
-                || verifier == Pubkey::default()
-                || token_mint == Pubkey::default()
+            validate_initial_roles(authority.key, &merchant, &executor, &verifier)?;
+            if token_mint == Pubkey::default()
                 || source_token == Pubkey::default()
-                || executor == verifier
-                || verifier == merchant
                 || per_charge == 0
                 || period_cap < per_charge
                 || lifetime_cap < period_cap
@@ -588,6 +754,8 @@ pub fn process_instruction(
             let merchant_token = next_account_info(account_info_iter)?;
             let delegate_pda = next_account_info(account_info_iter)?;
             let token_program = next_account_info(account_info_iter)?;
+            let evidence_record = next_account_info(account_info_iter)?;
+            let system_program_account = next_account_info(account_info_iter)?;
             require_program_account(allowance, program_id)?;
 
             let mut state = read_state_v2(allowance)?;
@@ -631,6 +799,17 @@ pub fn process_instruction(
                 amount,
                 nonce,
                 evidence_hash,
+            )?;
+            create_evidence_record(
+                program_id,
+                executor,
+                allowance,
+                evidence_record,
+                system_program_account,
+                evidence_hash,
+                1,
+                nonce,
+                Clock::get()?.unix_timestamp,
             )?;
             let transfer = spl_token::instruction::transfer(
                 token_program.key,
@@ -689,6 +868,8 @@ pub fn process_instruction(
         AllowanceInstruction::FreezeDelegated { evidence_hash } => {
             let verifier = next_account_info(account_info_iter)?;
             let allowance = next_account_info(account_info_iter)?;
+            let evidence_record = next_account_info(account_info_iter)?;
+            let system_program_account = next_account_info(account_info_iter)?;
             require_signer(verifier, AllowanceError::InvalidVerifier)?;
             require_program_account(allowance, program_id)?;
             let mut state = read_state_v2(allowance)?;
@@ -696,6 +877,17 @@ pub fn process_instruction(
                 return Err(AllowanceError::InvalidVerifier.into());
             }
             validate_freeze_evidence(&state, evidence_hash)?;
+            create_evidence_record(
+                program_id,
+                verifier,
+                allowance,
+                evidence_record,
+                system_program_account,
+                evidence_hash,
+                2,
+                state.next_nonce,
+                Clock::get()?.unix_timestamp,
+            )?;
             state.frozen = true;
             state.last_evidence_hash = evidence_hash;
             write_state_v2(allowance, &state)?;
@@ -759,6 +951,35 @@ pub fn process_instruction(
             write_state_v2(allowance, &state)?;
             msg!("Delegated allowance revoked; SPL delegate removed");
         }
+        AllowanceInstruction::RotateExecutor { new_executor } => {
+            let authority = next_account_info(account_info_iter)?;
+            let allowance = next_account_info(account_info_iter)?;
+            require_signer(authority, AllowanceError::InvalidAuthority)?;
+            require_program_account(allowance, program_id)?;
+            let mut state = read_state_v2(allowance)?;
+            require_authority(&state, authority)?;
+            validate_new_executor(&state, &new_executor)?;
+            state.executor = new_executor;
+            write_state_v2(allowance, &state)?;
+            msg!("Delegated allowance executor rotated by authority");
+        }
+        AllowanceInstruction::RotateVerifier { new_verifier } => {
+            let authority = next_account_info(account_info_iter)?;
+            let current_verifier = next_account_info(account_info_iter)?;
+            let allowance = next_account_info(account_info_iter)?;
+            require_signer(authority, AllowanceError::InvalidAuthority)?;
+            require_signer(current_verifier, AllowanceError::InvalidVerifier)?;
+            require_program_account(allowance, program_id)?;
+            let mut state = read_state_v2(allowance)?;
+            require_authority(&state, authority)?;
+            if state.verifier != *current_verifier.key {
+                return Err(AllowanceError::InvalidVerifier.into());
+            }
+            validate_new_verifier(&state, &new_verifier)?;
+            state.verifier = new_verifier;
+            write_state_v2(allowance, &state)?;
+            msg!("Delegated allowance verifier rotated by authority and current verifier");
+        }
     }
     Ok(())
 }
@@ -786,6 +1007,17 @@ fn require_authority(state: &AllowanceStateV2, authority: &AccountInfo) -> Progr
 
 pub fn delegate_address(program_id: &Pubkey, allowance: &Pubkey) -> (Pubkey, u8) {
     Pubkey::find_program_address(&[DELEGATE_SEED, allowance.as_ref()], program_id)
+}
+
+pub fn evidence_record_address(
+    program_id: &Pubkey,
+    allowance: &Pubkey,
+    evidence_hash: &[u8; 32],
+) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[EVIDENCE_SEED, allowance.as_ref(), evidence_hash.as_ref()],
+        program_id,
+    )
 }
 
 fn read_state(account: &AccountInfo) -> Result<AllowanceState, ProgramError> {
@@ -868,6 +1100,40 @@ mod tests {
             policy_hash: [7; 32],
         };
         assert_eq!(delegated.try_to_vec().unwrap()[0], 3);
+        assert_eq!(
+            AllowanceInstruction::PauseDelegated.try_to_vec().unwrap(),
+            vec![5]
+        );
+        assert_eq!(
+            AllowanceInstruction::UnpauseDelegated.try_to_vec().unwrap(),
+            vec![6]
+        );
+        assert_eq!(
+            AllowanceInstruction::UnfreezeDelegated
+                .try_to_vec()
+                .unwrap(),
+            vec![8]
+        );
+        assert_eq!(
+            AllowanceInstruction::RevokeDelegated.try_to_vec().unwrap(),
+            vec![9]
+        );
+        assert_eq!(
+            AllowanceInstruction::RotateExecutor {
+                new_executor: Pubkey::new_unique(),
+            }
+            .try_to_vec()
+            .unwrap()[0],
+            10
+        );
+        assert_eq!(
+            AllowanceInstruction::RotateVerifier {
+                new_verifier: Pubkey::new_unique(),
+            }
+            .try_to_vec()
+            .unwrap()[0],
+            11
+        );
     }
 
     fn active_state() -> AllowanceState {
@@ -957,6 +1223,19 @@ mod tests {
             active_delegated_state().try_to_vec().unwrap().len(),
             DELEGATED_STATE_SIZE
         );
+    }
+
+    #[test]
+    fn evidence_record_serializes_to_declared_size() {
+        let record = EvidenceRecordV2 {
+            version: 1,
+            allowance: Pubkey::new_unique(),
+            evidence_hash: [7; 32],
+            kind: 1,
+            nonce: 4,
+            created_at: 1_900_000_000,
+        };
+        assert_eq!(record.try_to_vec().unwrap().len(), EVIDENCE_RECORD_SIZE);
     }
 
     #[test]
@@ -1152,5 +1431,68 @@ mod tests {
         assert_eq!((delegate_a, bump_a), (delegate_a_again, bump_a_again));
         assert_ne!(delegate_a, delegate_b);
         assert_ne!(delegate_a, allowance_a);
+    }
+
+    #[test]
+    fn evidence_record_pda_binds_allowance_and_full_hash() {
+        let program_id = Pubkey::new_unique();
+        let allowance = Pubkey::new_unique();
+        let (first, first_bump) = evidence_record_address(&program_id, &allowance, &[1; 32]);
+        let (same, same_bump) = evidence_record_address(&program_id, &allowance, &[1; 32]);
+        let (other_hash, _) = evidence_record_address(&program_id, &allowance, &[2; 32]);
+        let (other_allowance, _) =
+            evidence_record_address(&program_id, &Pubkey::new_unique(), &[1; 32]);
+        assert_eq!((first, first_bump), (same, same_bump));
+        assert_ne!(first, other_hash);
+        assert_ne!(first, other_allowance);
+    }
+
+    #[test]
+    fn delegated_key_rotation_preserves_role_separation() {
+        let state = active_delegated_state();
+        assert_eq!(validate_new_executor(&state, &Pubkey::new_unique()), Ok(()));
+        assert_eq!(
+            validate_new_executor(&state, &state.verifier),
+            Err(AllowanceError::InvalidExecutor)
+        );
+        assert_eq!(validate_new_verifier(&state, &Pubkey::new_unique()), Ok(()));
+        assert_eq!(
+            validate_new_verifier(&state, &state.executor),
+            Err(AllowanceError::InvalidVerifier)
+        );
+        let mut revoked = state;
+        revoked.revoked = true;
+        assert_eq!(
+            validate_new_executor(&revoked, &Pubkey::new_unique()),
+            Err(AllowanceError::Revoked)
+        );
+        assert_eq!(
+            validate_new_verifier(&revoked, &Pubkey::new_unique()),
+            Err(AllowanceError::Revoked)
+        );
+    }
+
+    #[test]
+    fn delegated_creation_requires_four_distinct_roles() {
+        let authority = Pubkey::new_unique();
+        let merchant = Pubkey::new_unique();
+        let executor = Pubkey::new_unique();
+        let verifier = Pubkey::new_unique();
+        assert_eq!(
+            validate_initial_roles(&authority, &merchant, &executor, &verifier),
+            Ok(())
+        );
+        assert_eq!(
+            validate_initial_roles(&authority, &merchant, &merchant, &verifier),
+            Err(AllowanceError::InvalidPolicy)
+        );
+        assert_eq!(
+            validate_initial_roles(&authority, &authority, &executor, &verifier),
+            Err(AllowanceError::InvalidPolicy)
+        );
+        assert_eq!(
+            validate_initial_roles(&authority, &merchant, &executor, &Pubkey::default()),
+            Err(AllowanceError::InvalidPolicy)
+        );
     }
 }

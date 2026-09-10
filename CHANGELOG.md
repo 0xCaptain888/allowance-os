@@ -33,10 +33,13 @@ Release status: source and local debug build verified; production tag not create
 
 - Added backward-compatible Program v2 instructions without changing legacy v1 Borsh discriminants.
 - Added an allowance-scoped SPL delegate PDA so later settlement does not require the user authority signer.
-- Added separate executor and independent verifier signatures, sequential nonces, last-evidence replay rejection, and per-charge, rolling-period, and lifetime caps.
+- Added four-way authority/merchant/executor/verifier separation, sequential nonces, and per-charge, rolling-period, and lifetime caps.
+- Added immutable Evidence Record PDAs keyed by allowance plus the complete evidence hash; accepted charges and freezes now preserve full historical replay evidence onchain.
+- Safely initializes a system-owned Evidence PDA even if an attacker pre-funds it, preventing predictable-address dusting from becoming a denial-of-service vector.
+- Added authority-controlled executor rotation and authority+current-verifier controlled verifier rotation without changing legacy discriminants.
 - Added user pause/unpause, verifier evidence-bound freeze, authority+verifier unfreeze, and terminal revoke that removes the SPL Token delegation.
-- Added TypeScript instruction builders and expanded coverage to 18 TypeScript and 16 Rust tests.
-- Produced 92,704-byte Solana SBF binaries locally and in Ubuntu CI; recorded both platform-specific hashes and explicitly declined a cross-platform byte-reproducibility claim.
+- Added matching TypeScript instruction builders and expanded coverage to 22 TypeScript and 20 Rust tests.
+- Produced a current `130,280`-byte macOS Solana SBF binary with SHA-256 `e0eb4726bdfda25fa2a377f347b9590087072e4ad1d9e455598760f6b865e7d6`; independent CI builds remain separately recorded without claiming cross-platform byte reproducibility.
 - Added a pinned CI SBF build job that uploads the deployable `.so` as a workflow artifact.
 - Added the full v2 architecture, account model, threat boundary, deployment checklist, and explicit `SOURCE TESTED · NOT DEPLOYED` label.
 

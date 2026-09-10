@@ -3,7 +3,8 @@
 Status: **SOURCE TESTED · NOT DEPLOYED**  
 Program crate: `allowance-os-program 0.2.0`  
 State version: `2`  
-State size: `332` bytes
+Allowance state size: `332` bytes
+Evidence record size: `82` bytes
 
 ## Why v2 exists
 
@@ -33,17 +34,27 @@ The PDA is derived from:
 
 Each allowance therefore receives a distinct delegate authority. The PDA cannot initiate arbitrary transfers: it can sign only while the Allowance OS Program is executing, and the Program releases a transfer only after its committed policy checks pass.
 
+Every accepted charge and every verifier freeze also creates a separate evidence record PDA:
+
+```text
+["allowance-evidence", allowance_account_pubkey, evidence_hash]
+```
+
+Because the complete 32-byte evidence hash is part of the PDA address, reusing any historical hash for the same allowance attempts to recreate an existing account and fails closed. The record stores the allowance, evidence hash, event kind, nonce, and onchain timestamp. A system-owned PDA that has merely been pre-funded is safely topped up, allocated, and assigned by the Program, so address dusting cannot reserve an upcoming evidence hash. `last_evidence_hash` remains a convenient state pointer; it is not the only replay boundary.
+
+The executor funds the charge evidence record; the verifier funds a freeze record. This makes evidence-retention cost explicit and keeps the user offline during later settlement. Production pricing must include that rent cost.
+
 ## Roles
 
 | Role | Authority |
 | --- | --- |
-| User authority | Creates, pauses, unpauses, co-signs unfreeze, and permanently revokes the allowance |
+| User authority | Creates, pauses, unpauses, rotates the executor, co-signs verifier rotation/unfreeze, and permanently revokes the allowance |
 | Executor | Requests a bounded settlement after service delivery |
 | Verifier | Independently attests a valid result or freezes the allowance with a bad-result evidence hash |
 | Merchant | Owns the only accepted destination token account |
 | Delegate PDA | Performs the SPL-token CPI after Program validation; possesses no private key |
 
-The executor and verifier must be different public keys. The verifier must also differ from the merchant. These checks prevent a single merchant-controlled identity from satisfying every settlement role at creation time.
+Authority, merchant, executor, and verifier must be four distinct public keys. These checks prevent one identity from simultaneously owning funds, receiving funds, executing settlement, and approving delivery.
 
 ## Onchain state
 
@@ -73,6 +84,17 @@ policy_hash
 last_evidence_hash
 ```
 
+Each `EvidenceRecordV2` independently commits:
+
+```text
+version
+allowance
+evidence_hash
+kind        # 1 = accepted charge, 2 = freeze
+nonce
+created_at
+```
+
 The three budget levels have distinct purposes:
 
 - `per_charge` prevents one unexpectedly large charge;
@@ -97,8 +119,10 @@ Legacy Borsh discriminants remain unchanged:
 | `7` | `FreezeDelegated { evidence_hash }` | v2 |
 | `8` | `UnfreezeDelegated` | v2 |
 | `9` | `RevokeDelegated` | v2 |
+| `10` | `RotateExecutor { new_executor }` | v2 |
+| `11` | `RotateVerifier { new_verifier }` | v2 |
 
-`src/delegated-protocol.ts` provides matching TypeScript instruction builders and account ordering. The tests assert the discriminants, payload sizes, signer roles, PDA derivation, and the absence of the user authority from `ChargeDelegated`.
+`src/delegated-protocol.ts` provides matching TypeScript instruction builders and account ordering. The tests assert the discriminants, payload sizes, signer roles, delegate/evidence PDA derivation, rotation payloads, and the absence of the user authority from `ChargeDelegated`.
 
 ## State transitions
 
@@ -129,15 +153,19 @@ A delegated charge is rejected before CPI when any of the following is false:
 - active, unpaused, unfrozen, unrevoked, unexpired state;
 - sequential nonce;
 - positive amount within per-charge, current-period, and lifetime caps;
-- nonzero evidence hash different from the last recorded evidence hash.
+- nonzero evidence hash;
+- correct, uninitialized Evidence Record PDA derived from the allowance and complete evidence hash;
+- exact System Program account used to create that record atomically.
 
-The verifier is responsible for validating fulfillment and refusing historical evidence reuse beyond the Program's stored last hash. The sequential nonce stops transaction replay; the stored last hash stops immediate evidence reuse. A production verifier must retain a durable global evidence set or Merkle accumulator for stronger historical uniqueness.
+The verifier remains responsible for deciding whether fulfillment is valid. Historical evidence uniqueness is enforced onchain: the sequential nonce stops transaction replay, while the one-account-per-hash PDA prevents reuse of any earlier evidence hash for that allowance. Evidence record creation and token transfer occur in the same Solana transaction, so either both persist or both roll back.
 
 ## Recovery model
 
 - `PauseDelegated`: user-only temporary containment.
 - `FreezeDelegated`: verifier-only containment with the rejected result's evidence hash persisted onchain.
 - `UnfreezeDelegated`: requires both user and verifier signatures.
+- `RotateExecutor`: requires the user authority and preserves four-way role separation.
+- `RotateVerifier`: requires both the user authority and current verifier, then preserves four-way role separation.
 - `RevokeDelegated`: user-only terminal action that removes the SPL delegate.
 
 The dual-signature unfreeze prevents either a compromised verifier or a careless user interface from silently restoring a disputed allowance alone.
@@ -149,24 +177,26 @@ Rust source tests cover:
 - v1 instruction discriminant compatibility;
 - exact v2 state size;
 - allowance-scoped delegate PDA derivation;
+- allowance-and-full-hash Evidence Record PDA derivation and exact record size;
 - authority-free charge evaluation;
 - exact executor and verifier signatures;
 - sequential nonces and duplicate evidence;
 - per-charge, rolling-period, and lifetime caps;
 - deterministic period rollover;
-- paused, frozen, and revoked behavior.
-- fresh evidence requirements and terminal-state protection for verifier freezes.
+- paused, frozen, and revoked behavior;
+- fresh evidence requirements and terminal-state protection for verifier freezes;
+- executor/verifier rotation rules and role separation.
 
-TypeScript tests additionally verify the production-facing instruction payload sizes, account order, signer flags, discriminants, PDA, malformed hashes, and integer ranges.
+The current suite passes `20` Rust tests and `22` TypeScript tests. TypeScript additionally verifies production-facing payload sizes, account order, signer/writable flags, discriminants, both PDA families, rotation payloads, malformed hashes, and integer ranges.
 
 The source was compiled to Solana SBF artifacts using pinned `cargo-build-sbf 4.3.0`. The local macOS builder used platform-tools `v1.57` and Rust `1.95.0`:
 
 ```text
-macOS:     92,704 bytes · 9c36a9aaa91f40a9797c99876015ebcd2aaf284f796166719e2df1f19ee34fd5
-Ubuntu CI: 92,704 bytes · 5aa5d33d45557266800dd3941731eb8e607d47c0030d6fba3b5a4ec41c19b02e
+macOS: 130,280 bytes · e0eb4726bdfda25fa2a377f347b9590087072e4ad1d9e455598760f6b865e7d6
+Ubuntu CI: generated independently for the current source revision
 ```
 
-The host-specific digests differ, so no byte-for-byte cross-platform reproducibility claim is made. The exact `.so` chosen for deployment must be hashed and compared with the deployed binary. The machine-readable record is [`evidence/delegated-v2-source-build.json`](../evidence/delegated-v2-source-build.json). Generated `.so` files and all build keypairs remain ignored local artifacts.
+No byte-for-byte cross-platform reproducibility claim is made. The exact `.so` chosen for deployment must be hashed and compared with the deployed binary. The machine-readable record is [`evidence/delegated-v2-source-build.json`](../evidence/delegated-v2-source-build.json). Generated `.so` files and all build keypairs remain ignored local artifacts.
 
 ## Deployment gate
 
@@ -177,8 +207,9 @@ This document describes compiled and tested source, not a live v2 deployment. Be
 3. a `CreateDelegated` transaction showing the SPL approval;
 4. a later `ChargeDelegated` transaction signed by executor and verifier without the user;
 5. source and merchant token balance deltas;
-6. BLOCKED, FROZEN, PAUSED, UNFROZEN, and REVOKED transactions;
-7. the deployed binary hash and matching local build hash;
-8. updated machine-readable evidence.
+6. the created Evidence Record PDA decoded from chain data;
+7. BLOCKED, FROZEN, PAUSED, UNFROZEN, role-rotation, and REVOKED transactions;
+8. the deployed binary hash and matching local build hash;
+9. updated machine-readable evidence.
 
 Until those artifacts exist, the public v1 Devnet matrix remains the only claimed live Program evidence.

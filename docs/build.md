@@ -15,9 +15,11 @@ npm run demo
 cd program
 cargo fmt -- --check
 cargo test
+cargo install cargo-build-sbf --version 4.3.0 --locked
+cargo-build-sbf --manifest-path Cargo.toml
 ```
 
-The local macOS environment used during bootstrap has a global Cargo registry replacement that may prevent dependency resolution. CI uses the default crates.io registry and is the source of truth for the native program build until the local registry configuration is corrected.
+The current macOS SBF artifact is `130,280` bytes with SHA-256 `e0eb4726bdfda25fa2a377f347b9590087072e4ad1d9e455598760f6b865e7d6`. CI repeats the build independently and uploads the `.so`; host hashes are recorded separately because the project does not claim cross-platform byte-for-byte reproducibility. If a machine has a broken global Cargo mirror override, use a task-scoped Cargo config or restore crates.io rather than changing dependency versions.
 
 ## Live evidence rule
 

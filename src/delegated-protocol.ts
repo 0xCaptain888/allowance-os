@@ -1,7 +1,9 @@
-import { PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { PublicKey, SystemProgram, TransactionInstruction } from '@solana/web3.js';
 
 export const DELEGATED_STATE_SIZE = 332;
+export const EVIDENCE_RECORD_SIZE = 82;
 export const DELEGATE_SEED = 'allowance-delegate';
+export const EVIDENCE_SEED = 'allowance-evidence';
 export const SPL_TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 
 export type DelegatedAllowanceConfig = {
@@ -49,6 +51,17 @@ export function delegatedAuthority(programId: PublicKey, allowance: PublicKey): 
   );
 }
 
+export function evidenceRecordAddress(
+  programId: PublicKey,
+  allowance: PublicKey,
+  evidenceHash: Uint8Array,
+): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from(EVIDENCE_SEED, 'utf8'), allowance.toBuffer(), digest(evidenceHash, 'evidenceHash')],
+    programId,
+  );
+}
+
 export function createDelegatedInstruction(config: DelegatedAllowanceConfig): TransactionInstruction {
   const [delegate] = delegatedAuthority(config.programId, config.allowance);
   const data = Buffer.concat([
@@ -90,16 +103,19 @@ export function chargeDelegatedInstruction(input: {
   evidenceHash: Uint8Array;
 }): TransactionInstruction {
   const [delegate] = delegatedAuthority(input.programId, input.allowance);
+  const [evidenceRecord] = evidenceRecordAddress(input.programId, input.allowance, input.evidenceHash);
   return new TransactionInstruction({
     programId: input.programId,
     keys: [
-      { pubkey: input.executor, isSigner: true, isWritable: false },
+      { pubkey: input.executor, isSigner: true, isWritable: true },
       { pubkey: input.verifier, isSigner: true, isWritable: false },
       { pubkey: input.allowance, isSigner: false, isWritable: true },
       { pubkey: input.sourceToken, isSigner: false, isWritable: true },
       { pubkey: input.merchantToken, isSigner: false, isWritable: true },
       { pubkey: delegate, isSigner: false, isWritable: false },
       { pubkey: SPL_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+      { pubkey: evidenceRecord, isSigner: false, isWritable: true },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
     ],
     data: Buffer.concat([
       Buffer.from([4]),
@@ -148,11 +164,14 @@ export function freezeDelegatedInstruction(
   allowance: PublicKey,
   evidenceHash: Uint8Array,
 ): TransactionInstruction {
+  const [evidenceRecord] = evidenceRecordAddress(programId, allowance, evidenceHash);
   return new TransactionInstruction({
     programId,
     keys: [
-      { pubkey: verifier, isSigner: true, isWritable: false },
+      { pubkey: verifier, isSigner: true, isWritable: true },
       { pubkey: allowance, isSigner: false, isWritable: true },
+      { pubkey: evidenceRecord, isSigner: false, isWritable: true },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
     ],
     data: Buffer.concat([Buffer.from([7]), digest(evidenceHash, 'evidenceHash')]),
   });
@@ -190,5 +209,39 @@ export function revokeDelegatedInstruction(input: {
       { pubkey: SPL_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
     ],
     data: Buffer.from([9]),
+  });
+}
+
+export function rotateExecutorInstruction(input: {
+  programId: PublicKey;
+  authority: PublicKey;
+  allowance: PublicKey;
+  newExecutor: PublicKey;
+}): TransactionInstruction {
+  return new TransactionInstruction({
+    programId: input.programId,
+    keys: [
+      { pubkey: input.authority, isSigner: true, isWritable: false },
+      { pubkey: input.allowance, isSigner: false, isWritable: true },
+    ],
+    data: Buffer.concat([Buffer.from([10]), input.newExecutor.toBuffer()]),
+  });
+}
+
+export function rotateVerifierInstruction(input: {
+  programId: PublicKey;
+  authority: PublicKey;
+  currentVerifier: PublicKey;
+  allowance: PublicKey;
+  newVerifier: PublicKey;
+}): TransactionInstruction {
+  return new TransactionInstruction({
+    programId: input.programId,
+    keys: [
+      { pubkey: input.authority, isSigner: true, isWritable: false },
+      { pubkey: input.currentVerifier, isSigner: true, isWritable: false },
+      { pubkey: input.allowance, isSigner: false, isWritable: true },
+    ],
+    data: Buffer.concat([Buffer.from([11]), input.newVerifier.toBuffer()]),
   });
 }

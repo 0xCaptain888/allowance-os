@@ -14,6 +14,8 @@ import {
   createDelegatedInstruction,
   DELEGATED_STATE_SIZE,
   delegatedAuthority,
+  EVIDENCE_RECORD_SIZE,
+  evidenceRecordAddress,
 } from '../src/delegated-protocol.js';
 
 const proxyUrl = process.env.HTTPS_PROXY ?? process.env.HTTP_PROXY;
@@ -57,6 +59,15 @@ type DelegatedSnapshot = {
   frozen: boolean;
   policyHash: string;
   lastEvidenceHash: string;
+};
+
+type EvidenceRecordSnapshot = {
+  version: number;
+  allowance: string;
+  evidenceHash: string;
+  kind: number;
+  nonce: string;
+  createdAt: string;
 };
 
 function required(name: string): string {
@@ -154,6 +165,21 @@ function parseState(data: Buffer): DelegatedSnapshot {
   };
 }
 
+function parseEvidenceRecord(data: Buffer): EvidenceRecordSnapshot {
+  if (data.length < EVIDENCE_RECORD_SIZE) throw new Error('Evidence record account is too small');
+  let offset = 0;
+  const version = data.readUInt8(offset++);
+  const allowance = new PublicKey(data.subarray(offset, offset + 32)).toBase58();
+  offset += 32;
+  const evidenceHash = data.subarray(offset, offset + 32).toString('hex');
+  offset += 32;
+  const kind = data.readUInt8(offset++);
+  const nonce = data.readBigUInt64LE(offset).toString();
+  offset += 8;
+  const createdAt = data.readBigInt64LE(offset).toString();
+  return { version, allowance, evidenceHash, kind, nonce, createdAt };
+}
+
 async function main(): Promise<void> {
   if (perCharge > periodCap || periodCap > lifetimeCap || chargeAmount > perCharge) {
     throw new Error('Require CHARGE_AMOUNT_RAW <= PER_CHARGE_RAW <= PERIOD_CAP_RAW <= LIFETIME_CAP_RAW');
@@ -209,6 +235,7 @@ async function main(): Promise<void> {
     expiresAt: expiresAt.toString(),
   }));
   const evidenceHash = sha256(`ALLOWANCE_OS|DELEGATED_V2|${allowance.publicKey.toBase58()}|0`);
+  const [evidenceRecordAddressValue] = evidenceRecordAddress(programId, allowance.publicKey, evidenceHash);
   const rent = await connection.getMinimumBalanceForRentExemption(DELEGATED_STATE_SIZE, 'confirmed');
 
   const createSignature = await send(
@@ -262,15 +289,29 @@ async function main(): Promise<void> {
     executor,
     [verifier],
   );
-  const [sourceAfter, merchantAfter, stateAccount] = await Promise.all([
+  const [sourceAfter, merchantAfter, stateAccount, evidenceRecordAccount] = await Promise.all([
     connection.getTokenAccountBalance(sourceToken, 'confirmed'),
     connection.getTokenAccountBalance(merchantToken, 'confirmed'),
     connection.getAccountInfo(allowance.publicKey, 'confirmed'),
+    connection.getAccountInfo(evidenceRecordAddressValue, 'confirmed'),
   ]);
   if (!stateAccount || !stateAccount.owner.equals(programId)) throw new Error('Delegated state was not found');
+  if (!evidenceRecordAccount || !evidenceRecordAccount.owner.equals(programId)) {
+    throw new Error('Historical evidence record was not found');
+  }
   const state = parseState(stateAccount.data);
+  const evidenceRecord = parseEvidenceRecord(evidenceRecordAccount.data);
   if (state.version !== 2 || state.nextNonce !== '1' || state.spentLifetime !== chargeAmount.toString()) {
     throw new Error(`Unexpected delegated state after charge: ${JSON.stringify(state)}`);
+  }
+  if (
+    evidenceRecord.version !== 1
+    || evidenceRecord.allowance !== allowance.publicKey.toBase58()
+    || evidenceRecord.evidenceHash !== evidenceHash.toString('hex')
+    || evidenceRecord.kind !== 1
+    || evidenceRecord.nonce !== '0'
+  ) {
+    throw new Error(`Unexpected historical evidence record: ${JSON.stringify(evidenceRecord)}`);
   }
   const sourceDelta = BigInt(sourceBefore.value.amount) - BigInt(sourceAfter.value.amount);
   const merchantDelta = BigInt(merchantAfter.value.amount) - BigInt(merchantBefore.value.amount);
@@ -290,6 +331,7 @@ async function main(): Promise<void> {
     authoritySignedCharge: false,
     policyHash: policyHash.toString('hex'),
     evidenceHash: evidenceHash.toString('hex'),
+    evidenceRecordAddress: evidenceRecordAddressValue.toBase58(),
     transactions: {
       createDelegated: { signature: createSignature, explorer: explorer(createSignature) },
       chargeDelegated: { signature: chargeSignature, explorer: explorer(chargeSignature) },
@@ -299,6 +341,7 @@ async function main(): Promise<void> {
       merchantRaw: `+${merchantDelta}`,
     },
     state,
+    evidenceRecord,
   }, null, 2));
 }
 

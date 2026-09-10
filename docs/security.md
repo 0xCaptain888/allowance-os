@@ -9,7 +9,7 @@
 - SDK receipt v3 binds every request to a unique request ID, nonce, issue time, expiry, exact mint, integer raw amount, evidence URI, evidence type, and evidence hash;
 - identical request retries are idempotent;
 - evidence reuse under a new SDK request is blocked;
-- the Rust source rejects the last accepted evidence hash with Custom Error `14` (`DuplicateEvidence`).
+- the v2 Rust source creates a unique PDA for every accepted/frozen evidence hash, so any historical reuse fails because the record already exists.
 
 ## Important deployment boundary
 
@@ -21,11 +21,15 @@ The currently published Devnet evidence predates the Rust replay-protection and 
 - `ChargeDelegated` requires exact executor and verifier signatures but does not require the user authority;
 - source token, mint, merchant destination, delegate PDA, sequential nonce, evidence hash, expiry, and all three caps are checked before CPI;
 - the rolling period resets deterministically from the onchain clock while lifetime spend never resets;
+- authority, merchant, executor, and verifier must be four distinct identities;
+- charge and freeze atomically create immutable evidence records keyed by allowance plus the complete evidence hash;
+- pre-funded but uninitialized evidence PDAs are safely allocated and assigned, preventing dusting-based address reservation;
 - pause is user-controlled; freeze is verifier-controlled and stores the bad-result evidence hash;
 - unfreeze requires both user and verifier; terminal revoke removes the SPL delegate through CPI;
+- executor rotation requires the authority; verifier rotation requires the authority plus current verifier;
 - legacy v1 instruction discriminants remain stable.
 
-Remaining v2 limits: only the last evidence hash is stored onchain, so the independent verifier must durably reject older evidence reuse; the verifier is a single configured signer rather than a quorum; token decimals and canonical asset selection remain deployment configuration; and the v2 source has not yet been deployed or independently audited.
+Remaining v2 limits: the verifier is a single configured signer rather than a quorum; evidence records intentionally remain rent-funded accounts with no pruning policy; token decimals and canonical asset selection remain deployment configuration; and the v2 source has not yet been deployed or independently audited.
 
 ## Production requirements
 
@@ -46,8 +50,8 @@ Remaining v2 limits: only the last evidence hash is stored onchain, so the indep
 | Overspend | V1 live BLOCKED; v2 source adds three-level caps and rolling periods | deploy v2 and monitor cap invariants |
 | Missing or changed delivery | V1 live FROZEN; v2 source separates verifier and records bad evidence | verifier quorum for high-value services |
 | Network retry | stored receipt returned idempotently | transactional database |
-| Evidence replay | SDK/Android/browser blocked; v2 source enforces sequential nonce and duplicate last hash | deploy v2 and retain a durable global verifier replay set or accumulator |
-| Compromised executor | v2 requires a separate verifier signature and bounded policy | verifier quorum, key rotation, rate alerts |
-| Compromised verifier | cannot change destination/caps; user can pause/revoke; unfreeze needs user | verifier rotation and quorum |
+| Evidence replay | SDK/Android/browser blocked; v2 source enforces nonce plus immutable per-hash Evidence PDA history | deploy v2 and monitor evidence-account creation failures |
+| Compromised executor | v2 requires a separate verifier signature, bounded policy, and authority-controlled rotation | incident procedure, verifier quorum and rate alerts |
+| Compromised verifier | cannot change destination/caps; user can pause/revoke; rotation needs user + current verifier | emergency rotation design for a lost verifier and quorum |
 | Compromised upgrader | disclosed single upgrade authority | multisig/timelock |
 | Lost mobile session | local forget + MWA deauthorize | account recovery UX |

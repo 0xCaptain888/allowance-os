@@ -1,46 +1,63 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
   "capturedAt": "2026-09-10",
   "status": "SOURCE_TESTED_NOT_DEPLOYED",
+  "sourceFiles": {
+    "program/src/lib.rs": "853008f6a5e2d4427ca043ad18e5d6de1b138190792a6de2b253c1710c9239a1",
+    "src/delegated-protocol.ts": "b6bed2872bdbeb3ce5eb561ecec22a152a729d78db0eb527396fda7153265533",
+    "scripts/run-delegated-devnet.ts": "8a4b123bd5366431c5fe42bd5e5e31b2466e49c319b4d8048b711197c0eb2ad4"
+  },
   "program": {
     "crate": "allowance-os-program",
     "crateVersion": "0.2.0",
     "declaredProgramId": "DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE",
     "stateVersion": 2,
-    "stateSizeBytes": 332
+    "stateSizeBytes": 332,
+    "evidenceRecordVersion": 1,
+    "evidenceRecordSizeBytes": 82,
+    "evidenceSeed": "allowance-evidence"
+  },
+  "features": {
+    "authorityFreeCharge": true,
+    "fourWayActorSeparation": true,
+    "historicalEvidencePdas": true,
+    "executorRotation": "authority_signature",
+    "verifierRotation": "authority_plus_current_verifier_signatures"
   },
   "builds": {
     "localMacOs": {
       "artifact": "program/target/deploy/allowance_os_program.so",
       "artifactCommitted": false,
-      "sizeBytes": 92704,
-      "sha256": "9c36a9aaa91f40a9797c99876015ebcd2aaf284f796166719e2df1f19ee34fd5",
+      "sizeBytes": 130280,
+      "sha256": "e0eb4726bdfda25fa2a377f347b9590087072e4ad1d9e455598760f6b865e7d6",
       "cargoBuildSbf": "4.3.0",
       "platformTools": "v1.57",
       "rustc": "1.95.0"
     },
     "githubUbuntu": {
-      "workflowRunId": 34437596176,
-      "job": "solana-sbf-build",
+      "status": "PENDING_CURRENT_REVISION_CI",
+      "workflowRunId": null,
       "artifactName": "allowance-os-program-v2-sbf",
-      "sizeBytes": 92704,
-      "sha256": "5aa5d33d45557266800dd3941731eb8e607d47c0030d6fba3b5a4ec41c19b02e",
-      "uploadedArtifactDigest": "48f826cc0c6a747c4fd9e8241cbfa24cbbe274f95b076a32a5cf53c7d081c347",
+      "sizeBytes": null,
+      "sha256": null,
+      "uploadedArtifactDigest": null,
       "cargoBuildSbf": "4.3.0"
     },
-    "reproducibilityNote": "Both builds succeed and have the same byte length, but their SHA-256 digests differ across macOS and Ubuntu. No cross-platform byte-for-byte reproducibility claim is made. The exact artifact selected for deployment must be hashed and matched to the deployed binary."
+    "reproducibilityNote": "Builds are recorded per host. No cross-platform byte-for-byte reproducibility claim is made. The exact artifact selected for deployment must be hashed and matched to the deployed binary."
   },
   "verification": {
-    "rustTestsPassed": 16,
-    "typescriptTestsPassed": 18,
+    "rustTestsPassed": 20,
+    "typescriptTestsPassed": 22,
+    "androidTestsPassed": 13,
     "npmAuditVulnerabilities": 0,
     "localSbfBuildPassed": true,
-    "githubSbfBuildPassed": true
+    "githubSbfBuildPassed": false
   },
   "deployment": {
     "deployed": false,
     "transaction": null,
     "authorityFreeChargeTransaction": null,
-    "note": "This record proves a reproducible local SBF build only. It is not chain evidence and must not be presented as a live v2 deployment."
+    "evidenceRecordAccount": null,
+    "note": "This record proves a local SBF build and source tests only. It is not chain evidence and must not be presented as a live v2 deployment."
   }
 }

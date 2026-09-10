@@ -54,10 +54,14 @@ Merchant delivers output → evidence hash
        └─ per-charge / rolling-period / lifetime caps
                               │
                               ▼
+          create immutable Evidence Record PDA
+          (allowance + full evidence hash + nonce + time)
+                              │
+                              ▼
              invoke_signed(SPL Token transfer, PDA)
 ```
 
-The verifier can persist `FROZEN` with the rejected result's evidence hash. Unfreeze requires both the authority and verifier. Revoke requires the authority, invokes SPL Token `Revoke`, and makes the Program state terminal. See [`delegated-settlement-v2.md`](delegated-settlement-v2.md) for the exact state layout, instruction discriminants, and deployment gate.
+The verifier can persist `FROZEN` with the rejected result's evidence hash in its own immutable Evidence Record PDA. Reusing any prior evidence hash for the same allowance collides with that existing PDA and fails closed. The authority can rotate the executor; verifier rotation requires the authority and current verifier. Unfreeze requires both the authority and verifier. Revoke requires the authority, invokes SPL Token `Revoke`, and makes the Program state terminal. See [`delegated-settlement-v2.md`](delegated-settlement-v2.md) for the exact state layout, instruction discriminants, and deployment gate.
 
 ## Receipt contract
 
@@ -80,7 +84,7 @@ Program ID: `DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE` on Solana Devnet.
 
 The same policy hash is exposed to the independent verifier. A UI-only cap is not considered a security boundary. For VERIFIED, the Program validates the authority, mint, source owner, merchant owner, per-charge cap, period cap, expiry, and required evidence hash before invoking the SPL Token Program. The allowed Program ID is committed in the policy state and exposed to independent verification. BLOCKED and FROZEN return before CPI, so they move no tokens. The recorded mint is a project-created Devnet test token, not canonical USDC.
 
-The v2 source replaces recurring authority signatures with an SPL delegate PDA and adds explicit executor/verifier identities, a lifetime cap, deterministic period rollover, sequential nonces, and onchain pause/freeze/unfreeze controls. These v2 properties are not attributed to the deployed v1 binary.
+The v2 source replaces recurring authority signatures with an SPL delegate PDA and adds four-way actor separation, a lifetime cap, deterministic period rollover, sequential nonces, immutable evidence-history PDAs, governed role rotation, and onchain pause/freeze/unfreeze controls. These v2 properties are not attributed to the deployed v1 binary.
 
 ## Merchant delivery plane
 
