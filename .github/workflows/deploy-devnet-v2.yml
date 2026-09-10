@@ -52,7 +52,7 @@ jobs:
         shell: bash
         run: |
           test "$(solana address -k "$RUNNER_TEMP/deployer.json")" = "Hwr3facWMTBCJYbYPcRNLPKZspWDmSkizdi7f9tjUsYt"
-          test "$(solana address -k "$RUNNER_TEMP/program.json")" = "7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswD6xvL"
+          test "$(solana address -k "$RUNNER_TEMP/program.json")" = "7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL"
           echo "Artifact digest: $(sha256sum program/target/deploy/allowance_os_program.so | cut -d' ' -f1)"
           solana balance Hwr3facWMTBCJYbYPcRNLPKZspWDmSkizdi7f9tjUsYt --url devnet
 
@@ -73,7 +73,7 @@ jobs:
       - name: Record public program state
         shell: bash
         run: |
-          solana program show 7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswD6xvL \
+          solana program show 7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL \
             --url devnet \
             --keypair "$RUNNER_TEMP/deployer.json" \
             --output json | tee program-state.json
