@@ -38,7 +38,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.material.darkColors
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -75,7 +75,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun AllowanceApp(viewModel: AllowanceViewModel, sender: ActivityResultSender) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     var page by rememberSaveable { mutableStateOf(AppPage.HOME) }
     var chinese by rememberSaveable { mutableStateOf(viewModel.preferredChinese) }
     var showOnboarding by rememberSaveable { mutableStateOf(!viewModel.hasCompletedOnboarding) }
@@ -152,7 +152,7 @@ private fun AppHeader(chinese: Boolean, onLanguageToggle: () -> Unit) {
         ) { Text("A", color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Black) }
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text("Allowance OS · v0.11.0", color = White, fontSize = 18.sp, fontWeight = FontWeight.Black)
+            Text("Allowance OS · v${BuildConfig.VERSION_NAME}", color = White, fontSize = 18.sp, fontWeight = FontWeight.Black)
             Text(t("Web3 服务支付与授权层", "Payment authorization for Web3 services", chinese), color = Muted, fontSize = 11.sp)
         }
         Row(
@@ -208,9 +208,17 @@ private fun OverviewPage(
                 .background(if (state.walletAddress.isBlank()) PanelRaised else androidx.compose.ui.graphics.Color(0xFF10251F)).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            SectionTitle(t("钱包授权", "WALLET AUTHORIZATION", chinese), if (state.walletAddress.isBlank()) t("未连接", "DISCONNECTED", chinese) else t("已授权", "AUTHORIZED", chinese))
+            val walletStatus = when (state.walletSessionState) {
+                WalletSessionState.CONNECTED -> t("已授权", "AUTHORIZED", chinese)
+                WalletSessionState.REAUTH_REQUIRED -> t("需要重新授权", "REAUTH REQUIRED", chinese)
+                WalletSessionState.DISCONNECTED -> t("未连接", "DISCONNECTED", chinese)
+            }
+            SectionTitle(t("钱包授权", "WALLET AUTHORIZATION", chinese), walletStatus)
             if (state.walletAddress.isBlank()) {
                 Text(t("连接 Phantom 或任意 MWA 钱包，为多个服务创建统一授权。", "Connect Phantom or any MWA wallet to control multiple services from one place.", chinese), color = Muted)
+                if (state.walletSessionState == WalletSessionState.REAUTH_REQUIRED) {
+                    Notice(t("已保存的加密会话无法恢复。旧地址已从本地连接状态中清除，请重新授权。", "The encrypted session could not be restored. The stale local identity was cleared; reauthorize the wallet.", chinese), Amber)
+                }
                 PrimaryButton(t("连接 Phantom / MWA 钱包", "Connect Phantom / MWA wallet", chinese)) { viewModel.connect(sender) }
             } else {
                 Row(verticalAlignment = Alignment.Bottom) {
@@ -591,7 +599,7 @@ private fun PolicyPage(state: AllowanceUiState, viewModel: AllowanceViewModel, s
             confirmButton = {
                 TextButton(onClick = {
                     showDisconnectConfirmation = false
-                    viewModel.revoke(sender)
+                    viewModel.disconnectWalletSession(sender)
                 }) { Text(t("确认断开", "Disconnect", chinese), color = Rose, fontWeight = FontWeight.Black) }
             },
             dismissButton = {

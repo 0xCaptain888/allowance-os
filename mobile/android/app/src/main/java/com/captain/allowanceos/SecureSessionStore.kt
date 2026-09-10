@@ -25,10 +25,11 @@ class SecureSessionStore(context: Context) {
         require(token.isNotBlank()) { "MWA auth token must not be blank" }
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey())
-        preferences.edit()
+        val saved = preferences.edit()
             .putString(KEY_CIPHERTEXT, Base64.encodeToString(cipher.doFinal(token.encodeToByteArray()), Base64.NO_WRAP))
             .putString(KEY_IV, Base64.encodeToString(cipher.iv, Base64.NO_WRAP))
-            .apply()
+            .commit()
+        check(saved) { "Unable to persist encrypted MWA session" }
     }
 
     fun loadAuthToken(): String? {
@@ -51,7 +52,10 @@ class SecureSessionStore(context: Context) {
     }
 
     fun clearAuthToken() {
-        preferences.edit().clear().apply()
+        preferences.edit()
+            .remove(KEY_CIPHERTEXT)
+            .remove(KEY_IV)
+            .apply()
     }
 
     private fun getOrCreateKey(): SecretKey {

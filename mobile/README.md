@@ -9,12 +9,12 @@ Verified locally on September 10, 2026:
 ```text
 ./gradlew testDebugUnitTest assembleDebug
 BUILD SUCCESSFUL
-12 Android policy tests passed
-Artifact: app/build/outputs/apk/debug/allowance-os-0.11.0-debug.apk
-APK SHA-256: 14d5ed6d41b47a5a7a921cb2e5f193c5fba4effc4911191e830be96926710fd2
+13 Android policy/session tests passed
+Artifact: app/build/outputs/apk/debug/allowance-os-0.11.1-debug.apk
+APK SHA-256: 39ff8c2fe237f1ba128eada3ccc50751a6888a1b301630a8fea76e2809be7592
 ```
 
-v0.11.0 encrypts the MWA reconnect token with Android Keystore, adds explicit review before broadcasting a non-payment Memo proof, persists the selected language, and clearly separates wallet-session disconnect from onchain allowance revocation. It retains the AlphaBrief flow, five commercial templates, Seeker Integration Lab, deployed Program evidence boundary, and direct Devnet verification.
+v0.11.1 requires a valid encrypted MWA reconnect token before restoring a connected wallet, clears stale public identity after Keystore recovery failure, fails closed when session persistence fails, and separates test-release tags from protected production releases. It retains the AlphaBrief flow, five commercial templates, Seeker Integration Lab, deployed Program evidence boundary, and direct Devnet verification.
 
 The checksum belongs to the local debug build and may change after any source or dependency update.
 
@@ -49,7 +49,7 @@ JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home" \
 
 ```bash
 ~/Library/Android/sdk/platform-tools/adb install -r \
-  app/build/outputs/apk/debug/allowance-os-0.11.0-debug.apk
+  app/build/outputs/apk/debug/allowance-os-0.11.1-debug.apk
 ```
 
 7. Open **Allowance OS** on the phone.

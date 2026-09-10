@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const required = [
@@ -23,9 +23,15 @@ execFileSync('./gradlew', ['clean', 'testDebugUnitTest', 'assembleRelease', '--n
   env: process.env,
 });
 
-const apk = resolve(androidRoot, 'app/build/outputs/apk/release/allowance-os-0.11.0-release.apk');
-if (!existsSync(apk)) throw new Error(`Expected release APK not found: ${apk}`);
+const releaseDirectory = resolve(androidRoot, 'app/build/outputs/apk/release');
+const releaseApks = existsSync(releaseDirectory)
+  ? readdirSync(releaseDirectory).filter((name) => name.endsWith('-release.apk'))
+  : [];
+if (releaseApks.length !== 1) {
+  throw new Error(`Expected exactly one release APK in ${releaseDirectory}; found ${releaseApks.length}`);
+}
+const apk = resolve(releaseDirectory, releaseApks[0]);
 const digest = createHash('sha256').update(readFileSync(apk)).digest('hex');
-const checksum = resolve(androidRoot, 'app/build/outputs/apk/release/SHA256SUMS.txt');
-writeFileSync(checksum, `${digest}  allowance-os-0.11.0-release.apk\n`, { mode: 0o600 });
+const checksum = resolve(releaseDirectory, 'SHA256SUMS.txt');
+writeFileSync(checksum, `${digest}  ${releaseApks[0]}\n`, { mode: 0o600 });
 console.log(JSON.stringify({ apk, sha256: digest, checksum }, null, 2));

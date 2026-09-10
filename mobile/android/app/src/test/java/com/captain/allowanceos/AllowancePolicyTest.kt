@@ -97,4 +97,20 @@ class AllowancePolicyTest {
         val decision = PolicyEngine.evaluateRequest(policy, 1.0, policy.merchant, envelope, 200, setOf(AlphaBriefReference.evidenceHash))
         assertEquals(AllowanceState.BLOCKED, decision.state)
     }
+
+    @Test
+    fun restoredWalletRequiresBothPublicIdentityAndEncryptedSession() {
+        assertEquals(
+            WalletSessionState.CONNECTED,
+            resolveRestoredWalletSession("wallet-address", "Primary", "encrypted-token").state,
+        )
+        assertEquals(
+            WalletSessionState.REAUTH_REQUIRED,
+            resolveRestoredWalletSession("wallet-address", "Primary", null).state,
+        )
+        assertEquals(
+            WalletSessionState.DISCONNECTED,
+            resolveRestoredWalletSession("", "", "orphan-token").state,
+        )
+    }
 }

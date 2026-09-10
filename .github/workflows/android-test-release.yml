@@ -1,0 +1,43 @@
+name: Android Test Release
+
+on:
+  push:
+    tags:
+      - "android-test-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v4
+      - run: sdkmanager "platforms;android-37.0" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Validate tag and Android version
+        shell: bash
+        run: |
+          expected="${GITHUB_REF_NAME#android-test-v}"
+          actual="$(sed -n "s/.*versionName '\([^']*\)'.*/\1/p" mobile/android/app/build.gradle)"
+          test "$expected" = "$actual" || { echo "Tag $expected does not match versionName $actual"; exit 1; }
+      - name: Test and build debug APK
+        working-directory: mobile/android
+        run: ./gradlew testDebugUnitTest assembleDebug --no-daemon
+      - name: Generate checksum
+        working-directory: mobile/android/app/build/outputs/apk/debug
+        run: sha256sum *.apk > SHA256SUMS.txt
+      - name: Create clearly-labelled test release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            mobile/android/app/build/outputs/apk/debug/*.apk \
+            mobile/android/app/build/outputs/apk/debug/SHA256SUMS.txt \
+            --title "Allowance OS Android Test Build ${GITHUB_REF_NAME#android-test-v}" \
+            --notes "Debug-signed test build for Devnet QA only. Not a production or dApp Store release."

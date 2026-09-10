@@ -29,11 +29,34 @@ data class AuditEvent(
     val signature: String = "",
 )
 
+enum class WalletSessionState {
+    DISCONNECTED,
+    CONNECTED,
+    REAUTH_REQUIRED,
+}
+
+data class RestoredWalletSession(
+    val state: WalletSessionState,
+    val publicKey: String,
+    val accountLabel: String,
+)
+
+fun resolveRestoredWalletSession(
+    storedPublicKey: String,
+    storedAccountLabel: String,
+    authToken: String?,
+): RestoredWalletSession = when {
+    storedPublicKey.isBlank() -> RestoredWalletSession(WalletSessionState.DISCONNECTED, "", "")
+    authToken.isNullOrBlank() -> RestoredWalletSession(WalletSessionState.REAUTH_REQUIRED, "", "")
+    else -> RestoredWalletSession(WalletSessionState.CONNECTED, storedPublicKey, storedAccountLabel)
+}
+
 data class AllowanceUiState(
     val loading: Boolean = false,
     val loadingMessage: String = "",
     val walletAddress: String = "",
     val walletLabel: String = "",
+    val walletSessionState: WalletSessionState = WalletSessionState.DISCONNECTED,
     val solBalance: Double? = null,
     val allowanceState: AllowanceState = AllowanceState.IDLE,
     val decisionReason: String = "Connect a Devnet wallet or replay a policy outcome.",
@@ -91,6 +114,22 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
     val policy: AllowancePolicy get() = activePolicy
     val policyHash: String get() = PolicyEngine.policyHash(activePolicy)
     private val rpc = DevnetRpc()
+    private val loadedAuthToken = secureSession.loadAuthToken()
+    private val storedPublicKey = preferences.getString(KEY_PUBLIC_KEY, "").orEmpty()
+    private val storedAccountLabel = preferences.getString(KEY_ACCOUNT_LABEL, "").orEmpty()
+    private val restoredSession = resolveRestoredWalletSession(
+        storedPublicKey = storedPublicKey,
+        storedAccountLabel = storedAccountLabel,
+        authToken = loadedAuthToken,
+    ).also { restored ->
+        if (restored.state != WalletSessionState.CONNECTED) {
+            if (storedPublicKey.isNotBlank()) clearStoredPublicIdentity()
+            if (!loadedAuthToken.isNullOrBlank()) secureSession.clearAuthToken()
+        }
+    }
+    private val restoredAuthToken = loadedAuthToken.takeIf {
+        restoredSession.state == WalletSessionState.CONNECTED
+    }
     private val walletAdapter = MobileWalletAdapter(
         connectionIdentity = ConnectionIdentity(
             identityUri = Uri.parse("https://0xcaptain888.github.io/allowance-os/"),
@@ -99,13 +138,17 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         ),
     ).apply {
         blockchain = Solana.Devnet
-        authToken = secureSession.loadAuthToken()
+        authToken = restoredAuthToken
     }
 
     private val _state = MutableStateFlow(
         AllowanceUiState(
-            walletAddress = preferences.getString(KEY_PUBLIC_KEY, "").orEmpty(),
-            walletLabel = preferences.getString(KEY_ACCOUNT_LABEL, "").orEmpty(),
+            walletAddress = restoredSession.publicKey,
+            walletLabel = restoredSession.accountLabel,
+            walletSessionState = restoredSession.state,
+            error = if (restoredSession.state == WalletSessionState.REAUTH_REQUIRED) {
+                "The saved wallet session could not be restored. Reauthorize the wallet to continue."
+            } else "",
             signature = preferences.getString(KEY_LAST_SIGNATURE, "").orEmpty(),
             auditEvents = loadEvents(),
             selectedServiceId = preferences.getString(KEY_SELECTED_SERVICE, CommercialCatalog.DEFAULT_ID)
@@ -121,16 +164,26 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                 is TransactionResult.Success -> {
                     val account = result.authResult.accounts.first()
                     val publicKey = SolanaPublicKey(account.publicKey)
-                    persistConnection(
-                        publicKey = publicKey.base58(),
-                        accountLabel = account.accountLabel.orEmpty(),
-                        authToken = result.authResult.authToken,
-                    )
+                    try {
+                        persistConnection(
+                            publicKey = publicKey.base58(),
+                            accountLabel = account.accountLabel.orEmpty(),
+                            authToken = result.authResult.authToken,
+                        )
+                    } catch (error: Exception) {
+                        clearConnection()
+                        fail(
+                            "Wallet authorization succeeded, but the encrypted reconnect session could not be saved. Reconnect and try again.",
+                            "WALLET_SESSION_STORAGE_ERROR",
+                        )
+                        return@launch
+                    }
                     _state.update {
                         it.copy(
                             loading = false,
                             walletAddress = publicKey.base58(),
                             walletLabel = account.accountLabel.orEmpty(),
+                            walletSessionState = WalletSessionState.CONNECTED,
                             solBalance = runCatching { rpc.balance(publicKey) }.getOrNull(),
                             error = "",
                             decisionReason = "MWA authorization succeeded on Solana Devnet.",
@@ -333,16 +386,28 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
             }) {
                 is TransactionResult.Success -> {
                     val account = result.authResult.accounts.first()
-                    persistConnection(
-                        publicKey = SolanaPublicKey(account.publicKey).base58(),
-                        accountLabel = account.accountLabel.orEmpty(),
-                        authToken = result.authResult.authToken,
-                    )
+                    try {
+                        persistConnection(
+                            publicKey = SolanaPublicKey(account.publicKey).base58(),
+                            accountLabel = account.accountLabel.orEmpty(),
+                            authToken = result.authResult.authToken,
+                        )
+                    } catch (error: Exception) {
+                        clearConnection()
+                        fail(
+                            "The proof was broadcast, but the encrypted reconnect session could not be saved. Verify the signature, then reconnect the wallet.",
+                            "WALLET_SESSION_STORAGE_ERROR",
+                        )
+                        preferences.edit().putString(KEY_LAST_SIGNATURE, result.payload).apply()
+                        _state.update { it.copy(signature = result.payload) }
+                        return@launch
+                    }
                     _state.update {
                         it.copy(
                             loading = false,
                             walletAddress = SolanaPublicKey(account.publicKey).base58(),
                             walletLabel = account.accountLabel.orEmpty(),
+                            walletSessionState = WalletSessionState.CONNECTED,
                             allowanceState = AllowanceState.VERIFIED,
                             decisionReason = "Policy passed and the wallet broadcast a real Devnet Memo authorization proof.",
                             signature = result.payload,
@@ -359,7 +424,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    fun revoke(sender: ActivityResultSender) {
+    fun disconnectWalletSession(sender: ActivityResultSender) {
         viewModelScope.launch {
             setLoading("Requesting MWA wallet disconnect…")
             when (val result = walletAdapter.disconnect(sender)) {
@@ -408,22 +473,30 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     private fun persistConnection(publicKey: String, accountLabel: String, authToken: String) {
-        preferences.edit()
+        secureSession.saveAuthToken(authToken)
+        val publicIdentitySaved = preferences.edit()
             .putString(KEY_PUBLIC_KEY, publicKey)
             .putString(KEY_ACCOUNT_LABEL, accountLabel)
-            .apply()
-        runCatching { secureSession.saveAuthToken(authToken) }
+            .commit()
+        if (!publicIdentitySaved) {
+            secureSession.clearAuthToken()
+            error("Unable to persist wallet public identity")
+        }
         walletAdapter.authToken = authToken
     }
 
     private fun clearConnection() {
+        clearStoredPublicIdentity()
+        secureSession.clearAuthToken()
+        walletAdapter.authToken = null
+    }
+
+    private fun clearStoredPublicIdentity() {
         preferences.edit()
             .remove(KEY_PUBLIC_KEY)
             .remove(KEY_ACCOUNT_LABEL)
             .remove(KEY_AUTH_TOKEN_LEGACY)
             .apply()
-        secureSession.clearAuthToken()
-        walletAdapter.authToken = null
     }
 
     fun clearAuditEvents() {

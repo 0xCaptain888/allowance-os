@@ -2,6 +2,19 @@
 
 All notable Allowance OS Android releases are recorded here. Installable APK files and checksums are attached to the matching [GitHub Releases](https://github.com/0xCaptain888/allowance-os/releases).
 
+## Android v0.11.1 — 2026-09-10 (release candidate)
+
+- A restored wallet now requires both a stored public identity and a valid encrypted MWA reconnect token.
+- Keystore recovery failure clears stale public connection state and explicitly requires reauthorization.
+- Encrypted session writes and public-identity writes fail closed instead of silently claiming a durable session.
+- Renamed the internal wallet action from `revoke` to `disconnectWalletSession` so it cannot be confused with Program revocation.
+- Added lifecycle-aware StateFlow collection and a regression test for wallet restoration truth.
+- Read the visible app version from Gradle-generated build metadata.
+- Reserved `android-v*` tags for protected production-signed APKs and introduced `android-test-v*` for clearly labelled debug QA builds.
+- Removed the hardcoded APK version from the production build script.
+
+Release status: source and local debug build verified; production tag not created.
+
 ## Unreleased — Delegated Settlement v2 source
 
 - Added backward-compatible Program v2 instructions without changing legacy v1 Borsh discriminants.
@@ -68,12 +81,12 @@ No archived APK was available when the permanent release process was introduced.
 
 ## Release integrity rule
 
-Starting with v0.9.0, an Android version is not considered published until all of the following exist:
+Starting with v0.11.1, an Android production version is not considered published until all of the following exist:
 
 1. versioned source commit;
-2. `android-vX.Y.Z` Git tag;
+2. protected `android-vX.Y.Z` Git tag;
 3. GitHub Release;
-4. versioned APK asset;
+4. production-signed versioned APK asset;
 5. `SHA256SUMS.txt`;
 6. test/build result;
 7. changelog entry.

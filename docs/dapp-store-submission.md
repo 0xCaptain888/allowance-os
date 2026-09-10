@@ -14,7 +14,7 @@ Official publishing guidance requires a release-ready signed APK, listing metada
 - Support URL: `https://github.com/0xCaptain888/allowance-os/issues`
 - Website: `https://0xcaptain888.github.io/allowance-os/`
 - Privacy policy: `docs/privacy-policy.md`
-- Version: `0.11.0` / code `11`
+- Version: `0.11.1` / code `12`
 
 ## Required preview asset plan
 
