@@ -35,12 +35,15 @@
       "rustc": "1.95.0"
     },
     "githubUbuntu": {
-      "status": "PENDING_CURRENT_REVISION_CI",
-      "workflowRunId": null,
+      "status": "PASSED",
+      "workflowRunId": 34449449052,
+      "jobId": 102781591783,
+      "headSha": "ebdd31e1e5f24f0dc59d749021a5c8ef03aede12",
+      "artifactId": 10141007100,
       "artifactName": "allowance-os-program-v2-sbf",
-      "sizeBytes": null,
-      "sha256": null,
-      "uploadedArtifactDigest": null,
+      "sizeBytes": 130280,
+      "sha256": "45a3996ee011587e394951ee344742290c0aa7d0d132d972cb0168360df191dc",
+      "uploadedArtifactDigest": "d15598d7e4e0249105e745d62b2d98a72c1a028dab8354f0f50dec08ae1649e1",
       "cargoBuildSbf": "4.3.0"
     },
     "reproducibilityNote": "Builds are recorded per host. No cross-platform byte-for-byte reproducibility claim is made. The exact artifact selected for deployment must be hashed and matched to the deployed binary."
@@ -51,7 +54,7 @@
     "androidTestsPassed": 13,
     "npmAuditVulnerabilities": 0,
     "localSbfBuildPassed": true,
-    "githubSbfBuildPassed": false
+    "githubSbfBuildPassed": true
   },
   "deployment": {
     "deployed": false,

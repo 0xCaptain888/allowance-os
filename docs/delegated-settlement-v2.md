@@ -193,10 +193,10 @@ The source was compiled to Solana SBF artifacts using pinned `cargo-build-sbf 4.
 
 ```text
 macOS: 130,280 bytes · e0eb4726bdfda25fa2a377f347b9590087072e4ad1d9e455598760f6b865e7d6
-Ubuntu CI: generated independently for the current source revision
+Ubuntu CI: 130,280 bytes · 45a3996ee011587e394951ee344742290c0aa7d0d132d972cb0168360df191dc
 ```
 
-No byte-for-byte cross-platform reproducibility claim is made. The exact `.so` chosen for deployment must be hashed and compared with the deployed binary. The machine-readable record is [`evidence/delegated-v2-source-build.json`](../evidence/delegated-v2-source-build.json). Generated `.so` files and all build keypairs remain ignored local artifacts.
+The host-specific digests differ, so no byte-for-byte cross-platform reproducibility claim is made. The exact `.so` chosen for deployment must be hashed and compared with the deployed binary. The machine-readable record is [`evidence/delegated-v2-source-build.json`](../evidence/delegated-v2-source-build.json). Generated `.so` files and all build keypairs remain ignored local artifacts.
 
 ## Deployment gate
 
