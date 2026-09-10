@@ -42,6 +42,17 @@ Android tests: 10 passed, 0 failed
 SHA-256: 8fc1b16e2ecae5bd451bc2110a8093c6f0b0992f8ce87ee00524a9e72c455be3
 ```
 
+Published GitHub Actions APK:
+
+```text
+Artifact: allowance-os-0.10.0-debug.apk
+Size: 18,778,352 bytes
+SHA-256: c583ddba4ee5f2596649b98133b67cf36fc2a9ea43e514ea104616e2c765af18
+Authority: SHA256SUMS.txt attached to android-v0.10.0
+```
+
+The two debug APK hashes differ because local and CI builds use different debug signing keys. This is expected; production distribution requires one protected release signing key.
+
 ## External hardware step still required
 
 - Test Seed Vault and Genesis Token on actual compatible Solana Mobile hardware.

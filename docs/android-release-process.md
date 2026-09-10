@@ -25,6 +25,8 @@ Pushing the version tag triggers `.github/workflows/android-release.yml`. The wo
 - creates a GitHub Release;
 - uploads the APK and checksum as permanent release assets.
 
+The CI-generated `SHA256SUMS.txt` is the checksum authority for the public download. Local and CI debug APK hashes can differ because Gradle creates environment-specific debug signing keys. Production builds must use one protected release signing key to provide stable signer identity across updates.
+
 Example:
 
 ```bash
