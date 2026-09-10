@@ -37,7 +37,7 @@ Build or install the Android app from `mobile/android`:
 10. Open **Activity**, export the complete audit trail as JSON, and compare its displayed SHA-256 fingerprint before sharing it with another reviewer.
 11. Test **Reconnect**, **Forget local wallet session**, and **Revoke & deauthorize** without exposing a wallet key.
 
-The Android v0.13 source also contains a strict 332-byte Delegated Allowance v2 state decoder plus pause, unpause, revoke, executor-rotation, and verifier-rotation instruction encoders. These codecs are source-tested mobile readiness for v2; they are not evidence of a v2 deployment.
+The Android v0.14 source contains a strict 332-byte Delegated Allowance v2 state decoder plus pause, unpause, revoke, executor-rotation, and verifier-rotation instruction encoders. Its Evidence page links directly to the deployed v2 Program and authority-free settlement. The codecs are tested; not every v2 authority control is wired to mobile broadcasting yet.
 
 ## 4. Inspect the real Program path
 
@@ -62,4 +62,18 @@ The deployed Devnet Program is [`DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`](
 
 The current submission does not conflate these levels.
 
-Delegated Settlement v2 is currently labelled **SOURCE TESTED · NOT DEPLOYED**. The live links in this guide refer only to the deployed v1 Devnet Program and its recorded transactions.
+## 5. Verify approve-once / settle-later v2
+
+The dedicated v2 Program is [`7zARK…xvL`](https://explorer.solana.com/address/7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL?cluster=devnet).
+
+| Proof | Transaction | Expected verification |
+| --- | --- | --- |
+| DEPLOYED | [`21rb…gy7x`](https://explorer.solana.com/tx/21rb9fCR8Put2UDi3ANR1V5uzqLbjadozPsfcf7t3YxAV9YLuwSv7v7fNX4s66GrFNVc1RZfvAYiApBZxXCBgy7x?cluster=devnet) | Finalized deployment; dumped binary matches public Ubuntu CI artifact |
+| APPROVE ONCE | [`vpVb…VEax`](https://explorer.solana.com/tx/vpVbZD3WhHnBTa9MnWLWGmph8YsWDTErYdV9JENUadtvTQjxyj2md4aXt42KQtsB4xSX51r9K6yiRTG2jTFVEax?cluster=devnet) | Authority creates the v2 allowance and bounded SPL delegate |
+| SETTLE LATER | [`54Cj…YbU4`](https://explorer.solana.com/tx/54CjSJcs6QCkcr1SF3W8yJd1imEg1uCyZ2YS6qJp6AYougxoJwM5pfYcXjWkdTphcVDz1e7aNPswHvCYjviPYbU4?cluster=devnet) | Executor + verifier signatures; authority absent; exactly `1,000,000` raw units move |
+| BLOCKED | [`4gre…PVDk`](https://explorer.solana.com/tx/4gre7JQdqsfHb7f93NktFrwdsbLuUqucFm2GZB7Rq9Q3ZYhRX3uh3D771csrHR4htJLNq2DeFhLqHkj4yx91PVDk?cluster=devnet) | Custom Error `6`, zero movement, no Evidence Record |
+| FROZEN | [`381K…BZS6`](https://explorer.solana.com/tx/381KRkTfUncSY7X1Rh2UN2aoqTWRTBgjVB7QPaKwwcphHoJRB1zTEn4DR1zXrw3NroqZREHt94fdurJ6xkaQBZS6?cluster=devnet) | Verifier persists immutable rejected-result evidence |
+| ROTATED | [`4H1Q…2yjR`](https://explorer.solana.com/tx/4H1QniLQ46bDKGAzwL2QzzzQcr97em8n38JzdNFDaKsURPH1Sv9f8haTTNE5MVV5pqjHVYMVFXkcLTDZ7S9s2yjR?cluster=devnet) | Rotated executor + verifier settle without authority |
+| REVOKED | [`2y4m…X1YWU`](https://explorer.solana.com/tx/2y4micc34Z3GtcRRdcZSTHPmmojd24oGhp58RtH7g6cYDj9A5KrmzBpvfsXBuJvmu38gkxxxugMG6HjbNLkX1YWU?cluster=devnet) | Final state is revoked/paused and SPL delegate is removed |
+
+The source/merchant asset is a project-created Devnet test mint, not canonical USDC. Read [`evidence/live-devnet-v2.json`](../evidence/live-devnet-v2.json) for all actors, PDAs, hashes, pause/recovery/rotation transactions, and final decoded state.

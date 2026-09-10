@@ -13,9 +13,9 @@
 
 ## Important deployment boundary
 
-The currently published Devnet evidence predates the Rust replay-protection and Delegated Settlement v2 source changes. The deployed Program remains the verified v0.9.0 evidence binary until the upgrade-authority wallet is available and a new binary is deployed and independently hashed. The TypeScript SDK and Android/browser reference flows enforce replay protection now; the repository does not claim that the old Devnet binary implements v2.
+The original v1 Program remains a separate historical proof. Delegated Settlement v2 is deployed at `7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL`; its dumped binary exactly matches the public Ubuntu CI artifact and its full Devnet control matrix is recorded in `evidence/live-devnet-v2.json`. This does not convert the v1 binary into v2 and does not imply Mainnet readiness.
 
-## Delegated Settlement v2 — source tested
+## Delegated Settlement v2 — Devnet verified
 
 - `CreateDelegated` approves only `lifetime_cap` tokens to a PDA derived from the allowance account;
 - `ChargeDelegated` requires exact executor and verifier signatures but does not require the user authority;
@@ -29,14 +29,14 @@ The currently published Devnet evidence predates the Rust replay-protection and 
 - executor rotation requires the authority; verifier rotation requires the authority plus current verifier;
 - legacy v1 instruction discriminants remain stable.
 
-Remaining v2 limits: the verifier is a single configured signer rather than a quorum; evidence records intentionally remain rent-funded accounts with no pruning policy; token decimals and canonical asset selection remain deployment configuration; and the v2 source has not yet been deployed or independently audited.
+Remaining v2 limits: the verifier is a single configured signer rather than a quorum; evidence records intentionally remain rent-funded accounts with no pruning policy; the live asset is a project-created Devnet test mint rather than canonical USDC; the upgrade authority is a single development key; Android does not yet broadcast every v2 control; and the Program has not been independently audited.
 
 ## Production requirements
 
 - move upgrade authority to a multisig or timelocked governance account;
 - use a canonical production stablecoin mint and explicitly configured token decimals;
 - persist nonce/idempotency state transactionally;
-- deploy and independently verify the v2 period-window accounting and recovery implementation;
+- independently audit the v2 period-window accounting, evidence-account creation, CPI authority, and recovery implementation;
 - define delayed or quorum-based unfreeze governance for higher-value allowances;
 - protect webhook secrets in a managed secret store and rotate them;
 - use a dedicated dApp Store release signing key;
@@ -47,10 +47,10 @@ Remaining v2 limits: the verifier is a single configured signer rather than a qu
 | Threat | Current response | Remaining production work |
 | --- | --- | --- |
 | Lookalike merchant | FROZEN before settlement | merchant registry and human-readable domain binding |
-| Overspend | V1 live BLOCKED; v2 source adds three-level caps and rolling periods | deploy v2 and monitor cap invariants |
-| Missing or changed delivery | V1 live FROZEN; v2 source separates verifier and records bad evidence | verifier quorum for high-value services |
+| Overspend | V1 and v2 live BLOCKED; v2 adds three-level caps and rolling periods | monitor cap invariants and audit arithmetic |
+| Missing or changed delivery | V1 and v2 live FROZEN; v2 separates verifier and records bad evidence | verifier quorum for high-value services |
 | Network retry | stored receipt returned idempotently | transactional database |
-| Evidence replay | SDK/Android/browser blocked; v2 source enforces nonce plus immutable per-hash Evidence PDA history | deploy v2 and monitor evidence-account creation failures |
+| Evidence replay | SDK/Android/browser blocked; deployed v2 enforces nonce plus immutable per-hash Evidence PDA history | monitor evidence-account creation failures |
 | Compromised executor | v2 requires a separate verifier signature, bounded policy, and authority-controlled rotation | incident procedure, verifier quorum and rate alerts |
 | Compromised verifier | cannot change destination/caps; user can pause/revoke; rotation needs user + current verifier | emergency rotation design for a lost verifier and quorum |
 | Compromised upgrader | disclosed single upgrade authority | multisig/timelock |

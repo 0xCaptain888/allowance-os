@@ -8,19 +8,19 @@
 
 Allowance OS is a Solana Mobile payment-authorization layer for Web3 services. It turns an open-ended wallet approval into a human-readable allowance with merchant, token, program, per-charge, period, expiry, and evidence boundaries—then applies that same model to AI subscriptions, paid research, trading signals, automation bots, and metered APIs.
 
-**v0.13.0 hardens the path from demo to operated product:** the merchant runtime now supports atomic restart-safe reference persistence; webhook verification adds timestamp tolerance, event replay rejection, and overlapping-secret rotation; Android adds strict v2 state decoding, authority-control encoders, bounded RPC retries, and portable Activity audit exports. These additions remain honestly separated from live v2 deployment claims.
+**v0.14.0 publishes the missing approve-once / settle-later proof:** Delegated Settlement v2 is deployed on Solana Devnet, its dumped Program bytes exactly match the public Ubuntu CI artifact, and a complete public control matrix proves authority-free later settlement, fail-closed blocking, pause/unpause, evidence-bound freeze, dual-signature recovery, role rotation, and terminal SPL-delegate revocation.
 
-**Delegated Settlement v2 is now source-tested:** a user approves an allowance-scoped SPL delegate PDA once; later `ChargeDelegated` settlement requires the configured executor and independent verifier, enforces sequential nonces plus per-charge/period/lifetime caps, and does not include the user authority as a signer. Every accepted charge or freeze creates an immutable evidence PDA keyed by the full evidence hash. Pause, evidence-bound freeze, dual-signature unfreeze, terminal token-delegate revoke, and governed executor/verifier rotation are implemented. Read the [v2 specification](docs/delegated-settlement-v2.md).
+**Delegated Settlement v2 is Devnet deployed and matrix-verified:** a user approves an allowance-scoped SPL delegate PDA once; later `ChargeDelegated` settlement requires the configured executor and independent verifier, enforces sequential nonces plus per-charge/period/lifetime caps, and does not include the user authority as a signer. Every accepted charge or freeze creates an immutable evidence PDA keyed by the full evidence hash. Read the [v2 specification](docs/delegated-settlement-v2.md) and [machine-readable live evidence](evidence/live-devnet-v2.json).
 
-The dedicated v2 Program ID is `7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL`. Until its deployment transaction is published, it remains a source/build identity rather than live chain evidence; the existing `DJz…WRcuE` deployment remains the v1 proof.
+The dedicated v2 Program ID is [`7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL`](https://explorer.solana.com/address/7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL?cluster=devnet). Its [deployment transaction](https://explorer.solana.com/tx/21rb9fCR8Put2UDi3ANR1V5uzqLbjadozPsfcf7t3YxAV9YLuwSv7v7fNX4s66GrFNVc1RZfvAYiApBZxXCBgy7x?cluster=devnet) is finalized. The existing `DJz…WRcuE` deployment remains the intentionally separate v1 proof.
 
-The current v2 source produces `130,280`-byte Solana SBF binaries with pinned `cargo-build-sbf 4.3.0`. The macOS SHA-256 is `e0eb4726bdfda25fa2a377f347b9590087072e4ad1d9e455598760f6b865e7d6`; independent Ubuntu CI run `34451107078` produced `45a3996ee011587e394951ee344742290c0aa7d0d132d972cb0168360df191dc`. The bytes differ across hosts, so no cross-platform byte-for-byte reproducibility claim is made. See [source-build evidence](evidence/delegated-v2-source-build.json); this is build evidence, not deployment evidence.
+The deployed `130,280`-byte Program dumps to SHA-256 `45a3996ee011587e394951ee344742290c0aa7d0d132d972cb0168360df191dc`, exactly matching the public Ubuntu artifact from GitHub Actions run `34451107078`. The macOS artifact has a different host-specific digest, so no cross-platform reproducibility claim is made. See [source-build evidence](evidence/delegated-v2-source-build.json) and [deployment evidence](evidence/live-devnet-v2.json).
 
-> **Pre-production disclosure:** v2 is **SOURCE TESTED · NOT DEPLOYED**. The repository proves policy evaluation, real MWA signing, deployed v1 Devnet state transitions, and a recorded v1 SPL-token transfer. The current deployed Program still requires the authority signer for `Charge`; do not interpret the v2 source as live recurring settlement until new public transactions and a matching binary hash are published. See the [maturity audit](docs/product-maturity-audit.md).
+> **Pre-production disclosure:** v2 is **DEVNET DEPLOYED · FULL CONTROL MATRIX VERIFIED**. It uses a project-created Devnet test mint, not canonical USDC; the upgrade authority is still a single development key; and the Program has not received an independent audit. This is strong public hackathon evidence, not a Mainnet or production-readiness claim. See the [maturity audit](docs/product-maturity-audit.md).
 
 ## Commercial product proof
 
-v0.13.0 keeps the five-surface product—**Home → Services → Allowances → Activity → Evidence**—while adding restart-safe merchant behavior, exportable audit evidence, and mobile v2 protocol readiness instead of adding another static use-case card.
+v0.14.0 keeps the five-surface product—**Home → Services → Allowances → Activity → Evidence**—and adds direct visibility into the live v2 Program, its authority-free charge, and the public safety-control matrix.
 
 | Ready template | Commercial use | Payment boundary | Required evidence |
 | --- | --- | --- | --- |
@@ -39,8 +39,8 @@ The **Seeker Integration Lab** also maps Allowance OS to apps featured by Solana
 | Surface | What it proves | Status |
 | --- | --- | --- |
 | [Public Judge Demo](https://0xcaptain888.github.io/allowance-os/) | Instant `VERIFIED` / `BLOCKED` / `FROZEN` policy replay | GitHub Pages deployment |
-| `mobile/android` | Bilingual native Android product with commercial catalog, AlphaBrief unlock/replay lab, fail-closed encrypted MWA session, JSON audit export, v2 state/control codecs, bounded RPC retry, and direct Devnet verification | v0.13.0; 15 Android tests |
-| `program/` | Backward-compatible v1 plus Delegated Settlement v2 with PDA authority, executor/verifier separation, immutable evidence records, governed role rotation, three-level caps, period rollover, recovery and SPL revoke | v2 source tested with 20 Rust tests; not deployed |
+| `mobile/android` | Bilingual native Android product with commercial catalog, AlphaBrief unlock/replay lab, fail-closed encrypted MWA session, JSON audit export, v2 state/control codecs, bounded RPC retry, and public v2 evidence links | v0.14.0; 15 Android tests |
+| `program/` | Backward-compatible v1 plus deployed Delegated Settlement v2 with PDA authority, executor/verifier separation, immutable evidence records, governed role rotation, three-level caps, period rollover, recovery and SPL revoke | Devnet deployed; 20 Rust tests; full control matrix verified |
 | Solana Explorer | Connected Devnet wallet and wallet-broadcast authorization proof | Live signature captured |
 | [Deployed allowance program](https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet) | Program-enforced state transitions and settlement | Live `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED` evidence |
 | SPL-token settlement | Token movement through CPI | Live Devnet transfer with independently readable pre/post balances |
@@ -64,6 +64,22 @@ Devnet test mint: [`3KVq4nkUnb7GS7DjYCaGR7JJGAhDG1YPsz84xxThn5de`](https://explo
 | REVOKED | [`5Mpt…qysu`](https://explorer.solana.com/tx/5MpttoR2mfpDXhWq1B3nr6AWHC9AFCTsQ7626EXDEka6nWzgF3GdJGZnTxk9BmU4sBxiLjAAbbES9GXheGCqqysu?cluster=devnet) | Authority persists `revoked = true`; no token movement |
 
 The complete machine-readable record is [`evidence/live-devnet-program.json`](evidence/live-devnet-program.json). The VERIFIED transaction contains the SPL Token Program inner instruction and public pre/post token balances; BLOCKED and FROZEN move zero tokens.
+
+## Live Delegated Settlement v2 matrix
+
+Program: [`7zARK…xvL`](https://explorer.solana.com/address/7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL?cluster=devnet) · Allowance: [`9CC1…jcbk`](https://explorer.solana.com/address/9CC1YRBNYkDB1iBSZ4FgWcZvkxatrJQ7akcfXQcAjcbk?cluster=devnet)
+
+| Proof | Public transaction | What it proves |
+| --- | --- | --- |
+| DEPLOYED | [`21rb…gy7x`](https://explorer.solana.com/tx/21rb9fCR8Put2UDi3ANR1V5uzqLbjadozPsfcf7t3YxAV9YLuwSv7v7fNX4s66GrFNVc1RZfvAYiApBZxXCBgy7x?cluster=devnet) | Finalized v2 deployment; dumped binary exactly matches the public Ubuntu CI artifact |
+| APPROVE ONCE | [`vpVb…VEax`](https://explorer.solana.com/tx/vpVbZD3WhHnBTa9MnWLWGmph8YsWDTErYdV9JENUadtvTQjxyj2md4aXt42KQtsB4xSX51r9K6yiRTG2jTFVEax?cluster=devnet) | Authority creates the bounded delegated allowance and SPL delegate PDA |
+| SETTLE LATER | [`54Cj…YbU4`](https://explorer.solana.com/tx/54CjSJcs6QCkcr1SF3W8yJd1imEg1uCyZ2YS6qJp6AYougxoJwM5pfYcXjWkdTphcVDz1e7aNPswHvCYjviPYbU4?cluster=devnet) | Executor + verifier settle `1,000,000` raw units; authority is not a signer |
+| BLOCKED | [`4gre…PVDk`](https://explorer.solana.com/tx/4gre7JQdqsfHb7f93NktFrwdsbLuUqucFm2GZB7Rq9Q3ZYhRX3uh3D771csrHR4htJLNq2DeFhLqHkj4yx91PVDk?cluster=devnet) | Custom Error `6`; zero tokens move and no evidence account is created |
+| FROZEN | [`381K…BZS6`](https://explorer.solana.com/tx/381KRkTfUncSY7X1Rh2UN2aoqTWRTBgjVB7QPaKwwcphHoJRB1zTEn4DR1zXrw3NroqZREHt94fdurJ6xkaQBZS6?cluster=devnet) | Verifier persists an immutable bad-result Evidence Record PDA |
+| ROLE ROTATION | [`4H1Q…2yjR`](https://explorer.solana.com/tx/4H1QniLQ46bDKGAzwL2QzzzQcr97em8n38JzdNFDaKsURPH1Sv9f8haTTNE5MVV5pqjHVYMVFXkcLTDZ7S9s2yjR?cluster=devnet) | Rotated executor + verifier settle another charge without the authority |
+| REVOKED | [`2y4m…X1YWU`](https://explorer.solana.com/tx/2y4micc34Z3GtcRRdcZSTHPmmojd24oGhp58RtH7g6cYDj9A5KrmzBpvfsXBuJvmu38gkxxxugMG6HjbNLkX1YWU?cluster=devnet) | Terminal state persists and the SPL delegate is removed |
+
+The full record also publishes pause, unpause, dual-signature unfreeze, actor identities, policy/evidence hashes, Evidence Record PDAs, token deltas, and final decoded state in [`evidence/live-devnet-v2.json`](evidence/live-devnet-v2.json). The asset remains a project-created Devnet test mint, not canonical USDC.
 
 ## Why this matters
 
@@ -141,10 +157,10 @@ cd mobile/android
 The resulting APK is:
 
 ```text
-mobile/android/app/build/outputs/apk/debug/allowance-os-0.13.0-debug.apk
+mobile/android/app/build/outputs/apk/debug/allowance-os-0.14.0-debug.apk
 ```
 
-Latest clean local v0.13.0 debug build SHA-256: `463ad7ad745c78040c4618e5b9688def42ab29edc4a8619d28ca163fd0d38a08`
+Latest clean local v0.14.0 debug build SHA-256: `3aeb6479969d116d637858031bd8de07f0818c2e04f92ba447b5870919c51dcf` (`18,813,650` bytes). The machine-readable build record is [`evidence/android-build.json`](evidence/android-build.json).
 
 Latest public QA asset: [`android-test-v0.13.0`](https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.13.0), CI SHA-256 `d9d5f8e57ed358e09a780ca8d4097437fdb618a453a3beee72d67854a72c07b2`. Local and CI debug hashes differ because each environment uses its own debug signing key. `android-v*` is reserved for protected production-signed releases; `android-test-v*` assets are explicitly labelled as Devnet QA builds.
 
@@ -186,10 +202,10 @@ MERCHANT_TOKEN_ACCOUNT=<merchant-owned-token-account> \
 npm run devnet:live
 ```
 
-After a v2 Program is deployed, reproduce the decisive approve-once / settle-later proof with separate authority, executor, and verifier keypairs:
+Reproduce the decisive approve-once / settle-later proof with separate authority, executor, and verifier keypairs:
 
 ```bash
-DELEGATED_PROGRAM_ID=<v2-program-id> \
+DELEGATED_PROGRAM_ID=7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL \
 SOLANA_KEYPAIR=/absolute/path/to/authority.json \
 EXECUTOR_KEYPAIR=/absolute/path/to/executor.json \
 VERIFIER_KEYPAIR=/absolute/path/to/verifier.json \
@@ -204,14 +220,15 @@ The second transaction is fee-paid and signed by the executor plus verifier; the
 
 ## Truth boundary
 
-There are four intentionally separate evidence levels:
+There are five intentionally separate evidence levels:
 
 1. **SIMULATED** — browser and TypeScript policy replay; never a chain claim.
 2. **WALLET-BROADCAST DEVNET PROOF** — real MWA authorization and Memo transaction returned by Phantom; the browser and Android app can independently query its Devnet confirmation status and slot.
 3. **PROGRAM-ENFORCED STATE TRANSITIONS** — deployed Rust Program with public create, verified, blocked, frozen, and revoke evidence.
 4. **SPL-TOKEN SETTLEMENT** — the VERIFIED transaction invokes the SPL Token Program and transfers exactly `1,000,000` raw units; BLOCKED and FROZEN are publicly shown to transfer zero.
+5. **DELEGATED V2 CONTROL MATRIX** — a separate Devnet Program proves approve-once settlement without the authority signer, immutable Evidence Record PDAs, pause/freeze/recovery, role rotation, and SPL-delegate removal.
 
-The deployed Rust Program ID is `DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`. Its upgrade authority remains the deployment wallet for hackathon iteration; this is disclosed rather than presented as immutable production infrastructure. The deployed binary is still the v0.9.0 evidence build. Delegated Settlement v2 and replay protection are source-tested but are not claimed for that older deployed binary.
+The v1 Program remains `DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`; the deployed v2 Program is `7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL`. Both retain single-key upgrade authorities for hackathon iteration. They are deliberately separate so the older v1 evidence is never misattributed to v2.
 
 See the [Delegated Settlement v2 specification](docs/delegated-settlement-v2.md), [merchant SDK guide](docs/sdk-integration.md), [operations runbook](docs/operations.md), [security policy](SECURITY.md), [security notes](docs/security.md), [privacy policy](docs/privacy-policy.md), and [prepared dApp Store submission pack](docs/dapp-store-submission.md).
 

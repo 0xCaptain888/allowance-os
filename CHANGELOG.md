@@ -1,5 +1,17 @@
 # Changelog
 
+## Android / SDK v0.14.0 — 2026-09-10
+
+- Deployed Delegated Settlement v2 to Solana Devnet at `7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL`.
+- Dumped the deployed Program and exactly matched its `130,280` bytes to the public Ubuntu CI artifact at SHA-256 `45a3996ee011587e394951ee344742290c0aa7d0d132d972cb0168360df191dc`.
+- Published a real `CreateDelegated` plus later `ChargeDelegated` flow signed by executor and verifier without the user authority; `1,000,000` raw test-token units moved.
+- Published a full control matrix for BLOCKED, pause/unpause, immutable-evidence freeze, dual-signature unfreeze, executor/verifier rotation, rotated-role settlement, and revoke with SPL delegate removal.
+- Added safe runner resume and HTTP-only confirmation polling for private RPC providers without WebSocket `signatureSubscribe`.
+- Added machine-readable `evidence/live-devnet-v2.json`, updated the public Judge Demo, and surfaced v2 proof links in Android.
+- Bumped Android to version code `15` / version name `0.14.0`.
+
+This remains a debug-signed Devnet QA milestone using a project-created test mint, not canonical USDC. It is not an audit, Mainnet deployment, or production-readiness claim.
+
 All notable Allowance OS Android releases are recorded here. Installable APK files and checksums are attached to the matching [GitHub Releases](https://github.com/0xCaptain888/allowance-os/releases).
 
 ## Android / SDK v0.13.0 — 2026-09-10 (public test release)
@@ -14,7 +26,7 @@ All notable Allowance OS Android releases are recorded here. Installable APK fil
 - Added a responsible-disclosure policy, operational runbook, and machine-readable evidence index.
 - Expanded coverage to 24 TypeScript, 15 Android, and 20 Rust tests.
 
-Release tag: `android-test-v0.13.0`. The published APK is debug-signed for Devnet QA; v2 remains source-tested and not deployed, and no production tag has been created.
+Release tag: `android-test-v0.13.0`. The published APK is debug-signed for Devnet QA; it predates the live v2 deployment milestone, and no production tag has been created.
 
 ## Android / SDK v0.12.0 — 2026-09-10 (release candidate)
 
@@ -43,7 +55,7 @@ Release status: source and local debug build verified; production tag not create
 
 Release status: source and local debug build verified; production tag not created.
 
-## Unreleased — Delegated Settlement v2 source
+## Delegated Settlement v2 source and Devnet deployment
 
 - Added backward-compatible Program v2 instructions without changing legacy v1 Borsh discriminants.
 - Assigned a dedicated v2 Program identity so new deployment evidence cannot be confused with the live v1 binary.
@@ -56,7 +68,7 @@ Release status: source and local debug build verified; production tag not create
 - Added matching TypeScript instruction builders and expanded coverage to 22 TypeScript and 20 Rust tests.
 - Produced current `130,280`-byte Solana SBF binaries on macOS (`e0eb4726…e7d6`) and Ubuntu CI (`45a3996e…91dc`); both host-specific hashes are recorded without claiming cross-platform byte reproducibility.
 - Added a pinned CI SBF build job that uploads the deployable `.so` as a workflow artifact.
-- Added the full v2 architecture, account model, threat boundary, deployment checklist, and explicit `SOURCE TESTED · NOT DEPLOYED` label.
+- Added the full v2 architecture, account model, threat boundary, deployment checklist, and precise Devnet verification boundary.
 
 ## Android v0.11.0 — 2026-09-10
 

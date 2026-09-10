@@ -737,16 +737,28 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
         }
 
         ProductCard {
-            SectionTitle(t("Delegated v2 移动端能力", "DELEGATED V2 MOBILE CAPABILITY", chinese), t("源码就绪", "SOURCE READY", chinese))
+            SectionTitle(t("Delegated v2 公开证据", "DELEGATED V2 PUBLIC EVIDENCE", chinese), t("Devnet 已验证", "DEVNET VERIFIED", chinese))
             Text(
-                t("Android 现已包含严格的 332-byte v2 状态解码器，以及 pause、unpause、revoke 和角色轮换指令编码器。它们已经单元测试，但在 v2 Program 成功部署前不会显示为实时操作。", "Android now includes a strict 332-byte v2 state decoder plus pause, unpause, revoke, and role-rotation instruction encoders. They are unit-tested but remain unavailable as live actions until the v2 Program is deployed.", chinese),
+                t("v2 Program 已部署，并完成无用户签名结算、拒绝、冻结、双签恢复、角色轮换和撤销矩阵。Android 已包含严格的 332-byte 状态解码器与控制指令编码器；当前页面公开链上证据，但尚未把所有 v2 控制接成手机端实时广播。", "The v2 Program is deployed with public authority-free settlement, block, freeze, dual-signature recovery, role rotation, and revoke evidence. Android includes the strict 332-byte state decoder and control encoders; this screen exposes the chain proofs, while not every v2 control is wired to live mobile broadcast yet.", chinese),
                 color = Muted,
                 fontSize = 13.sp,
             )
             ValueRow("Program ID", short(DelegatedAllowanceV2.PROGRAM_ID))
             BoundaryRow("STATE DECODER", t("验证版本、角色、三层额度、nonce 和状态标志", "Validates version, roles, three cap levels, nonce, and state flags", chinese), Mint)
             BoundaryRow("CONTROL ENCODERS", t("暂停、恢复、撤销、Executor/Verifier 轮换", "Pause, unpause, revoke, and Executor/Verifier rotation", chinese), Mint)
-            BoundaryRow("LIVE BROADCAST", t("等待稳定 RPC 完成 v2 部署", "Waiting for a stable RPC to complete v2 deployment", chinese), Amber)
+            BoundaryRow("SETTLE LATER", t("Executor + Verifier 签名；用户未签名", "Executor + verifier signed; authority did not", chinese), Mint)
+            BoundaryRow("SAFETY MATRIX", t("BLOCKED / FROZEN / ROTATED / REVOKED 已上链", "BLOCKED / FROZEN / ROTATED / REVOKED are public", chinese), Mint)
+            BoundaryRow("MOBILE CONTROLS", t("编码器已测试；完整实时广播仍待接入", "Encoders tested; full live broadcasting is not wired yet", chinese), Amber)
+            SecondaryButton(Modifier.fillMaxWidth(), t("打开 v2 Program", "Open v2 Program", chinese)) {
+                uriHandler.openUri("https://explorer.solana.com/address/${DelegatedAllowanceV2.PROGRAM_ID}?cluster=devnet")
+            }
+            SecondaryButton(Modifier.fillMaxWidth(), t("查看无用户签名结算", "View authority-free settlement", chinese)) {
+                uriHandler.openUri("https://explorer.solana.com/tx/54CjSJcs6QCkcr1SF3W8yJd1imEg1uCyZ2YS6qJp6AYougxoJwM5pfYcXjWkdTphcVDz1e7aNPswHvCYjviPYbU4?cluster=devnet")
+            }
+            SecondaryButton(Modifier.fillMaxWidth(), t("查看撤销与 Delegate 移除", "View revoke and delegate removal", chinese)) {
+                uriHandler.openUri("https://explorer.solana.com/tx/2y4micc34Z3GtcRRdcZSTHPmmojd24oGhp58RtH7g6cYDj9A5KrmzBpvfsXBuJvmu38gkxxxugMG6HjbNLkX1YWU?cluster=devnet")
+            }
+            Notice(t("使用项目自建 Devnet 测试 mint，不是官方 USDC；未宣称 Mainnet 或生产就绪。", "Uses a project-created Devnet test mint, not canonical USDC; no Mainnet or production claim.", chinese), Blue)
         }
 
         ProductCard {
@@ -755,6 +767,7 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
             BoundaryRow("LIVE DEVNET PROOF", t("真实 MWA 钱包授权 + Memo 签名", "Real MWA wallet authorization + Memo signature", chinese), Mint)
             BoundaryRow("PROGRAM ENFORCEMENT", t("真实链上状态变更：通过、拒绝、冻结和撤销", "Real onchain state transitions: verify, reject, freeze, and revoke", chinese), Mint)
             BoundaryRow("SPL TOKEN SETTLEMENT", t("VERIFIED 通过 CPI 转移 1,000,000 raw 单位；测试 mint 不是官方 USDC", "VERIFIED transferred 1,000,000 raw units by CPI; the test mint is not canonical USDC", chinese), Mint)
+            BoundaryRow("DELEGATED V2", t("真实无用户签名后续结算与完整控制矩阵", "Real authority-free later settlement and full control matrix", chinese), Mint)
         }
         Spacer(Modifier.height(12.dp))
     }

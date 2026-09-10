@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "1",
+  "capturedAt": "2026-09-10",
+  "network": "solana-devnet",
+  "status": "DELEGATED_V2_CONTROL_MATRIX_VERIFIED",
+  "truthBoundary": "This record proves a Devnet deployment and public test-token behavior. It does not claim Mainnet readiness, canonical USDC use, an independent security audit, or production governance.",
+  "program": {
+    "programId": "7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL",
+    "deploymentTransaction": "21rb9fCR8Put2UDi3ANR1V5uzqLbjadozPsfcf7t3YxAV9YLuwSv7v7fNX4s66GrFNVc1RZfvAYiApBZxXCBgy7x",
+    "programData": "A7iP8P6Ucr5Eb9Y5L1J3rDnuh8R4zBpZSvuBWtLBXcGw",
+    "upgradeAuthority": "Hwr3facWMTBCJYbYPcRNLPKZspWDmSkizdi7f9tjUsYt",
+    "deploySlot": 496122983,
+    "owner": "BPFLoaderUpgradeab1e11111111111111111111111",
+    "dataLengthBytes": 130280,
+    "deployedBinarySha256": "45a3996ee011587e394951ee344742290c0aa7d0d132d972cb0168360df191dc",
+    "matchingArtifact": {
+      "source": "GitHub Actions Ubuntu SBF build",
+      "runId": 34451107078,
+      "sizeBytes": 130280,
+      "sha256": "45a3996ee011587e394951ee344742290c0aa7d0d132d972cb0168360df191dc",
+      "exactMatch": true
+    }
+  },
+  "assets": {
+    "mint": "3KVq4nkUnb7GS7DjYCaGR7JJGAhDG1YPsz84xxThn5de",
+    "sourceTokenAccount": "9JxQGW1dMBtpq2qoWubS24QKkfYxtySvavgtnzSGf4i7",
+    "merchantTokenAccount": "56UFXEt2H4wLNCDuWjwaeRJYuJE5r52ohmjjG35BSbbb",
+    "decimals": 6,
+    "disclosure": "Project-created Devnet test mint; not canonical USDC."
+  },
+  "approveOnceSettleLater": {
+    "allowance": "9CC1YRBNYkDB1iBSZ4FgWcZvkxatrJQ7akcfXQcAjcbk",
+    "delegatePda": "osA1dNVmu7wCr6qPjFn6pXchHD3XqtDc7nNm9QafM41",
+    "authority": "ETJL7fK6CkaYsjrfXm6NhyNcztes8PcZKJ6jK3xGgMXF",
+    "merchant": "D3XJqkeFiPNtuwKkyeJfVG1Gjvi88AV6fiNs29ukjKm6",
+    "executor": "GhzAsrL6Eqq16orx9cakR1YMod3KHGG1x7t8rfTrmSu7",
+    "verifier": "2aZsxC7GEFv8J8fXUdzUdD2L9d8S9GiMtnevEZmVcjx8",
+    "createDelegatedTransaction": "vpVbZD3WhHnBTa9MnWLWGmph8YsWDTErYdV9JENUadtvTQjxyj2md4aXt42KQtsB4xSX51r9K6yiRTG2jTFVEax",
+    "chargeDelegatedTransaction": "54CjSJcs6QCkcr1SF3W8yJd1imEg1uCyZ2YS6qJp6AYougxoJwM5pfYcXjWkdTphcVDz1e7aNPswHvCYjviPYbU4",
+    "authoritySignedCharge": false,
+    "sourceTokenDeltaRaw": "-1000000",
+    "merchantTokenDeltaRaw": "1000000",
+    "nonceBefore": "0",
+    "nonceAfter": "1",
+    "spentLifetimeRaw": "1000000",
+    "policyHash": "8bf813de4c7d4d9ba22a9c86c0e9928c7188e715140fd9983c88884c7bbf9e26",
+    "evidenceHash": "c938d1464082604662cb06269221dc914fddcbb02719c28a7cbfdbc950c56e5f",
+    "evidenceRecordPda": "2vwRJ5nNUeZZ3Ft5HKA27aqehaKmaLYGKgHVSux59dj9"
+  },
+  "controlMatrix": {
+    "blocked": {
+      "transaction": "4gre7JQdqsfHb7f93NktFrwdsbLuUqucFm2GZB7Rq9Q3ZYhRX3uh3D771csrHR4htJLNq2DeFhLqHkj4yx91PVDk",
+      "result": "Custom Error 6",
+      "tokenDeltaRaw": "0",
+      "evidenceRecordCreated": false
+    },
+    "pause": "4UAwk4uu3rJDDtHufftS9ybhzpKiT44dMKWMrkpiYrWWm8qsbcga1zJGjXpxRHvUDqBoJo9MESRxcXiomNvP5KTw",
+    "unpause": "2vsqN78Vku9Pf1N7XN7vpbxzQfq7ZoiSkb4GtSbje4iKDQUN3mEQo9rYczKaLqXBuJNDGZvigyZqpG3F7C4p499K",
+    "freeze": {
+      "transaction": "381KRkTfUncSY7X1Rh2UN2aoqTWRTBgjVB7QPaKwwcphHoJRB1zTEn4DR1zXrw3NroqZREHt94fdurJ6xkaQBZS6",
+      "evidenceHash": "48c00056d140a1a1f504639b8bbf976baa6b4c9670f284e48142b444eed2c732",
+      "evidenceRecordPda": "DGfE4AJhVhr5Hmtd1uYXbBuhdSSPMqHBAmsVMNzdm1aX"
+    },
+    "unfreeze": "4QEXJKtEEbmqinn8VGAnQzu5TD7m6WY2n29E3ob7ei4p3quzPY6jxZiRWv54AqFpbHM5VV7yf2iZDMS9cvQh3RfP",
+    "rotateExecutor": {
+      "transaction": "DVv9EjNGBFodSw4uSJCGV1k9bJ3Hbsap8nNhwwfzWtuYp1o82tTbewAoDhacdogHxNyqi8xJoMLdPZcVGzFanwN",
+      "newExecutor": "CtKLpZWkqjwmghwFsjo4yUavbMAXFxPcALBJzriEvDFY"
+    },
+    "rotateVerifier": {
+      "transaction": "zSv99nP5UbCeux2qULPQuAFaT1bfHLCeGGRjaQCXk3HddCnWYoewskP5q9UJzbXnENkZ7A4xof6km6ug4AVfu1c",
+      "newVerifier": "7wETaHCjNVaaFg9G3UgDZduQhxg5MirShgh4NdLecsFZ"
+    },
+    "rotatedRoleCharge": {
+      "transaction": "4H1QniLQ46bDKGAzwL2QzzzQcr97em8n38JzdNFDaKsURPH1Sv9f8haTTNE5MVV5pqjHVYMVFXkcLTDZ7S9s2yjR",
+      "authoritySigned": false,
+      "tokenDeltaRaw": "1000000",
+      "evidenceHash": "c919ed80dd5817c8f1f68988b1a7e475c9a0e431961c7b1d7a55b952a7c11b13",
+      "evidenceRecordPda": "Dm9txs8UCgnhH7UxiqEFizntXDQkwzEuRiTiTSpmTohE"
+    },
+    "revoke": {
+      "transaction": "2y4micc34Z3GtcRRdcZSTHPmmojd24oGhp58RtH7g6cYDj9A5KrmzBpvfsXBuJvmu38gkxxxugMG6HjbNLkX1YWU",
+      "splDelegateRemoved": true
+    }
+  },
+  "finalState": {
+    "version": 2,
+    "spentInPeriodRaw": "2000000",
+    "spentLifetimeRaw": "2000000",
+    "nextNonce": "2",
+    "paused": true,
+    "revoked": true,
+    "frozen": false,
+    "splDelegatePresent": false
+  },
+  "verifiedChecks": [
+    "blocked_moved_zero_tokens",
+    "blocked_created_no_evidence_record",
+    "pause_persisted",
+    "unpause_persisted",
+    "freeze_persisted_evidence_record",
+    "dual_signature_unfreeze",
+    "role_rotation_persisted",
+    "rotated_actors_settled_without_authority",
+    "revoke_removed_spl_delegate"
+  ]
+}

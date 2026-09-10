@@ -22,7 +22,12 @@
     {
       "path": "evidence/delegated-v2-source-build.json",
       "type": "V2_SOURCE_TEST_AND_SBF_BUILD",
-      "status": "SOURCE_TESTED_NOT_DEPLOYED"
+      "status": "SOURCE_TESTED"
+    },
+    {
+      "path": "evidence/live-devnet-v2.json",
+      "type": "V2_DEPLOYMENT_BINARY_MATCH_AND_FULL_CONTROL_MATRIX",
+      "status": "DEVNET_VERIFIED"
     },
     {
       "path": "evidence/android-build.json",

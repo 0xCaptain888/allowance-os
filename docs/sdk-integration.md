@@ -1,6 +1,6 @@
 # Merchant SDK integration
 
-Allowance OS v0.13.0 includes a reference TypeScript SDK for bounded repeat payments. It is intentionally signer-agnostic: wallet credentials stay in Mobile Wallet Adapter, Seed Vault, or an application-controlled signer adapter.
+Allowance OS v0.14.0 includes a reference TypeScript SDK for bounded repeat payments. It is intentionally signer-agnostic: wallet credentials stay in Mobile Wallet Adapter, Seed Vault, or an application-controlled signer adapter.
 
 Receipt schema v3 uses base-10 integer strings in the mint's smallest unit. A policy binds the display symbol, exact mint address, decimals, per-charge raw amount, period raw amount, and raw amount already spent. For a six-decimal token, `"2000000"` represents two tokens. Decimal strings, scientific notation, negative values, and values above Solana `u64` are rejected.
 

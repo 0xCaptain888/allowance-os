@@ -36,6 +36,10 @@
 - npm dependency audit: 0 known vulnerabilities after compatible transitive overrides.
 - Native Solana Program v0.2.0 source compiled with 20 passing Rust tests, including v1 compatibility, delegated settlement safety boundaries, immutable evidence accounts, role rotation, and evidence-bound freeze validation.
 - Solana SBF v2 binary built locally and in GitHub CI with pinned `cargo-build-sbf 4.3.0`; both artifacts are 130,280 bytes. macOS SHA-256: `e0eb4726bdfda25fa2a377f347b9590087072e4ad1d9e455598760f6b865e7d6`; Ubuntu CI SHA-256: `45a3996ee011587e394951ee344742290c0aa7d0d132d972cb0168360df191dc`.
+- Dedicated v2 Program deployed to Solana Devnet at `7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL`.
+- Dumped v2 Program bytes exactly match the public Ubuntu CI artifact at SHA-256 `45a3996ee011587e394951ee344742290c0aa7d0d132d972cb0168360df191dc`.
+- Real approve-once / settle-later task transfers `1,000,000` raw test-token units with executor + verifier signatures and no authority signature.
+- Public v2 matrix verifies BLOCKED zero movement, pause/unpause, immutable-evidence freeze, dual-signature unfreeze, executor/verifier rotation, rotated-role settlement, and terminal revoke with SPL delegate removal.
 - Upgradeable Program deployed to Solana Devnet at `DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`.
 - Real Devnet allowance account with public `CREATED`, `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED` evidence.
 - VERIFIED transfers exactly `1,000,000` raw SPL-token units through CPI; source balance changes `20 → 19`, merchant `0 → 1`.
@@ -44,15 +48,15 @@
 - Onchain evidence mismatch persists `frozen = true`; revoke persists `revoked = true`.
 - Rust formatting and multi-job CI workflow.
 
-## Android v0.13.0 local build
+## Android v0.14.0 local build
 
 ```text
-Artifact: mobile/android/app/build/outputs/apk/debug/allowance-os-0.13.0-debug.apk
+Artifact: mobile/android/app/build/outputs/apk/debug/allowance-os-0.14.0-debug.apk
 Size: 18,813,650 bytes
-Version code: 14
-Version name: 0.13.0
+Version code: 15
+Version name: 0.14.0
 Android tests: 15 passed, 0 failed
-SHA-256: 463ad7ad745c78040c4618e5b9688def42ab29edc4a8619d28ca163fd0d38a08
+SHA-256: 3aeb6479969d116d637858031bd8de07f0818c2e04f92ba447b5870919c51dcf
 ```
 
 Published GitHub Actions APK:
@@ -68,16 +72,16 @@ Public QA release: https://github.com/0xCaptain888/allowance-os/releases/tag/and
 
 The v0.13.0 test release and its checksum were produced by GitHub Actions run `34462245120`. Local and CI debug APK hashes differ because they use different debug signing keys. Production distribution still requires one protected release signing key.
 
-## External hardware step still required
+## External and production steps still required
 
 - Test Seed Vault and Genesis Token on actual compatible Solana Mobile hardware.
 - Build a production-signed APK and submit it through the Solana dApp Store Publisher Portal.
-- Deploy the dedicated v2 Program with a stable private Devnet RPC; public-RPC attempts were safely stopped after transaction confirmation retries failed, all temporary buffers were closed, and the test SOL was recovered.
+- Test all live mobile control broadcasts on physical devices and validate Seed Vault / Genesis Token on compatible Solana Mobile hardware.
 
 The wallet/Memo evidence is recorded separately from program enforcement. Program deployment, real state transitions, and the SPL-token CPI settlement are recorded in `evidence/live-devnet-program.json`. The token is a project-created Devnet test mint and is not presented as canonical USDC.
 
-The v2 SBF artifacts are recorded separately in `evidence/delegated-v2-source-build.json`. They prove buildability only; no v2 deployment or authority-free settlement transaction is claimed yet. The macOS and Ubuntu hashes differ, so the exact artifact chosen for deployment must be hashed and matched to the deployed binary.
+The v2 source artifacts are recorded in `evidence/delegated-v2-source-build.json`; deployment, exact Ubuntu artifact match, authority-free settlement, recovery controls, role rotation, and revoke evidence are recorded in `evidence/live-devnet-v2.json`. The macOS and Ubuntu source-build hashes differ, so only the exact Ubuntu artifact is claimed to match the deployed binary.
 
 ## Production architecture gate
 
-Delegated Settlement v2 is now **SOURCE TESTED · NOT DEPLOYED**. Its allowance-scoped SPL delegate PDA implements authority-free later settlement with executor/verifier authorization, sequential nonces, period rollover, recovery, and lifetime-bounded delegation. Android can decode v2 state and encode authority controls, but keeps them unavailable as live actions until deployment. The merchant SDK now has restart-safe reference persistence and hardened webhook verification; a mature launch still requires v2 deployment/public evidence, transactional production storage, independent review, and multisig/timelocked upgrade authority. See `docs/delegated-settlement-v2.md`, `docs/operations.md`, and `docs/product-maturity-audit.md`.
+Delegated Settlement v2 is now **DEVNET DEPLOYED · FULL CONTROL MATRIX VERIFIED**. Its allowance-scoped SPL delegate PDA implements authority-free later settlement with executor/verifier authorization, sequential nonces, period rollover, recovery, role rotation, immutable evidence, and lifetime-bounded delegation. Android exposes the public v2 evidence and has tested state/control codecs, but not every v2 control is wired to live mobile broadcasting. A mature launch still requires canonical production assets, transactional production storage, independent review, multisig/timelocked upgrade authority, protected Android signing, physical-device QA, and Mainnet rollout controls. See `docs/delegated-settlement-v2.md`, `docs/operations.md`, and `docs/product-maturity-audit.md`.

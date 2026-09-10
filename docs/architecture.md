@@ -4,11 +4,11 @@
 
 Allowance OS is a pre-production mobile control plane for bounded spending. It does not custody keys and it does not silently submit live transactions. The policy engine, wallet authorization, deployed Program enforcement, and SPL-token settlement are separate, auditable layers.
 
-The current deployed Program requires the authority signer for `Charge`. That is useful public enforcement evidence, but it is not yet the final “approve once, charge later” architecture.
+The original deployed v1 Program requires the authority signer for `Charge`. That remains useful historical enforcement evidence, but it is not the final “approve once, charge later” architecture.
 
-Delegated Settlement v2 now implements that missing architecture in compiled and tested source. A user signs `CreateDelegated` once, which delegates a hard lifetime amount to an allowance-scoped PDA. Later settlement requires separate executor and verifier signatures; the Program signs the SPL transfer as the PDA after enforcing the policy. The user authority is not an account in `ChargeDelegated`. Status: **SOURCE TESTED · NOT DEPLOYED**.
+Delegated Settlement v2 implements that missing architecture and is now deployed on Solana Devnet. A user signs `CreateDelegated` once, which delegates a hard lifetime amount to an allowance-scoped PDA. Later settlement requires separate executor and verifier signatures; the Program signs the SPL transfer as the PDA after enforcing the policy. The user authority is not an account in `ChargeDelegated`. Status: **DEVNET DEPLOYED · FULL CONTROL MATRIX VERIFIED**.
 
-The source declares the dedicated v2 Program ID `7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL`; the live v1 evidence remains under `DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`. The two identities are intentionally separated so judges cannot mistake old deployment evidence for v2 behavior.
+The dedicated v2 Program ID is `7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL`; the live v1 evidence remains under `DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`. The two identities are intentionally separated so judges cannot mistake old deployment evidence for v2 behavior.
 
 ```text
 Seeker Android App

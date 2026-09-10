@@ -70,7 +70,7 @@
 </head>
 <body>
   <main>
-    <nav><strong>Allowance OS · Android v0.13</strong><div class="links"><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os">GitHub</a><a class="nav-link" href="https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet">Devnet Program</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/docs/delegated-settlement-v2.md">Delegated v2</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/tree/main/mobile/android">Android MWA</a></div></nav>
+    <nav><strong>Allowance OS · Android v0.14</strong><div class="links"><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os">GitHub</a><a class="nav-link" href="https://explorer.solana.com/address/7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL?cluster=devnet">Delegated v2 Program</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/evidence/live-devnet-v2.json">v2 Evidence</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/tree/main/mobile/android">Android MWA</a></div></nav>
     <section class="hero">
       <div><div class="eyebrow">Payment authorization for Web3 services</div><h1>Allowance OS</h1><p class="lede">One mobile control layer for AI subscriptions, research, trading signals, automation bots, and paid APIs. Approve a bounded policy—not an unlimited future.</p></div>
       <div class="card policy"><div class="row"><span class="muted">Active service</span><span id="heroService" class="value">AlphaBrief</span></div><div class="row"><span class="muted">Merchant</span><span id="heroMerchant" class="value">merchant:alphabrief</span></div><div class="row"><span class="muted">Per charge</span><span id="heroCharge" class="value">2 USDC</span></div><div class="row"><span class="muted">Period cap</span><span id="heroCap" class="value">8 USDC</span></div><div class="row"><span class="muted">Status</span><span class="pill verified">READY TEMPLATE</span></div></div>
@@ -79,8 +79,9 @@
     <p class="truth-note"><strong>Pre-production boundary:</strong> this public site is an interactive policy and evidence verifier. Browser receipts are simulated; the recorded Program transactions are real Devnet evidence. The current deployment is not yet an autonomous recurring-payment service.</p>
 
     <section class="card" style="margin-top:14px">
-      <div class="section-heading"><div><div class="eyebrow">Delegated Settlement v2</div><h2>Approve once. Settle later without the user online.</h2></div><span class="pill blocked">SOURCE TESTED · NOT DEPLOYED</span></div>
-      <p class="muted">The new Program source closes the central recurring-payment gap while keeping the public v1 evidence readable. The user's token account delegates a hard lifetime limit to an allowance-scoped PDA; a later charge needs both the configured executor and an independent verifier, but not the user's signature. Every accepted charge or freeze creates an immutable evidence PDA keyed by the full evidence hash.</p>
+      <div class="section-heading"><div><div class="eyebrow">Delegated Settlement v2 · Solana Devnet</div><h2>Approve once. Settle later without the user online.</h2></div><span class="pill verified">FULL MATRIX VERIFIED</span></div>
+      <p class="muted">The deployed v2 Program closes the central recurring-payment gap while keeping the public v1 evidence readable. The user's token account delegates a hard lifetime limit to an allowance-scoped PDA; a later charge needs both the configured executor and an independent verifier, but not the user's signature. Every accepted charge or freeze creates an immutable evidence PDA keyed by the full evidence hash.</p>
+      <div class="row"><span class="muted">Program</span><a href="https://explorer.solana.com/address/7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL?cluster=devnet" target="_blank" rel="noreferrer">7zARKW…QswBd6xvL</a></div>
       <div class="matrix">
         <div class="muted">Step</div><div class="muted">Required signer</div><div class="muted">Onchain boundary</div>
         <div>Create allowance once</div><div>User authority</div><div>SPL delegate PDA + lifetime cap</div>
@@ -90,7 +91,17 @@
         <div>Restore after dispute</div><div>User + verifier</div><div>Dual-signature unfreeze</div>
         <div>Revoke permanently</div><div>User authority</div><div>SPL delegate removed</div>
       </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px"><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/docs/delegated-settlement-v2.md">Read exact v2 specification</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/program/src/lib.rs">Inspect Program source</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/src/delegated-protocol.ts">Inspect TypeScript builders</a></div>
+      <div class="grid" style="margin-top:16px">
+        <div><span class="pill verified">DEPLOYED</span><p><a href="https://explorer.solana.com/tx/21rb9fCR8Put2UDi3ANR1V5uzqLbjadozPsfcf7t3YxAV9YLuwSv7v7fNX4s66GrFNVc1RZfvAYiApBZxXCBgy7x?cluster=devnet" target="_blank" rel="noreferrer">Finalized · binary matches CI artifact</a></p></div>
+        <div><span class="pill verified">APPROVE ONCE</span><p><a href="https://explorer.solana.com/tx/vpVbZD3WhHnBTa9MnWLWGmph8YsWDTErYdV9JENUadtvTQjxyj2md4aXt42KQtsB4xSX51r9K6yiRTG2jTFVEax?cluster=devnet" target="_blank" rel="noreferrer">Bounded SPL delegate created</a></p></div>
+        <div><span class="pill verified">SETTLE LATER</span><p><a href="https://explorer.solana.com/tx/54CjSJcs6QCkcr1SF3W8yJd1imEg1uCyZ2YS6qJp6AYougxoJwM5pfYcXjWkdTphcVDz1e7aNPswHvCYjviPYbU4?cluster=devnet" target="_blank" rel="noreferrer">Executor + verifier; no authority signature</a></p></div>
+        <div><span class="pill blocked">BLOCKED</span><p><a href="https://explorer.solana.com/tx/4gre7JQdqsfHb7f93NktFrwdsbLuUqucFm2GZB7Rq9Q3ZYhRX3uh3D771csrHR4htJLNq2DeFhLqHkj4yx91PVDk?cluster=devnet" target="_blank" rel="noreferrer">Custom Error 6 · zero token movement</a></p></div>
+        <div><span class="pill frozen">FROZEN</span><p><a href="https://explorer.solana.com/tx/381KRkTfUncSY7X1Rh2UN2aoqTWRTBgjVB7QPaKwwcphHoJRB1zTEn4DR1zXrw3NroqZREHt94fdurJ6xkaQBZS6?cluster=devnet" target="_blank" rel="noreferrer">Immutable bad-result evidence PDA</a></p></div>
+        <div><span class="pill verified">ROTATED</span><p><a href="https://explorer.solana.com/tx/4H1QniLQ46bDKGAzwL2QzzzQcr97em8n38JzdNFDaKsURPH1Sv9f8haTTNE5MVV5pqjHVYMVFXkcLTDZ7S9s2yjR?cluster=devnet" target="_blank" rel="noreferrer">New actors settle without authority</a></p></div>
+        <div><span class="pill frozen">REVOKED</span><p><a href="https://explorer.solana.com/tx/2y4micc34Z3GtcRRdcZSTHPmmojd24oGhp58RtH7g6cYDj9A5KrmzBpvfsXBuJvmu38gkxxxugMG6HjbNLkX1YWU?cluster=devnet" target="_blank" rel="noreferrer">SPL delegate removed</a></p></div>
+      </div>
+      <p class="truth-note">The transferred asset is a project-created Devnet test mint, not canonical USDC. The Program is upgradeable and unaudited; no Mainnet or production claim is made.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px"><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/evidence/live-devnet-v2.json">Inspect machine-readable evidence</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/docs/delegated-settlement-v2.md">Read exact v2 specification</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/program/src/lib.rs">Inspect Program source</a></div>
     </section>
 
     <section id="services">
@@ -142,16 +153,16 @@
       <div id="alphaBriefReport" class="proof-state muted">The report preview remains locked until the receipt and webhook both verify.</div>
       <div id="alphaBriefReceipt" class="output">No request yet.</div>
     </section>
-    <section class="card" style="margin-top:14px"><div class="eyebrow">Native mobile readiness</div><h2>One policy, two honest device modes.</h2><div class="matrix"><div class="muted">Capability</div><div class="muted">Android + Phantom</div><div class="muted">Seeker</div><div>Mobile Wallet Adapter</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Devnet signing</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Seed Vault</div><div class="limited">SEEKER ONLY</div><div class="ok">AVAILABLE</div><div>Genesis Token</div><div class="limited">NOT AVAILABLE</div><div class="ok">AVAILABLE</div></div><p class="muted">Verified source coverage: 24 TypeScript tests + 15 Android tests + 20 Rust source tests. SDK receipt v3 binds integer raw units to an exact mint; browser and Android local simulations remain explicitly labelled receipt v2. Delegated settlement v2 adds immutable evidence history and governed role rotation in source, while remaining clearly separated from deployed v1 evidence. No simulated hash is presented as a chain transaction.</p></section>
+    <section class="card" style="margin-top:14px"><div class="eyebrow">Native mobile readiness</div><h2>One policy, two honest device modes.</h2><div class="matrix"><div class="muted">Capability</div><div class="muted">Android + Phantom</div><div class="muted">Seeker</div><div>Mobile Wallet Adapter</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Devnet signing</div><div class="ok">AVAILABLE</div><div class="ok">AVAILABLE</div><div>Seed Vault</div><div class="limited">SEEKER ONLY</div><div class="ok">AVAILABLE</div><div>Genesis Token</div><div class="limited">NOT AVAILABLE</div><div class="ok">AVAILABLE</div></div><p class="muted">Verified coverage: 24 TypeScript tests + 15 Android tests + 20 Rust tests. The public v2 Devnet matrix proves immutable evidence history, governed role rotation, authority-free later settlement, and SPL-delegate removal. Browser and Android local simulations remain explicitly labelled; no simulated hash is presented as a chain transaction.</p></section>
     <section class="card" style="margin-top:14px">
-      <div class="eyebrow">v0.13 operational hardening</div>
+      <div class="eyebrow">v0.14 live delegated settlement</div>
       <h2>Built to survive restarts, retries, and evidence review.</h2>
       <div class="grid">
         <div><span class="pill verified">MERCHANT</span><h3>Restart-safe reference store</h3><p class="muted">Policies, idempotency fingerprints, nonces, evidence hashes, spend, and revocation state can be persisted atomically.</p></div>
         <div><span class="pill blocked">WEBHOOKS</span><h3>Replay-aware verification</h3><p class="muted">Signed callbacks enforce timestamp tolerance, replay rejection, and overlapping secrets during key rotation.</p></div>
         <div><span class="pill frozen">ANDROID</span><h3>Portable audit evidence</h3><p class="muted">The app decodes strict v2 state, builds governed control instructions, and exports JSON audit history with a SHA-256 fingerprint.</p></div>
       </div>
-      <p class="truth-note" style="margin-bottom:0"><strong>Deployment boundary:</strong> these v0.13 merchant and Android capabilities are source-tested. Delegated Settlement v2 remains <strong>NOT DEPLOYED</strong>; public onchain evidence continues to come from the verified v1 Devnet Program.</p>
+      <p class="truth-note" style="margin-bottom:0"><strong>Deployment boundary:</strong> Delegated Settlement v2 is live and fully matrix-verified on Devnet. Android exposes the public proof but does not yet broadcast every v2 authority control from the mobile UI. Production still requires canonical assets, audit, multisig/timelock governance, protected signing, and Mainnet review.</p>
     </section>
     <section class="card" style="margin-top:14px">
       <div class="eyebrow">Live evidence · Solana Devnet</div>

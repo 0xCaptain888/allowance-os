@@ -9,22 +9,21 @@ Allowance OS is a strong hackathon proof and an increasingly credible Android re
 | Area | Current maturity | What is credible now | Remaining launch gate |
 | --- | ---: | --- | --- |
 | Core policy idea | 8.5/10 | Merchant, exact mint, decimals, integer raw amount, program, period and evidence boundaries | Validate the model with real merchants and users |
-| Android UX | 7.5/10 | Bilingual five-surface app, service templates, MWA, evidence inspection, JSON audit export, and v2 state/control codecs | Instrumented wallet flows, accessibility/device matrix and usability sessions |
+| Android UX | 8/10 | Bilingual five-surface app, service templates, MWA, evidence inspection, JSON audit export, v2 state/control codecs, and public v2 proof links | Live mobile broadcasting for all v2 controls, instrumented wallet flows, accessibility/device matrix and usability sessions |
 | Wallet security | 7.5/10 | No private-key custody; fail-closed Keystore session restoration and stale-identity clearing in v0.11.1 | Instrumented recovery tests, external mobile security review and compromised-device response |
-| Onchain enforcement | 7.5/10 | Public v1 Devnet settlement plus compiled/tested v2 delegate PDA, immutable evidence history, role rotation, period rollover and recovery source | Deploy/verify v2, publish authority-free charge evidence, audit and multisig |
+| Onchain enforcement | 9/10 | Public v1 proof plus deployed v2 authority-free settlement, exact binary match, immutable evidence, fail-closed block, pause/freeze/recovery, role rotation, and delegate-removing revoke | Independent audit, canonical asset deployment, multisig/timelock, monitored Mainnet rollout |
 | Merchant platform | 7.5/10 | Integer raw-unit SDK, canonical hashes, restart-safe reference persistence, idempotency, evidence replay protection, webhook replay windows and secret rotation | Transactional database, dashboard, delivery queue, rate limits and merchant authentication |
-| Reliability | 6/10 | 59 source/unit tests, deterministic verifier, configurable mobile RPC with bounded retries, and an incident runbook | Instrumentation/E2E tests, multi-endpoint production failover, offline UX and operational monitoring |
+| Reliability | 7/10 | 59 source/unit tests, deterministic verifier, configurable mobile RPC with bounded retries, HTTP-only deployment confirmation, safe runner resume, and an incident runbook | Instrumentation/E2E tests, multi-endpoint production failover, offline UX and operational monitoring |
 | Distribution | 5/10 | Production and debug release channels are separated; production tags require protected signing | Configure the protected key, produce the first signed APK, capture screenshots, then complete Publisher Portal review |
 | Legal/support | 4/10 | Privacy disclosure, responsible-disclosure policy, incident runbook and public issue tracker | Terms, jurisdiction review, staffed support SLA and production token/risk disclosures |
 
 ## P0 — required before calling it a mature payment app
 
-1. **Deploy and prove Delegated Settlement v2.** The source now implements an allowance-scoped SPL delegate PDA, authority-free later charges, four-way actor separation, sequential nonces, immutable evidence PDAs, period/lifetime accounting, governed role rotation, and recovery. The deployed v0.9 Program still requires the user signer, so v2 must be deployed and demonstrated with public create, later charge, evidence-account decoding, pause, freeze, rotation, unfreeze, and revoke transactions before the product promise is considered live.
-2. **Verify the hardened Program.** Publish the v2 binary hash, matching local build, stable instruction specification, and machine-readable evidence; rotate upgrade authority to a multisig/timelock after iteration.
-3. **Complete live v2 Android integration.** Android now strictly decodes v2 state and encodes pause/unpause/revoke/operator-rotation instructions. After deployment, add live account selection, transaction review, MWA broadcast, confirmation, and post-state inspection while distinguishing user, executor, verifier, and merchant roles.
+1. **Complete live v2 Android integration.** Android strictly decodes v2 state, encodes pause/unpause/revoke/operator-rotation instructions, and exposes public evidence. Add live allowance selection, transaction review, MWA broadcast, confirmation, and post-state inspection while distinguishing user, executor, verifier, and merchant roles.
+2. **Harden governance and verification.** The deployed binary matches the public Ubuntu artifact, but the upgrade authority must move to a multisig/timelock after iteration and the Program needs independent review.
+3. **Deploy production asset configuration deliberately.** The public proof uses a project-created Devnet test mint. Canonical mint, decimals, merchant accounts, value caps, and network configuration must be reviewed before any Mainnet beta.
 4. **Operationalize recovery and verification.** Define incident handling, a lost-verifier emergency path, evidence-account retention economics, and delay/quorum policy for higher-value verification and unfreeze decisions.
-5. **Use production assets deliberately.** Configure the canonical mint, decimals, merchant token accounts and network. Never infer decimals or present a project-created test token as USDC.
-6. **Production-sign and review the Android APK.** Use one protected signing identity, test update compatibility, run static/mobile security review, and submit the exact reviewed hash.
+5. **Production-sign and review the Android APK.** Use one protected signing identity, test update compatibility, run static/mobile security review, and submit the exact reviewed hash.
 
 ## P1 — required for credible early access
 
@@ -61,10 +60,10 @@ Allowance OS is a strong hackathon proof and an increasingly credible Android re
 ## Recommended next build order
 
 ```text
-Delegated settlement design + threat model [complete in source]
-  → Program v2 implementation and tests [complete in source]
-  → new Devnet deployment + verified binary [next external gate]
-  → Android live create / inspect / pause / revoke integration
+Delegated settlement design + threat model [complete]
+  → Program v2 implementation and tests [complete]
+  → Devnet deployment + exact binary match + full control matrix [complete]
+  → Android live create / inspect / pause / revoke integration [next product gate]
   → merchant SDK backed by transactional production storage
   → production signing + device QA
   → limited merchant/user pilot

@@ -1,6 +1,6 @@
 # Delegated Settlement v2
 
-Status: **SOURCE TESTED · NOT DEPLOYED**  
+Status: **DEVNET DEPLOYED · FULL CONTROL MATRIX VERIFIED**
 Program crate: `allowance-os-program 0.2.0`  
 Declared v2 Program ID: `7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL`
 State version: `2`  
@@ -188,7 +188,7 @@ Rust source tests cover:
 - fresh evidence requirements and terminal-state protection for verifier freezes;
 - executor/verifier rotation rules and role separation.
 
-The current suite passes `20` Rust tests and `22` TypeScript tests. TypeScript additionally verifies production-facing payload sizes, account order, signer/writable flags, discriminants, both PDA families, rotation payloads, malformed hashes, and integer ranges.
+The current suite passes `20` Rust tests and `24` TypeScript tests. TypeScript additionally verifies production-facing payload sizes, account order, signer/writable flags, discriminants, both PDA families, rotation payloads, malformed hashes, and integer ranges.
 
 The source was compiled to Solana SBF artifacts using pinned `cargo-build-sbf 4.3.0`. The local macOS builder used platform-tools `v1.57` and Rust `1.95.0`:
 
@@ -197,20 +197,22 @@ macOS: 130,280 bytes · e0eb4726bdfda25fa2a377f347b9590087072e4ad1d9e455598760f6
 Ubuntu CI: 130,280 bytes · 45a3996ee011587e394951ee344742290c0aa7d0d132d972cb0168360df191dc
 ```
 
-The host-specific digests differ, so no byte-for-byte cross-platform reproducibility claim is made. The exact `.so` chosen for deployment must be hashed and compared with the deployed binary. The machine-readable record is [`evidence/delegated-v2-source-build.json`](../evidence/delegated-v2-source-build.json). Generated `.so` files and all build keypairs remain ignored local artifacts.
+The host-specific digests differ, so no byte-for-byte cross-platform reproducibility claim is made. The deployed Program was dumped from Devnet and hashes to `45a3996ee011587e394951ee344742290c0aa7d0d132d972cb0168360df191dc`, an exact match for the public Ubuntu CI artifact. The source-build record is [`evidence/delegated-v2-source-build.json`](../evidence/delegated-v2-source-build.json); the deployment and transaction record is [`evidence/live-devnet-v2.json`](../evidence/live-devnet-v2.json). Generated `.so` files and all build keypairs remain ignored local artifacts.
 
-## Deployment gate
+## Public Devnet verification
 
-This document describes compiled and tested source, not a live v2 deployment. Before changing the status to `DEVNET VERIFIED`, the project must publish:
+The deployment gate is complete on Solana Devnet:
 
-1. the deployment transaction for the declared v2 Program ID;
-2. the deploy/upgrade transaction;
-3. a `CreateDelegated` transaction showing the SPL approval;
-4. a later `ChargeDelegated` transaction signed by executor and verifier without the user;
-5. source and merchant token balance deltas;
-6. the created Evidence Record PDA decoded from chain data;
-7. BLOCKED, FROZEN, PAUSED, UNFROZEN, role-rotation, and REVOKED transactions;
-8. the deployed binary hash and matching local build hash;
-9. updated machine-readable evidence.
+1. v2 Program [`7zARK…xvL`](https://explorer.solana.com/address/7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL?cluster=devnet) is finalized;
+2. [deployment transaction](https://explorer.solana.com/tx/21rb9fCR8Put2UDi3ANR1V5uzqLbjadozPsfcf7t3YxAV9YLuwSv7v7fNX4s66GrFNVc1RZfvAYiApBZxXCBgy7x?cluster=devnet) is public;
+3. [`CreateDelegated`](https://explorer.solana.com/tx/vpVbZD3WhHnBTa9MnWLWGmph8YsWDTErYdV9JENUadtvTQjxyj2md4aXt42KQtsB4xSX51r9K6yiRTG2jTFVEax?cluster=devnet) records the one-time authority approval;
+4. [`ChargeDelegated`](https://explorer.solana.com/tx/54CjSJcs6QCkcr1SF3W8yJd1imEg1uCyZ2YS6qJp6AYougxoJwM5pfYcXjWkdTphcVDz1e7aNPswHvCYjviPYbU4?cluster=devnet) is signed by executor and verifier without the authority and transfers `1,000,000` raw units;
+5. BLOCKED moves zero tokens and creates no Evidence Record;
+6. FROZEN creates an immutable bad-result Evidence Record;
+7. pause, unpause, dual-signature unfreeze, executor rotation, verifier rotation, a rotated-role charge, and terminal revoke are public;
+8. revoke removes the SPL Token delegate;
+9. the dumped deployed binary exactly matches the public Ubuntu CI artifact.
 
-Until those artifacts exist, the public v1 Devnet matrix remains the only claimed live Program evidence.
+All addresses, hashes, transactions, decoded state, and checks are in [`evidence/live-devnet-v2.json`](../evidence/live-devnet-v2.json).
+
+This is Devnet proof with a project-created test mint, not canonical USDC. The upgrade authority remains a single development key, and no independent audit or Mainnet deployment is claimed.

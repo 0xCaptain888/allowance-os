@@ -20,6 +20,10 @@ The Android client uses a configurable Devnet RPC URL with bounded retries. A cu
 
 The manual v2 deployment workflow accepts the encrypted GitHub Secret `SOLANA_DEVNET_RPC_URL`. This is intended for a rate-limited private Devnet endpoint and is masked in workflow logs.
 
+The first v2 deployment used a private Devnet RPC and is publicly verifiable through normal Solana account and transaction data. No private RPC credential is stored in source, evidence files, Android resources, CI logs, or the public Demo. The TypeScript runners confirm transactions through HTTP polling because not every private RPC exposes WebSocket `signatureSubscribe`.
+
+`scripts/run-delegated-devnet.ts` supports safe resume through `DELEGATED_ALLOWANCE` and `CREATE_DELEGATED_SIGNATURE`. Before resuming it verifies the existing allowance actors and assets, reads the next nonce from chain state, and refuses to create a duplicate allowance after an ambiguous confirmation.
+
 ## Merchant state
 
 `JsonFileRuntimeStateStore` is an atomic, single-process reference implementation that survives restarts and preserves policy, idempotency, nonce, evidence, spending, and revocation state. It is not a multi-writer database. Production deployments must use transactional storage with backups, access control, encryption, and migration discipline.

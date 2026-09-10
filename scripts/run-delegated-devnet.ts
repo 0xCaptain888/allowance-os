@@ -36,6 +36,8 @@ const periodCap = positiveBigInt('PERIOD_CAP_RAW', 8_000_000n);
 const lifetimeCap = positiveBigInt('LIFETIME_CAP_RAW', 24_000_000n);
 const chargeAmount = positiveBigInt('CHARGE_AMOUNT_RAW', 1_000_000n);
 const periodSeconds = positiveBigInt('PERIOD_SECONDS', 604_800n);
+const existingAllowanceValue = process.env.DELEGATED_ALLOWANCE?.trim();
+const existingCreateSignature = process.env.CREATE_DELEGATED_SIGNATURE?.trim();
 
 type DelegatedSnapshot = {
   version: number;
@@ -109,11 +111,28 @@ async function send(
     skipPreflight: false,
     maxRetries: 5,
   });
-  const confirmation = await connection.confirmTransaction({ signature, ...latest }, 'confirmed');
-  if (confirmation.value.err) {
-    throw new Error(`Transaction ${signature} failed: ${JSON.stringify(confirmation.value.err)}`);
-  }
+  await confirmByHttpPolling(connection, signature, latest.lastValidBlockHeight);
   return signature;
+}
+
+async function confirmByHttpPolling(
+  connection: Connection,
+  signature: string,
+  lastValidBlockHeight: number,
+): Promise<void> {
+  const deadline = Date.now() + 120_000;
+  while (Date.now() < deadline) {
+    const statuses = await connection.getSignatureStatuses([signature], { searchTransactionHistory: true });
+    const status = statuses.value[0];
+    if (status?.err) throw new Error(`Transaction ${signature} failed: ${JSON.stringify(status.err)}`);
+    if (status && (status.confirmationStatus === 'confirmed' || status.confirmationStatus === 'finalized')) return;
+    const blockHeight = await connection.getBlockHeight('confirmed');
+    if (blockHeight > lastValidBlockHeight) {
+      throw new Error(`Transaction ${signature} was not found before blockhash expiry`);
+    }
+    await new Promise(resolve => setTimeout(resolve, 1_000));
+  }
+  throw new Error(`Timed out while polling transaction ${signature}`);
 }
 
 function parseState(data: Buffer): DelegatedSnapshot {
@@ -216,58 +235,87 @@ async function main(): Promise<void> {
     throw new Error('MERCHANT_TOKEN_ACCOUNT must be owned by MERCHANT and use TOKEN_MINT');
   }
 
-  const allowance = Keypair.generate();
-  const [delegate] = delegatedAuthority(programId, allowance.publicKey);
-  const now = BigInt(Math.floor(Date.now() / 1000));
-  const expiresAt = now + 30n * 86_400n;
-  const policyHash = sha256(JSON.stringify({
-    version: 2,
+  const allowanceKeypair = existingAllowanceValue ? undefined : Keypair.generate();
+  const allowance = existingAllowanceValue
+    ? new PublicKey(existingAllowanceValue)
+    : allowanceKeypair!.publicKey;
+  const [delegate] = delegatedAuthority(programId, allowance);
+  let createSignature = existingCreateSignature;
+
+  if (!existingAllowanceValue) {
+    const now = BigInt(Math.floor(Date.now() / 1000));
+    const expiresAt = now + 30n * 86_400n;
+    const policyHash = sha256(JSON.stringify({
+      version: 2,
+      authority: authority.publicKey.toBase58(),
+      merchant: merchant.toBase58(),
+      executor: executor.publicKey.toBase58(),
+      verifier: verifier.publicKey.toBase58(),
+      tokenMint: tokenMint.toBase58(),
+      sourceToken: sourceToken.toBase58(),
+      perCharge: perCharge.toString(),
+      periodCap: periodCap.toString(),
+      lifetimeCap: lifetimeCap.toString(),
+      periodSeconds: periodSeconds.toString(),
+      expiresAt: expiresAt.toString(),
+    }));
+    const rent = await connection.getMinimumBalanceForRentExemption(DELEGATED_STATE_SIZE, 'confirmed');
+    createSignature = await send(
+      connection,
+      new Transaction().add(
+        SystemProgram.createAccount({
+          fromPubkey: authority.publicKey,
+          newAccountPubkey: allowance,
+          lamports: rent,
+          space: DELEGATED_STATE_SIZE,
+          programId,
+        }),
+        createDelegatedInstruction({
+          programId,
+          allowance,
+          authority: authority.publicKey,
+          merchant,
+          executor: executor.publicKey,
+          verifier: verifier.publicKey,
+          tokenMint,
+          sourceToken,
+          perCharge,
+          periodCap,
+          lifetimeCap,
+          periodSeconds,
+          expiresAt,
+          policyHash,
+        }),
+      ),
+      authority,
+      [allowanceKeypair!],
+    );
+  }
+
+  const stateBeforeAccount = await connection.getAccountInfo(allowance, 'confirmed');
+  if (!stateBeforeAccount || !stateBeforeAccount.owner.equals(programId)) {
+    throw new Error('Delegated state was not found before charge');
+  }
+  const stateBefore = parseState(stateBeforeAccount.data);
+  const expectedActors = {
     authority: authority.publicKey.toBase58(),
     merchant: merchant.toBase58(),
     executor: executor.publicKey.toBase58(),
     verifier: verifier.publicKey.toBase58(),
     tokenMint: tokenMint.toBase58(),
     sourceToken: sourceToken.toBase58(),
-    perCharge: perCharge.toString(),
-    periodCap: periodCap.toString(),
-    lifetimeCap: lifetimeCap.toString(),
-    periodSeconds: periodSeconds.toString(),
-    expiresAt: expiresAt.toString(),
-  }));
-  const evidenceHash = sha256(`ALLOWANCE_OS|DELEGATED_V2|${allowance.publicKey.toBase58()}|0`);
-  const [evidenceRecordAddressValue] = evidenceRecordAddress(programId, allowance.publicKey, evidenceHash);
-  const rent = await connection.getMinimumBalanceForRentExemption(DELEGATED_STATE_SIZE, 'confirmed');
-
-  const createSignature = await send(
-    connection,
-    new Transaction().add(
-      SystemProgram.createAccount({
-        fromPubkey: authority.publicKey,
-        newAccountPubkey: allowance.publicKey,
-        lamports: rent,
-        space: DELEGATED_STATE_SIZE,
-        programId,
-      }),
-      createDelegatedInstruction({
-        programId,
-        allowance: allowance.publicKey,
-        authority: authority.publicKey,
-        merchant,
-        executor: executor.publicKey,
-        verifier: verifier.publicKey,
-        tokenMint,
-        sourceToken,
-        perCharge,
-        periodCap,
-        lifetimeCap,
-        periodSeconds,
-        expiresAt,
-        policyHash,
-      }),
-    ),
-    authority,
-    [allowance],
-  );
+  };
+  for (const [field, expected] of Object.entries(expectedActors)) {
+    if (stateBefore[field as keyof DelegatedSnapshot] !== expected) {
+      throw new Error(`Existing allowance ${field} does not match the requested role or asset`);
+    }
+  }
+  if (stateBefore.paused || stateBefore.revoked || stateBefore.frozen) {
+    throw new Error('Existing allowance is not active');
+  }
+  const nonce = BigInt(stateBefore.nextNonce);
+  const evidenceHash = sha256(`ALLOWANCE_OS|DELEGATED_V2|${allowance.toBase58()}|${nonce}`);
+  const [evidenceRecordAddressValue] = evidenceRecordAddress(programId, allowance, evidenceHash);
 
   const [sourceBefore, merchantBefore] = await Promise.all([
     connection.getTokenAccountBalance(sourceToken, 'confirmed'),
@@ -277,13 +325,13 @@ async function main(): Promise<void> {
     connection,
     new Transaction().add(chargeDelegatedInstruction({
       programId,
-      allowance: allowance.publicKey,
+      allowance,
       executor: executor.publicKey,
       verifier: verifier.publicKey,
       sourceToken,
       merchantToken,
       amount: chargeAmount,
-      nonce: 0n,
+      nonce,
       evidenceHash,
     })),
     executor,
@@ -292,7 +340,7 @@ async function main(): Promise<void> {
   const [sourceAfter, merchantAfter, stateAccount, evidenceRecordAccount] = await Promise.all([
     connection.getTokenAccountBalance(sourceToken, 'confirmed'),
     connection.getTokenAccountBalance(merchantToken, 'confirmed'),
-    connection.getAccountInfo(allowance.publicKey, 'confirmed'),
+    connection.getAccountInfo(allowance, 'confirmed'),
     connection.getAccountInfo(evidenceRecordAddressValue, 'confirmed'),
   ]);
   if (!stateAccount || !stateAccount.owner.equals(programId)) throw new Error('Delegated state was not found');
@@ -301,15 +349,17 @@ async function main(): Promise<void> {
   }
   const state = parseState(stateAccount.data);
   const evidenceRecord = parseEvidenceRecord(evidenceRecordAccount.data);
-  if (state.version !== 2 || state.nextNonce !== '1' || state.spentLifetime !== chargeAmount.toString()) {
+  const expectedNextNonce = (nonce + 1n).toString();
+  const expectedLifetimeSpend = (BigInt(stateBefore.spentLifetime) + chargeAmount).toString();
+  if (state.version !== 2 || state.nextNonce !== expectedNextNonce || state.spentLifetime !== expectedLifetimeSpend) {
     throw new Error(`Unexpected delegated state after charge: ${JSON.stringify(state)}`);
   }
   if (
     evidenceRecord.version !== 1
-    || evidenceRecord.allowance !== allowance.publicKey.toBase58()
+    || evidenceRecord.allowance !== allowance.toBase58()
     || evidenceRecord.evidenceHash !== evidenceHash.toString('hex')
     || evidenceRecord.kind !== 1
-    || evidenceRecord.nonce !== '0'
+    || evidenceRecord.nonce !== nonce.toString()
   ) {
     throw new Error(`Unexpected historical evidence record: ${JSON.stringify(evidenceRecord)}`);
   }
@@ -323,17 +373,19 @@ async function main(): Promise<void> {
     status: 'DELEGATED_V2_VERIFIED',
     truthBoundary: 'This output is live only when produced against a deployed v2 Program.',
     programId: programId.toBase58(),
-    allowance: allowance.publicKey.toBase58(),
+    allowance: allowance.toBase58(),
     delegate: delegate.toBase58(),
     authority: authority.publicKey.toBase58(),
     executor: executor.publicKey.toBase58(),
     verifier: verifier.publicKey.toBase58(),
     authoritySignedCharge: false,
-    policyHash: policyHash.toString('hex'),
+    policyHash: state.policyHash,
     evidenceHash: evidenceHash.toString('hex'),
     evidenceRecordAddress: evidenceRecordAddressValue.toBase58(),
     transactions: {
-      createDelegated: { signature: createSignature, explorer: explorer(createSignature) },
+      createDelegated: createSignature
+        ? { signature: createSignature, explorer: explorer(createSignature) }
+        : { signature: null, explorer: null },
       chargeDelegated: { signature: chargeSignature, explorer: explorer(chargeSignature) },
     },
     tokenDeltas: {

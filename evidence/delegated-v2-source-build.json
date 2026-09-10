@@ -5,7 +5,7 @@
   "sourceFiles": {
     "program/src/lib.rs": "e06d9068837d4aa48385d1cf0ffd3cf2ce9e78bc9083da530d6fc142d7796004",
     "src/delegated-protocol.ts": "b6bed2872bdbeb3ce5eb561ecec22a152a729d78db0eb527396fda7153265533",
-    "scripts/run-delegated-devnet.ts": "8a4b123bd5366431c5fe42bd5e5e31b2466e49c319b4d8048b711197c0eb2ad4"
+    "scripts/run-delegated-devnet.ts": "59c4abc18f12e527b5b6d43e9121678d89013abf525c34ac00c2b3980df1b644"
   },
   "program": {
     "crate": "allowance-os-program",
