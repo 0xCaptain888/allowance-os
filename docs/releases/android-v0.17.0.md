@@ -34,6 +34,7 @@ Highlights:
 - `npm run android:build`: successful;
 - APK: `allowance-os-0.17.0-debug.apk`;
 - exact size and SHA-256: [`evidence/android-build.json`](../../evidence/android-build.json).
+- public QA release: [`android-test-v0.17.0`](https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.17.0).
 
 ## Truth boundary
 

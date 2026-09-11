@@ -4,9 +4,9 @@
 
 > Approve once. Enforce every charge. Revoke anytime.
 
-**[Open the public Judge Demo](https://0xcaptain888.github.io/allowance-os/)** · **[Android MWA client](mobile/android)** · **[Two-minute judge guide](docs/judge-guide.md)**
+**[Open the public Judge Demo](https://0xcaptain888.github.io/allowance-os/)** · **[Download Android v0.17.0](https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.17.0)** · **[Two-minute judge guide](docs/judge-guide.md)**
 
-**[Download versioned Android releases](https://github.com/0xCaptain888/allowance-os/releases)** · **[Product maturity audit](docs/product-maturity-audit.md)** · **[Changelog](CHANGELOG.md)** · **[Release process](docs/android-release-process.md)**
+**[Android MWA client](mobile/android)** · **[All versioned releases](https://github.com/0xCaptain888/allowance-os/releases)** · **[Product maturity audit](docs/product-maturity-audit.md)** · **[Changelog](CHANGELOG.md)** · **[Release process](docs/android-release-process.md)**
 
 Allowance OS is a Solana Mobile payment-authorization layer for Web3 services. It turns an open-ended wallet approval into a human-readable allowance with merchant, token, program, per-charge, period, expiry, and evidence boundaries—then applies that same model to AI subscriptions, paid research, trading signals, automation bots, and metered APIs.
 
@@ -190,7 +190,7 @@ mobile/android/app/build/outputs/apk/debug/allowance-os-0.17.0-debug.apk
 
 Latest clean local v0.17.0 debug build SHA-256 is recorded in [`evidence/android-build.json`](evidence/android-build.json).
 
-Latest public QA asset: `android-test-v0.17.0` (published after the clean build recorded below). It is explicitly labelled as a debug-signed Devnet QA build. `android-v*` remains reserved for protected production-signed releases.
+Latest public QA asset: [`android-test-v0.17.0`](https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.17.0). It contains the exact clean local APK recorded below and is explicitly labelled as a debug-signed Devnet QA build. `android-v*` remains reserved for protected production-signed releases.
 
 See [`mobile/README.md`](mobile/README.md) for phone setup and [`docs/judge-guide.md`](docs/judge-guide.md) for the two-minute evaluation path.
 
