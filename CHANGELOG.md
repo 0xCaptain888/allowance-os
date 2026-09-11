@@ -11,6 +11,8 @@
 - Removed decorative gradients from core cards, adopted the charcoal / ivory / lime / cobalt AO palette, and standardized spacing, radii, and 48dp-or-larger touch targets.
 - Added a centered 760dp content boundary for more credible tablet, landscape, and judge-screen presentation.
 - Kept Chinese as an optional saved preference while making English the default on a fresh install.
+- Rebuilt the public Judge Demo with the same AO palette, typography, protected-allowance hero, status semantics, control hierarchy, touch sizing, and mobile bottom navigation as the Android client.
+- Preserved the browser policy simulator, AlphaBrief commercial proof, and direct Solana RPC verification while visually separating simulated actions from live Devnet evidence.
 
 This is a UX and information-architecture release. Protocol behavior, wallet custody boundaries, and existing Devnet evidence are unchanged.
 

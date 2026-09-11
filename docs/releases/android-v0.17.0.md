@@ -25,6 +25,8 @@ Highlights:
 - consequence-led decision surfaces explaining whether the wallet opened and whether funds moved;
 - dedicated Wallet & Verification destination;
 - centered content boundary for tablet, landscape, and judge-screen layouts.
+- matching responsive Judge Demo with the same AO palette, protected-allowance hierarchy, state semantics, and mobile navigation;
+- preserved browser-side policy controls and direct Solana RPC verification with explicit simulation/live-evidence boundaries.
 
 ## Verification
 

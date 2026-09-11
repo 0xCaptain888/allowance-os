@@ -75,14 +75,248 @@
     @media (max-width: 980px) { .service-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 800px) { .hero, .grid, .blueprint-grid, .habit-grid { grid-template-columns: 1fr; } nav { position: static; } .hero { min-height: auto; } .timeline-step { grid-template-columns: 42px 1fr; } .timeline-step .pill { grid-column: 2; justify-self: start; } }
     @media (max-width: 560px) { .service-grid { grid-template-columns: 1fr; } .links { display: none; } }
+
+    /* Android v0.17.0 parity layer — the same AO fintech control-center system. */
+    :root {
+      --ink: #060810;
+      --panel: #101525;
+      --panel-raised: #181f34;
+      --mint: #c7f36b;
+      --blue: #5e74ff;
+      --violet: #9a8cff;
+      --cyan: #73d9e8;
+      --amber: #ffc857;
+      --rose: #ff7a59;
+      --white: #f3f1e9;
+      --muted: #afb5c2;
+      --line: #2a3140;
+      color-scheme: dark;
+      background: var(--ink);
+      color: var(--white);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      background:
+        radial-gradient(circle at 12% -8%, #5e74ff2c 0, transparent 31rem),
+        radial-gradient(circle at 92% 5%, #c7f36b12 0, transparent 25rem),
+        linear-gradient(180deg, #0d1021 0, var(--ink) 42%, #070a12 100%);
+      color: var(--white);
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .22;
+      background-image: linear-gradient(#ffffff05 1px, transparent 1px), linear-gradient(90deg, #ffffff05 1px, transparent 1px);
+      background-size: 52px 52px;
+      mask-image: linear-gradient(to bottom, black, transparent 65%);
+    }
+    main { position: relative; max-width: 1180px; padding: 20px 20px 100px; }
+    section { scroll-margin-top: 106px; }
+    nav {
+      top: 16px;
+      margin-bottom: 30px;
+      min-height: 68px;
+      padding: 10px 12px 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: #080b11e8;
+      box-shadow: 0 18px 60px #00000055;
+    }
+    nav strong { gap: 12px; color: var(--white); font-size: 1rem; }
+    .brand-copy { display: grid; gap: 2px; }
+    .brand-copy small { color: var(--muted); font-size: .64rem; letter-spacing: .12em; text-transform: uppercase; }
+    .brand-mark { width: 44px; height: 44px; border-radius: 13px; }
+    a { color: var(--mint); }
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 9px 13px;
+      border-color: var(--line);
+      color: var(--white);
+      background: var(--panel);
+      font-size: .75rem;
+      letter-spacing: .01em;
+    }
+    .nav-link:hover { border-color: #c7f36b8c; background: #25321a; color: var(--mint); }
+    .hero {
+      grid-template-columns: minmax(0, 1.08fr) minmax(340px, .92fr);
+      gap: 24px;
+      min-height: 520px;
+      align-items: center;
+      padding: 34px 0 44px;
+    }
+    .hero-copy { max-width: 680px; }
+    h1 {
+      max-width: 760px;
+      margin: 17px 0 22px;
+      color: var(--white);
+      background: none;
+      font-size: clamp(3.2rem, 7vw, 6rem);
+      line-height: .92;
+      letter-spacing: -.072em;
+      -webkit-text-fill-color: initial;
+    }
+    h2 { color: var(--white); letter-spacing: -.045em; }
+    h3 { color: var(--white); }
+    .eyebrow { color: var(--mint); letter-spacing: .14em; font-size: .67rem; }
+    .lede { max-width: 630px; color: var(--muted); font-size: 1.08rem; line-height: 1.65; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+    .hero-actions a { min-height: 52px; padding: 14px 18px; border-radius: 14px; font-size: .84rem; }
+    .primary-cta { display: inline-flex; align-items: center; background: var(--mint); color: var(--ink); font-weight: 900; }
+    .secondary-cta { display: inline-flex; align-items: center; border: 1px solid var(--line); background: var(--panel); color: var(--white); font-weight: 800; }
+    .state-strip { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+    .card {
+      border-color: var(--line);
+      border-radius: 20px;
+      background: var(--panel);
+      box-shadow: 0 24px 64px #0000003d;
+      backdrop-filter: none;
+    }
+    .policy {
+      position: relative;
+      gap: 0;
+      padding: 20px;
+      border-color: #c7f36b61;
+      background: #151a1f;
+      overflow: hidden;
+    }
+    .policy::before {
+      content: "";
+      position: absolute;
+      width: 190px;
+      height: 190px;
+      top: -100px;
+      right: -70px;
+      border-radius: 50%;
+      background: #c7f36b14;
+      filter: blur(4px);
+    }
+    .policy-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
+    .policy-head small { color: var(--muted); font-size: .66rem; font-weight: 900; letter-spacing: .13em; }
+    .policy-total { margin: 13px 0 20px; }
+    .policy-total b { display: block; color: var(--white); font-size: 2.65rem; line-height: 1; letter-spacing: -.06em; }
+    .policy-total span { color: var(--muted); font-size: .75rem; }
+    .row { position: relative; align-items: center; min-height: 42px; padding: 8px 0; border-color: var(--line); }
+    .muted { color: var(--muted); }
+    .value { color: var(--white); }
+    .pill { align-items: center; min-height: 27px; padding: 6px 10px; font-size: .66rem; letter-spacing: .035em; }
+    .verified { color: var(--ink); background: var(--mint); }
+    .blocked { color: var(--ink); background: var(--amber); }
+    .frozen { color: var(--ink); background: var(--rose); }
+    .card .section-heading { margin: 0 0 18px; }
+    .section-heading { margin: 80px 0 22px; }
+    .section-heading h2 { font-size: clamp(2rem, 4vw, 3.05rem); }
+    .grid { gap: 12px; margin-top: 20px; }
+    .grid > div {
+      min-width: 0;
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel-raised);
+    }
+    button {
+      min-height: 48px;
+      padding: 12px 16px;
+      border-radius: 13px;
+      background: var(--mint);
+      color: var(--ink);
+      font-weight: 900;
+    }
+    button:hover { box-shadow: 0 10px 28px #c7f36b26; }
+    button.secondary { border: 1px solid var(--line); background: var(--panel-raised); color: var(--white); }
+    button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; }
+    .habit { background: var(--panel-raised); border-color: var(--line); }
+    .habit b { color: var(--white); }
+    .habit:nth-child(1) b { color: var(--mint); }
+    .habit:nth-child(3) b { color: var(--cyan); }
+    .habit:nth-child(4) b { color: var(--rose); }
+    .budget-meter { background: var(--line); }
+    .budget-meter span { background: linear-gradient(90deg, var(--mint), var(--blue)); }
+    .timeline-step { background: var(--panel-raised); border-color: var(--line); }
+    .timeline-step i { border-radius: 11px; background: #25321a; color: var(--mint); }
+    .service-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .service { min-height: 268px; }
+    .service:hover, .service.active { border-color: #c7f36b8c; box-shadow: 0 22px 46px #0000004d; }
+    .service.active { background: #17201e; }
+    .service-icon { border-radius: 13px; background: var(--blue); }
+    .service:nth-child(2) .service-icon { background: var(--mint); color: var(--ink); }
+    .service:nth-child(3) .service-icon { background: var(--cyan); color: var(--ink); }
+    .service:nth-child(4) .service-icon { background: var(--violet); color: var(--ink); }
+    .service:nth-child(5) .service-icon { background: var(--amber); color: var(--ink); }
+    .service .price { color: var(--mint); }
+    .service small { color: var(--muted); }
+    .pattern, .proof-state, select { background: var(--panel-raised); border-color: var(--line); color: var(--white); }
+    .control label, .output { color: var(--muted); }
+    .control-value, .ok { color: var(--mint); }
+    .limited, .blueprint-label { color: var(--amber); }
+    input[type=range] { min-height: 32px; accent-color: var(--mint); }
+    select { min-height: 48px; border-radius: 12px; }
+    .matrix { border-color: var(--line); background: var(--panel-raised); }
+    .matrix > div { border-color: var(--line); }
+    .truth-note { border-color: #ffc85759; background: #ffc8570d; color: #ddd0ad; }
+    .mobile-dock { display: none; }
+    footer { margin-top: 28px; padding: 24px 0 0; border-top: 1px solid var(--line); color: var(--muted); font-size: .75rem; }
+    @media (max-width: 980px) {
+      .hero { grid-template-columns: 1fr 1fr; }
+      .service-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .links a:nth-child(n+4) { display: none; }
+    }
+    @media (max-width: 800px) {
+      main { padding: 12px 14px 108px; }
+      nav { position: sticky; top: 8px; min-height: 62px; margin-bottom: 12px; border-radius: 18px; }
+      .links { display: flex; }
+      .links .nav-link:not(:first-child) { display: none; }
+      .hero { grid-template-columns: 1fr; min-height: auto; padding: 42px 0 30px; }
+      .hero-copy { text-align: left; }
+      h1 { font-size: clamp(3.2rem, 15vw, 5rem); }
+      .habit-grid, .grid, .blueprint-grid { grid-template-columns: 1fr; }
+      .section-heading { align-items: flex-start; flex-direction: column; margin-top: 64px; }
+      .timeline-step { grid-template-columns: 38px 1fr; }
+      .timeline-step .pill { grid-column: 2; justify-self: start; }
+      .mobile-dock {
+        position: fixed;
+        z-index: 30;
+        left: 12px;
+        right: 12px;
+        bottom: max(10px, env(safe-area-inset-bottom));
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        padding: 8px;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: #080b11ef;
+        box-shadow: 0 18px 54px #00000099;
+        backdrop-filter: blur(18px);
+      }
+      .mobile-dock a { display: grid; place-items: center; gap: 4px; min-height: 50px; border-radius: 13px; color: var(--muted); font-size: .58rem; letter-spacing: .04em; text-transform: uppercase; }
+      .mobile-dock a:first-child { background: #25321a; color: var(--mint); }
+      .dock-icon { font-size: 1rem; line-height: 1; }
+    }
+    @media (max-width: 560px) {
+      .service-grid { grid-template-columns: 1fr; }
+      .hero-actions { display: grid; }
+      .hero-actions a { justify-content: center; }
+      .policy-total b { font-size: 2.25rem; }
+      .matrix { font-size: .73rem; }
+      .matrix > div { padding: 9px 7px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
   </style>
 </head>
 <body>
   <main>
-    <nav><strong><img class="brand-mark" src="favicon.svg" alt="" />Allowance OS · Android v0.17</strong><div class="links"><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os">GitHub</a><a class="nav-link" href="#live-commerce">Live AlphaBrief</a><a class="nav-link" href="https://explorer.solana.com/address/7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL?cluster=devnet">Delegated v2 Program</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/evidence/live-alphabrief-v2.json">Commercial Evidence</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/tree/main/mobile/android">Android MWA</a></div></nav>
-    <section class="hero">
-      <div><div class="eyebrow">Payment authorization for Web3 services</div><h1>Allowance OS</h1><p class="lede">One mobile control layer for AI subscriptions, research, trading signals, automation bots, and paid APIs. Approve a bounded policy—not an unlimited future.</p></div>
-      <div class="card policy"><div class="row"><span class="muted">Active service</span><span id="heroService" class="value">AlphaBrief</span></div><div class="row"><span class="muted">Merchant</span><span id="heroMerchant" class="value">merchant:alphabrief</span></div><div class="row"><span class="muted">Per charge</span><span id="heroCharge" class="value">2 USDC</span></div><div class="row"><span class="muted">Period cap</span><span id="heroCap" class="value">8 USDC</span></div><div class="row"><span class="muted">Status</span><span class="pill verified">READY TEMPLATE</span></div></div>
+    <nav><strong><img class="brand-mark" src="favicon.svg" alt="Allowance OS AO monogram" /><span class="brand-copy">Allowance OS<small>Fintech control center · v0.17</small></span></strong><div class="links"><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.17.0">Download APK</a><a class="nav-link" href="#live-commerce">Live AlphaBrief</a><a class="nav-link" href="https://explorer.solana.com/address/7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL?cluster=devnet">Delegated v2</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/evidence/live-alphabrief-v2.json">Evidence</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os">GitHub</a></div></nav>
+    <section id="overview" class="hero">
+      <div class="hero-copy"><div class="eyebrow">Control center · Solana Devnet</div><h1>Approve once.<br />Stay in control.</h1><p class="lede">The payment-authorization layer for AI subscriptions, paid research, trading signals, automation bots, and metered APIs. Every future charge stays inside a visible budget and evidence boundary.</p><div class="hero-actions"><a class="primary-cta" href="https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.17.0">Download Android v0.17.0</a><a class="secondary-cta" href="#live-commerce">Inspect live commerce proof</a></div><div class="state-strip"><span class="pill verified">VERIFIED · MAY SETTLE</span><span class="pill blocked">BLOCKED · NEVER STARTED</span><span class="pill frozen">FROZEN · ZERO MOVED</span></div></div>
+      <div class="card policy"><div class="policy-head"><small>PROTECTED ALLOWANCE</small><span class="pill verified">DEVNET READY</span></div><div class="policy-total"><b>6.00 TEST</b><span>remaining from an 8.00 weekly cap</span><div class="budget-meter"><span></span></div></div><div class="row"><span class="muted">Active service</span><span id="heroService" class="value">AlphaBrief</span></div><div class="row"><span class="muted">Merchant</span><span id="heroMerchant" class="value">merchant:alphabrief</span></div><div class="row"><span class="muted">Next charge</span><span id="heroCharge" class="value">2 USDC</span></div><div class="row"><span class="muted">Period cap</span><span id="heroCap" class="value">8 USDC</span></div><div class="row"><span class="muted">Latest decision</span><span class="pill frozen">BAD OUTPUT CONTAINED</span></div></div>
     </section>
 
     <p class="truth-note"><strong>Pre-production boundary:</strong> this public site never moves funds. Browser policy receipts remain simulated, while the linked AlphaBrief delivery, v2 settlement, and bad-output freeze are real Solana Devnet evidence using a project-created test mint—not canonical USDC or Mainnet.</p>
@@ -159,7 +393,7 @@
         <div class="card blueprint"><h3>Moonwalk / Perena <span class="blueprint-label">BLUEPRINT · UNOFFICIAL</span></h3><p class="muted">Membership, challenge entry, stable-asset workflow fees.</p><div class="pattern">Expiry or program allowlist → fee-only cap → fulfillment or transaction evidence</div></div>
       </div>
     </section>
-    <section class="grid">
+    <section id="simulator" class="grid">
       <div class="card"><div class="eyebrow">01 · verified</div><h2>Normal charge</h2><p class="muted">Merchant, token, program, evidence, and limits all match.</p><button onclick="run('verified')">Run check</button></div>
       <div class="card"><div class="eyebrow">02 · blocked</div><h2>Over the cap</h2><p class="muted">The request exceeds the selected service's per-charge allowance.</p><button class="secondary" onclick="run('blocked')">Run check</button></div>
       <div class="card"><div class="eyebrow">03 · frozen</div><h2>Merchant changed</h2><p class="muted">The destination no longer matches the authorized merchant.</p><button class="secondary" onclick="run('frozen')">Run check</button></div>
@@ -174,7 +408,7 @@
       <button style="margin-top:16px" onclick="evaluateDynamic()">Run policy pre-flight</button>
       <div id="output" class="output">Choose a scenario above to produce a receipt.</div>
     </section>
-    <section class="card" style="margin-top:14px">
+    <section id="proof-center" class="card" style="margin-top:14px">
       <div class="eyebrow">Browser reference integration · simulated receipt v2</div>
       <h2>Buy an AlphaBrief report, then attack the payment flow.</h2>
       <p class="muted">The browser hashes delivered content, creates a five-minute charge request, verifies the policy, signs a merchant webhook, and unlocks the report. Retrying the identical request is idempotent; reusing its evidence under a new request is BLOCKED.</p>
@@ -221,7 +455,9 @@
       <button style="margin:16px 0" onclick="verifyProgramMatrix()">Verify state + token settlement via Solana RPC</button>
       <div id="programProof" class="proof-state muted">Not checked yet. This reads five signatures, three transaction balance records, and the final allowance account.</div>
     </section>
+    <footer>Allowance OS v0.17.0 · Browser simulation is clearly separated from public Solana Devnet evidence · Project-created test mint, not canonical USDC.</footer>
   </main>
+  <div class="mobile-dock" aria-label="Mobile navigation"><a href="#overview"><span class="dock-icon">⌂</span>Home</a><a href="#services"><span class="dock-icon">◆</span>Services</a><a href="#simulator"><span class="dock-icon">◎</span>Review</a><a href="#proof-center"><span class="dock-icon">✓</span>Evidence</a></div>
   <script>
     const services = {
       agentcloud: { name: 'AgentCloud', merchant: 'merchant:agentcloud', perCharge: .5, periodCap: 12, evidence: 'signed_run_receipt_and_output_hash', program: 'program:agentcloud-settlement' },
