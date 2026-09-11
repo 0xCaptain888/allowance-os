@@ -110,7 +110,7 @@ private fun AllowanceApp(viewModel: AllowanceViewModel, sender: ActivityResultSe
                     AppPage.SERVICES -> ServicesPage(state, viewModel, chinese) { page = it }
                     AppPage.ALLOWANCES -> PolicyPage(state, viewModel, sender, chinese)
                     AppPage.ACTIVITY -> ActivityPage(state, viewModel, chinese)
-                    AppPage.EVIDENCE -> EvidencePage(state, viewModel, chinese)
+                    AppPage.EVIDENCE -> EvidencePage(state, viewModel, sender, chinese)
                 }
             }
             BottomBar(page = page, chinese = chinese, onSelect = { page = it })
@@ -715,7 +715,7 @@ private fun PolicyPage(state: AllowanceUiState, viewModel: AllowanceViewModel, s
 }
 
 @Composable
-private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel, chinese: Boolean) {
+private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel, sender: ActivityResultSender, chinese: Boolean) {
     val uriHandler = LocalUriHandler.current
     val clipboard = LocalClipboardManager.current
     PageColumn {
@@ -835,7 +835,7 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
         ProductCard {
             SectionTitle(t("Delegated v2 公开证据", "DELEGATED V2 PUBLIC EVIDENCE", chinese), t("Devnet 已验证", "DEVNET VERIFIED", chinese))
             Text(
-                t("v2 Program 已部署，并完成无用户签名结算、拒绝、冻结、双签恢复、角色轮换和撤销矩阵。Android 已包含严格的 332-byte 状态解码器与控制指令编码器；当前页面公开链上证据，但尚未把所有 v2 控制接成手机端实时广播。", "The v2 Program is deployed with public authority-free settlement, block, freeze, dual-signature recovery, role rotation, and revoke evidence. Android includes the strict 332-byte state decoder and control encoders; this screen exposes the chain proofs, while not every v2 control is wired to live mobile broadcast yet.", chinese),
+                t("v2 Program 已部署，并完成无用户签名结算、拒绝、冻结、双签恢复、角色轮换和撤销矩阵。Android 现在支持读取真实 v2 状态，并在 authority 钱包下审查和广播 Pause、Unpause、Revoke，再回读执行后状态。", "The v2 Program is deployed with public authority-free settlement, block, freeze, recovery, role rotation, and revoke evidence. Android now inspects live v2 state and supports review, MWA broadcast, and post-state refresh for Pause, Unpause, and Revoke when the authority wallet is connected.", chinese),
                 color = Muted,
                 fontSize = 13.sp,
             )
@@ -844,7 +844,7 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
             BoundaryRow("CONTROL ENCODERS", t("暂停、恢复、撤销、Executor/Verifier 轮换", "Pause, unpause, revoke, and Executor/Verifier rotation", chinese), Mint)
             BoundaryRow("SETTLE LATER", t("Executor + Verifier 签名；用户未签名", "Executor + verifier signed; authority did not", chinese), Mint)
             BoundaryRow("SAFETY MATRIX", t("BLOCKED / FROZEN / ROTATED / REVOKED 已上链", "BLOCKED / FROZEN / ROTATED / REVOKED are public", chinese), Mint)
-            BoundaryRow("MOBILE CONTROLS", t("编码器已测试；完整实时广播仍待接入", "Encoders tested; full live broadcasting is not wired yet", chinese), Amber)
+            BoundaryRow("MOBILE CONTROLS", t("authority 绑定；审查、广播、回读已接入", "Authority-bound review, broadcast, and refresh are wired", chinese), Mint)
             SecondaryButton(Modifier.fillMaxWidth(), t("打开 v2 Program", "Open v2 Program", chinese)) {
                 uriHandler.openUri("https://explorer.solana.com/address/${DelegatedAllowanceV2.PROGRAM_ID}?cluster=devnet")
             }
@@ -857,6 +857,8 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
             Notice(t("使用项目自建 Devnet 测试 mint，不是官方 USDC；未宣称 Mainnet 或生产就绪。", "Uses a project-created Devnet test mint, not canonical USDC; no Mainnet or production claim.", chinese), Blue)
         }
 
+        V2ControlsCard(state, viewModel, sender, chinese)
+
         ProductCard {
             SectionTitle(t("真实性边界", "TRUTH BOUNDARY", chinese), t("透明披露", "HONEST DISCLOSURE", chinese))
             BoundaryRow("SIMULATED", t("策略参数回放与三态矩阵", "Policy replay and three-state matrix", chinese), Blue)
@@ -866,6 +868,94 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
             BoundaryRow("DELEGATED V2", t("真实无用户签名后续结算与完整控制矩阵", "Real authority-free later settlement and full control matrix", chinese), Mint)
         }
         Spacer(Modifier.height(12.dp))
+    }
+}
+
+@Composable
+private fun V2ControlsCard(
+    state: AllowanceUiState,
+    viewModel: AllowanceViewModel,
+    sender: ActivityResultSender,
+    chinese: Boolean,
+) {
+    var pendingAction by rememberSaveable { mutableStateOf<String?>(null) }
+    val snapshot = state.v2State
+    ProductCard {
+        SectionTitle(t("v2 链上控制", "LIVE V2 CONTROLS", chinese), "MWA · RPC")
+        Text(
+            t(
+                "这是对已部署 v2 Allowance 的真实链上控制。只有 authority 钱包可以签名；当前连接的钱包不是 authority 时，按钮会在发送前拦截。",
+                "These are real onchain controls for the deployed v2 allowance. Only the authority wallet may sign; a different connected wallet is blocked before any wallet request.",
+                chinese,
+            ),
+            color = Muted,
+            fontSize = 13.sp,
+        )
+        ValueRow("Authority", short(DelegatedAllowanceV2.AUTHORITY))
+        ValueRow("Allowance", short(DelegatedAllowanceV2.ALLOWANCE_ACCOUNT))
+        if (snapshot != null) {
+            ValueRow("State", when {
+                snapshot.revoked -> "REVOKED"
+                snapshot.frozen -> "FROZEN"
+                snapshot.paused -> "PAUSED"
+                else -> "ACTIVE"
+            })
+            ValueRow("Nonce", snapshot.nextNonce.toString())
+            ValueRow("Lifetime spent", snapshot.spentLifetimeRaw.toString())
+        }
+        if (state.v2StateMessage.isNotBlank()) {
+            Notice(state.v2StateMessage, if (state.v2StateMessage.contains("success", true) || state.v2StateMessage.contains("confirmed", true)) Mint else Blue)
+        }
+        if (state.v2ControlSignature.isNotBlank()) {
+            Text("TX: ${short(state.v2ControlSignature)}", color = Mint, fontSize = 12.sp)
+        }
+        SecondaryButton(
+            Modifier.fillMaxWidth(),
+            if (state.v2StateLoading) t("正在读取 v2 状态…", "Reading v2 state…", chinese)
+            else t("读取真实 v2 状态", "Inspect live v2 state", chinese),
+        ) { if (!state.v2StateLoading) viewModel.inspectDelegatedV2() }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SecondaryButton(Modifier.weight(1f), t("链上暂停", "Onchain pause", chinese)) { pendingAction = "PAUSE" }
+            SecondaryButton(Modifier.weight(1f), t("恢复", "Unpause", chinese)) { pendingAction = "UNPAUSE" }
+        }
+        SecondaryButton(Modifier.fillMaxWidth(), t("撤销并移除 Delegate", "Revoke and remove delegate", chinese)) { pendingAction = "REVOKE" }
+        Notice(
+            t(
+                "当前公开证据 Allowance 已被撤销；按钮只在你连接 authority 钱包后请求 MWA 签名，并会在发送后重新读取链上状态。",
+                "The public evidence allowance is already revoked. Buttons request an MWA signature only after the authority wallet is connected, then re-read onchain state.",
+                chinese,
+            ),
+            Amber,
+        )
+    }
+    if (pendingAction != null) {
+        val action = pendingAction!!
+        AlertDialog(
+            onDismissRequest = { pendingAction = null },
+            title = { Text(t("确认链上控制", "Confirm onchain control", chinese), color = White, fontWeight = FontWeight.Black) },
+            text = {
+                Text(
+                    t(
+                        "即将通过 MWA 请求 $action。它会改变 Devnet Allowance 状态，只会产生网络费；请确认钱包地址和操作。",
+                        "MWA will request $action. This changes the Devnet allowance state and incurs only a network fee; verify the wallet address before signing.",
+                        chinese,
+                    ),
+                    color = Muted,
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    pendingAction = null
+                    when (action) {
+                        "PAUSE" -> viewModel.pauseDelegatedV2(sender)
+                        "UNPAUSE" -> viewModel.unpauseDelegatedV2(sender)
+                        "REVOKE" -> viewModel.revokeDelegatedV2(sender)
+                    }
+                }) { Text(t("打开钱包", "Open wallet", chinese), color = Mint) }
+            },
+            dismissButton = { TextButton(onClick = { pendingAction = null }) { Text(t("取消", "Cancel", chinese), color = Muted) } },
+            backgroundColor = Panel,
+        )
     }
 }
 

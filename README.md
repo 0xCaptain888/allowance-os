@@ -8,7 +8,7 @@
 
 Allowance OS is a Solana Mobile payment-authorization layer for Web3 services. It turns an open-ended wallet approval into a human-readable allowance with merchant, token, program, per-charge, period, expiry, and evidence boundaries—then applies that same model to AI subscriptions, paid research, trading signals, automation bots, and metered APIs.
 
-**v0.15.0 turns AlphaBrief from a template into a complete commercial proof:** a real 508-word report is delivered, content-hashed, checked by an independent verifier, settled by Delegated Settlement v2 without the subscriber signing the charge, and followed by a bad-output attempt that freezes the allowance with zero token movement. Android now presents the result through a Daily Habits safety dashboard.
+**v0.16.0 keeps AlphaBrief as a complete commercial proof and adds live v2 mobile controls:** a real 508-word report is delivered, content-hashed, checked by an independent verifier, settled by Delegated Settlement v2 without the subscriber signing the charge, and followed by a bad-output attempt that freezes the allowance with zero token movement. Android now presents the result through a Daily Habits safety dashboard and authority-bound Pause/Unpause/Revoke review and broadcast.
 
 **Delegated Settlement v2 is Devnet deployed and matrix-verified:** a user approves an allowance-scoped SPL delegate PDA once; later `ChargeDelegated` settlement requires the configured executor and independent verifier, enforces sequential nonces plus per-charge/period/lifetime caps, and does not include the user authority as a signer. Every accepted charge or freeze creates an immutable evidence PDA keyed by the full evidence hash. Read the [v2 specification](docs/delegated-settlement-v2.md) and [machine-readable live evidence](evidence/live-devnet-v2.json).
 
@@ -20,7 +20,7 @@ The deployed `130,280`-byte Program dumps to SHA-256 `45a3996ee011587e394951ee34
 
 ## Commercial product proof
 
-v0.15.0 keeps the five-surface product—**Home → Services → Allowances → Activity → Evidence**—but stops presenting every commercial example as equivalent. AlphaBrief is the live reference integration; the other four remain reusable templates.
+v0.16.0 keeps the five-surface product—**Home → Services → Allowances → Activity → Evidence**—but stops presenting every commercial example as equivalent. AlphaBrief is the live reference integration; the other four remain reusable templates.
 
 | Ready template | Commercial use | Payment boundary | Required evidence |
 | --- | --- | --- | --- |
@@ -62,7 +62,7 @@ The **Seeker Integration Lab** also maps Allowance OS to apps featured by Solana
 | Surface | What it proves | Status |
 | --- | --- | --- |
 | [Public Judge Demo](https://0xcaptain888.github.io/allowance-os/) | Instant `VERIFIED` / `BLOCKED` / `FROZEN` policy replay | GitHub Pages deployment |
-| `mobile/android` | Bilingual native Android product with Daily Habits, upcoming charges, today/week spend, budget/anomaly alerts, local pause, delivery/payment timeline, notifications, weekly report, MWA, and public v2 evidence | v0.15.0; 18 Android tests |
+| `mobile/android` | Bilingual native Android product with Daily Habits, upcoming charges, today/week spend, budget/anomaly alerts, local pause, delivery/payment timeline, notifications, weekly report, MWA, public v2 evidence, and authority-bound live v2 control review/broadcast | v0.16.0; 18 Android tests |
 | `program/` | Backward-compatible v1 plus deployed Delegated Settlement v2 with PDA authority, executor/verifier separation, immutable evidence records, governed role rotation, three-level caps, period rollover, recovery and SPL revoke | Devnet deployed; 20 Rust tests; full control matrix verified |
 | Solana Explorer | Connected Devnet wallet and wallet-broadcast authorization proof | Live signature captured |
 | [Deployed allowance program](https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet) | Program-enforced state transitions and settlement | Live `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED` evidence |
@@ -183,10 +183,10 @@ cd mobile/android
 The resulting APK is:
 
 ```text
-mobile/android/app/build/outputs/apk/debug/allowance-os-0.15.0-debug.apk
+mobile/android/app/build/outputs/apk/debug/allowance-os-0.16.0-debug.apk
 ```
 
-Latest clean local v0.15.0 debug build SHA-256: `2feaad9180dee1b3c4c72796ed7a3789d9f21bb16ed94c5c5c20fa7d1ead6a05` (`19,104,570` bytes). The machine-readable build record is [`evidence/android-build.json`](evidence/android-build.json).
+Latest clean local v0.16.0 debug build SHA-256: `2c4898e6d84d330f5572e848d4fdeaeaeb7fc89831bad72ce192c192bcd02d72` (`18,862,838` bytes). The machine-readable build record is [`evidence/android-build.json`](evidence/android-build.json).
 
 Latest public QA asset: [`android-test-v0.15.0`](https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.15.0), CI SHA-256 `a446a1d5ebdd62d8695d34ef5885b22da1ac6aab5d374f06556890ede92cb212`. Local and CI debug hashes differ because each environment uses its own debug signing key. `android-v*` is reserved for protected production-signed releases; `android-test-v*` assets are explicitly labelled as Devnet QA builds.
 

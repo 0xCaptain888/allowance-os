@@ -1,5 +1,15 @@
 # Changelog
 
+## Android / SDK v0.16.0 — 2026-09-11
+
+- Added a live Delegated Settlement v2 control surface in Android: RPC inspection, explicit transaction review, MWA broadcast, confirmation, and post-broadcast state refresh.
+- Added authority-bound Pause, Unpause, and Revoke actions with a fail-closed wallet identity check; a non-authority wallet is blocked before MWA is invoked.
+- Added v2 control signatures and resulting state to the local Activity audit trail.
+- Added deployed v2 allowance constants and an RPC decoder path that rejects an unexpected Program owner or malformed state.
+- Added Android unit/build verification for the new control path and bumped Android to version code `17` / version name `0.16.0`.
+
+The public evidence allowance is already revoked, so the new controls are an honest integration path for a compatible authority-owned Devnet allowance rather than a claim that a fresh control transaction was broadcast from this QA build. The APK remains debug-signed and Devnet-only.
+
 ## Android / SDK v0.15.0 — 2026-09-10
 
 - Turned AlphaBrief into a complete live commercial chain: purchase, substantive report delivery, deterministic evidence hash, independent verification, Delegated Settlement v2 settlement, notification intent, and bad-output freeze.

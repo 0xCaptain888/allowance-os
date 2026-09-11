@@ -1,16 +1,16 @@
 {
   "evidenceType": "LOCAL_ANDROID_BUILD",
   "project": "Allowance OS",
-  "date": "2026-09-10",
+  "date": "2026-09-11",
   "command": "./gradlew testDebugUnitTest assembleDebug",
   "result": "BUILD_SUCCESSFUL",
   "testCount": 18,
   "testFailures": 0,
-  "versionCode": 16,
-  "versionName": "0.15.0",
-  "artifact": "mobile/android/app/build/outputs/apk/debug/allowance-os-0.15.0-debug.apk",
-  "artifactSize": "19104570 bytes",
-  "sha256": "2feaad9180dee1b3c4c72796ed7a3789d9f21bb16ed94c5c5c20fa7d1ead6a05",
+  "versionCode": 17,
+  "versionName": "0.16.0",
+  "artifact": "mobile/android/app/build/outputs/apk/debug/allowance-os-0.16.0-debug.apk",
+  "artifactSize": "18862838 bytes",
+  "sha256": "2c4898e6d84d330f5572e848d4fdeaeaeb7fc89831bad72ce192c192bcd02d72",
   "publicQaRelease": {
     "tag": "android-test-v0.15.0",
     "workflowRunId": 34481977096,
@@ -19,5 +19,5 @@
     "sha256": "a446a1d5ebdd62d8695d34ef5885b22da1ac6aab5d374f06556890ede92cb212",
     "note": "The local and CI debug APK hashes differ because each environment uses its own debug signing key."
   },
-  "truthBoundary": "This records the clean local v0.15.0 Android build plus the public CI QA artifact metadata. Neither APK is production-signed, a Solana transaction, or a deployed-program receipt."
+  "truthBoundary": "This records the clean local v0.16.0 Android build plus the previous public CI QA artifact metadata. Neither APK is production-signed, a Solana transaction, or a deployed-program receipt."
 }

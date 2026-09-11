@@ -92,6 +92,10 @@ data class AllowanceUiState(
     val replayRejected: Boolean = false,
     val alphaBriefLiveProofSynced: Boolean = false,
     val locallyPaused: Boolean = false,
+    val v2StateLoading: Boolean = false,
+    val v2State: DelegatedAllowanceSnapshot? = null,
+    val v2StateMessage: String = "",
+    val v2ControlSignature: String = "",
 )
 
 class AllowanceViewModel(application: Application) : AndroidViewModel(application) {
@@ -393,6 +397,115 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
             if (paused) "Allowance requests paused locally" else "Allowance requests resumed locally",
             if (paused) "Allowance OS will stop new app-side requests. Onchain allowance state is unchanged." else "Local request processing is active again.",
         )
+    }
+
+    fun inspectDelegatedV2() {
+        viewModelScope.launch {
+            _state.update { it.copy(v2StateLoading = true, v2StateMessage = "Reading the deployed v2 allowance from Solana Devnet…") }
+            runCatching { rpc.delegatedV2Allowance() }
+                .onSuccess { snapshot ->
+                    _state.update {
+                        it.copy(
+                            v2StateLoading = false,
+                            v2State = snapshot,
+                            v2StateMessage = "RPC confirmed the deployed v2 allowance state.",
+                        )
+                    }
+                    logEvent("V2_STATE_INSPECTED", if (snapshot.revoked || snapshot.frozen) AllowanceState.FROZEN else AllowanceState.VERIFIED, message = "RPC read the delegated v2 allowance state")
+                }
+                .onFailure { error ->
+                    _state.update { it.copy(v2StateLoading = false, v2StateMessage = error.message ?: "Unable to read the delegated v2 allowance") }
+                }
+        }
+    }
+
+    fun pauseDelegatedV2(sender: ActivityResultSender) = submitDelegatedV2Control(
+        sender = sender,
+        action = "PAUSE",
+        instruction = DelegatedAllowanceV2.pause(
+            DelegatedAllowanceV2.PROGRAM_ID,
+            DelegatedAllowanceV2.AUTHORITY,
+            DelegatedAllowanceV2.ALLOWANCE_ACCOUNT,
+        ),
+    )
+
+    fun unpauseDelegatedV2(sender: ActivityResultSender) = submitDelegatedV2Control(
+        sender = sender,
+        action = "UNPAUSE",
+        instruction = DelegatedAllowanceV2.unpause(
+            DelegatedAllowanceV2.PROGRAM_ID,
+            DelegatedAllowanceV2.AUTHORITY,
+            DelegatedAllowanceV2.ALLOWANCE_ACCOUNT,
+        ),
+    )
+
+    fun revokeDelegatedV2(sender: ActivityResultSender) = submitDelegatedV2Control(
+        sender = sender,
+        action = "REVOKE",
+        instruction = DelegatedAllowanceV2.revoke(
+            DelegatedAllowanceV2.PROGRAM_ID,
+            DelegatedAllowanceV2.AUTHORITY,
+            DelegatedAllowanceV2.ALLOWANCE_ACCOUNT,
+            DelegatedAllowanceV2.SOURCE_TOKEN_ACCOUNT,
+        ),
+    )
+
+    private fun submitDelegatedV2Control(
+        sender: ActivityResultSender,
+        action: String,
+        instruction: com.solana.transaction.TransactionInstruction,
+    ) {
+        val connected = _state.value.walletAddress
+        if (connected != DelegatedAllowanceV2.AUTHORITY) {
+            val message = "This live control requires the allowance authority wallet ${DelegatedAllowanceV2.AUTHORITY}. Connected wallet does not control this Devnet evidence account."
+            _state.update { it.copy(v2StateMessage = message, error = message) }
+            logEvent("V2_CONTROL_BLOCKED", AllowanceState.BLOCKED, message = message)
+            return
+        }
+        viewModelScope.launch {
+            setLoading("Review the $action v2 transaction in your wallet…")
+            when (val result = walletAdapter.transact(sender) { authorization ->
+                val signer = SolanaPublicKey(authorization.accounts.first().publicKey)
+                check(signer.base58() == DelegatedAllowanceV2.AUTHORITY) {
+                    "Wallet account changed; expected the delegated v2 authority account"
+                }
+                val transaction = Message.Builder()
+                    .setRecentBlockhash(rpc.latestBlockhash())
+                    .addInstruction(instruction)
+                    .build()
+                    .toUnsignedTransaction()
+                Base58.encode(signAndSendTransactions(arrayOf(transaction.serialize())).signatures.first())
+            }) {
+                is TransactionResult.Success -> {
+                    val account = result.authResult.accounts.first()
+                    runCatching {
+                        persistConnection(
+                            publicKey = SolanaPublicKey(account.publicKey).base58(),
+                            accountLabel = account.accountLabel.orEmpty(),
+                            authToken = result.authResult.authToken,
+                        )
+                    }.onFailure {
+                        clearConnection()
+                    }
+                    _state.update {
+                        it.copy(
+                            loading = false,
+                            loadingMessage = "",
+                            walletAddress = SolanaPublicKey(account.publicKey).base58(),
+                            walletLabel = account.accountLabel.orEmpty(),
+                            walletSessionState = WalletSessionState.CONNECTED,
+                            v2ControlSignature = result.payload,
+                            v2StateMessage = "$action broadcast successfully. Reading the resulting state…",
+                            error = "",
+                        )
+                    }
+                    logEvent("V2_${action}_BROADCAST", AllowanceState.VERIFIED, message = "Live delegated v2 $action transaction broadcast", signature = result.payload)
+                    inspectDelegatedV2()
+                }
+                is TransactionResult.NoWalletFound -> fail(result.message, "V2_WALLET_ERROR")
+                is TransactionResult.Failure -> fail(result.message, "V2_CONTROL_ERROR")
+            }
+        }
     }
 
     fun dailyHabits(): DailyHabitsSnapshot = DailyHabitsEngine.snapshot(

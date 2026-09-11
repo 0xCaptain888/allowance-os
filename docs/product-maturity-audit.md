@@ -1,6 +1,6 @@
 # Product maturity audit
 
-Date: September 10, 2026
+Date: September 11, 2026
 
 Allowance OS is a strong hackathon proof and an increasingly credible Android reference client. It is not yet a production payment product. This audit deliberately separates shipped behavior from the architecture and operations a real commercial launch still requires.
 
@@ -9,7 +9,7 @@ Allowance OS is a strong hackathon proof and an increasingly credible Android re
 | Area | Current maturity | What is credible now | Remaining launch gate |
 | --- | ---: | --- | --- |
 | Core policy idea | 8.5/10 | Merchant, exact mint, decimals, integer raw amount, program, period and evidence boundaries | Validate the model with real merchants and users |
-| Android UX | 8.7/10 | Bilingual five-surface app, Daily Habits, upcoming charges, verified spend summaries, budget/anomaly alerts, local Pause, notifications, weekly report, MWA, and public AlphaBrief/v2 proof links | Live mobile broadcasting for all v2 controls, instrumented wallet flows, accessibility/device matrix and usability sessions |
+| Android UX | 9.0/10 | Bilingual five-surface app, Daily Habits, upcoming charges, verified spend summaries, budget/anomaly alerts, local Pause, notifications, weekly report, MWA, public AlphaBrief/v2 proof links, and authority-bound live v2 control review/broadcast path | Authority-wallet device validation, instrumented wallet flows, accessibility/device matrix and usability sessions |
 | Wallet security | 7.5/10 | No private-key custody; fail-closed Keystore session restoration and stale-identity clearing in v0.11.1 | Instrumented recovery tests, external mobile security review and compromised-device response |
 | Onchain enforcement | 9/10 | Public v1 proof plus deployed v2 authority-free settlement, exact binary match, immutable evidence, fail-closed block, pause/freeze/recovery, role rotation, and delegate-removing revoke | Independent audit, canonical asset deployment, multisig/timelock, monitored Mainnet rollout |
 | Merchant platform | 7.5/10 | Integer raw-unit SDK, canonical hashes, restart-safe reference persistence, idempotency, evidence replay protection, webhook replay windows and secret rotation | Transactional database, dashboard, delivery queue, rate limits and merchant authentication |
@@ -19,7 +19,7 @@ Allowance OS is a strong hackathon proof and an increasingly credible Android re
 
 ## P0 — required before calling it a mature payment app
 
-1. **Complete live v2 Android integration.** Android strictly decodes v2 state, encodes pause/unpause/revoke/operator-rotation instructions, and exposes public evidence. Add live allowance selection, transaction review, MWA broadcast, confirmation, and post-state inspection while distinguishing user, executor, verifier, and merchant roles.
+1. **Validate live v2 Android integration on an authority-owned allowance.** Android now strictly decodes v2 state, reviews and broadcasts pause/unpause/revoke through MWA, confirms the returned signature, and refreshes post-state while distinguishing user, executor, verifier, and merchant roles. The remaining gate is device validation with a non-terminal authority-owned Devnet allowance.
 2. **Harden governance and verification.** The deployed binary matches the public Ubuntu artifact, but the upgrade authority must move to a multisig/timelock after iteration and the Program needs independent review.
 3. **Deploy production asset configuration deliberately.** The public proof uses a project-created Devnet test mint. Canonical mint, decimals, merchant accounts, value caps, and network configuration must be reviewed before any Mainnet beta.
 4. **Operationalize recovery and verification.** Define incident handling, a lost-verifier emergency path, evidence-account retention economics, and delay/quorum policy for higher-value verification and unfreeze decisions.
@@ -65,7 +65,7 @@ AlphaBrief now provides the strongest product proof: real delivery, independent 
 Delegated settlement design + threat model [complete]
   → Program v2 implementation and tests [complete]
   → Devnet deployment + exact binary match + full control matrix [complete]
-  → Android live create / inspect / pause / revoke integration [next product gate]
+  → Android live create / inspect / pause / revoke integration [client path complete; authority-wallet validation next]
   → merchant SDK backed by transactional production storage
   → production signing + device QA
   → limited merchant/user pilot

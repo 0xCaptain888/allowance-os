@@ -33,6 +33,9 @@ data class DelegatedAllowanceSnapshot(
 object DelegatedAllowanceV2 {
     const val STATE_SIZE = 332
     const val PROGRAM_ID = "7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL"
+    const val ALLOWANCE_ACCOUNT = "9CC1YRBNYkDB1iBSZ4FgWcZvkxatrJQ7akcfXQcAjcbk"
+    const val AUTHORITY = "ETJL7fK6CkaYsjrfXm6NhyNcztes8PcZKJ6jK3xGgMXF"
+    const val SOURCE_TOKEN_ACCOUNT = "9JxQGW1dMBtpq2qoWubS24QKkfYxtySvavgtnzSGf4i7"
 
     fun parseState(data: ByteArray): DelegatedAllowanceSnapshot {
         require(data.size >= STATE_SIZE) { "Delegated allowance state is shorter than $STATE_SIZE bytes" }

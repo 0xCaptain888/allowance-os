@@ -76,6 +76,22 @@ class DevnetRpc(
         withRpcFailover { client -> programMatrix(client) }
     }
 
+    /** Read the deployed Delegated Settlement v2 allowance used by the public control matrix. */
+    suspend fun delegatedV2Allowance(): DelegatedAllowanceSnapshot = withContext(Dispatchers.IO) {
+        withRpcFailover { client ->
+            val response = client.getAccountInfo(
+                SolanaPublicKey(Base58.decode(DelegatedAllowanceV2.ALLOWANCE_ACCOUNT)),
+            )
+            val account = response.result
+                ?: error(response.error?.message ?: "Delegated v2 allowance was not found")
+            check(account.owner.base58() == DelegatedAllowanceV2.PROGRAM_ID) {
+                "Delegated v2 allowance is owned by an unexpected Program"
+            }
+            val data = account.data ?: error("Delegated v2 allowance contains no data")
+            DelegatedAllowanceV2.parseState(data)
+        }
+    }
+
     private suspend fun programMatrix(client: SolanaRpcClient): DevnetProgramMatrix {
         val signatures = listOf(
             CREATED_SIGNATURE,
