@@ -39,7 +39,7 @@ Build or install the Android app from `mobile/android`:
 10. On **Evidence**, run **Independent RPC Verification**, inspect the AlphaBrief live-commerce card, and open both settlement and freeze transactions.
 11. Copy the portable JSON receipt and Activity audit fingerprint; test reconnect and safe local-session reset without exposing a wallet key.
 
-The Android v0.15 source contains a strict 332-byte Delegated Allowance v2 state decoder plus pause, unpause, revoke, executor-rotation, and verifier-rotation instruction encoders. Its Evidence and Activity pages link directly to the AlphaBrief allowance, accepted/frozen evidence hashes, and public transactions. The codecs are tested; not every v2 authority control is wired to mobile broadcasting yet.
+The Android v0.16 source contains a strict 332-byte Delegated Allowance v2 state decoder plus authority-bound Pause, Unpause, and Revoke review/broadcast controls. Its Evidence and Activity pages link directly to the AlphaBrief allowance, accepted/frozen evidence hashes, and public transactions. Create, rotation, freeze/unfreeze, and delegated settlement remain operator flows; the public evidence allowance is already revoked.
 
 ## 4. Verify the real AlphaBrief chain
 
