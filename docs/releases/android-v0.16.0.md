@@ -23,6 +23,7 @@ Safety boundaries:
 - the allowance account owner is checked against the deployed v2 Program ID;
 - the public evidence allowance is already revoked, so no new public control transaction is claimed by this release;
 - all actions are Solana Devnet operations and may consume a small amount of Devnet SOL;
+- the app accepts a comma-separated `allowanceOsSolanaRpcUrls` Gradle property and fails over across distinct HTTP RPC endpoints;
 - no private key is held by the app.
 
 ## Verification
@@ -32,6 +33,7 @@ Safety boundaries:
 - Rust Program: 20 passed in the latest CI matrix;
 - `npm run preflight`: all checks READY;
 - `./gradlew testDebugUnitTest assembleDebug --no-daemon`: successful.
+- local APK: `allowance-os-0.16.0-debug.apk`, SHA-256 `5f4f6b9d16396ae5076737866ccac74ef2a68ca8422845c85607f69a7d93186c`.
 
 ## Truth boundary
 

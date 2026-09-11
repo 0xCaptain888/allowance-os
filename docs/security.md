@@ -29,7 +29,7 @@ The original v1 Program remains a separate historical proof. Delegated Settlemen
 - executor rotation requires the authority; verifier rotation requires the authority plus current verifier;
 - legacy v1 instruction discriminants remain stable.
 
-Remaining v2 limits: the verifier is a single configured signer rather than a quorum; evidence records intentionally remain rent-funded accounts with no pruning policy; the live asset is a project-created Devnet test mint rather than canonical USDC; the upgrade authority is a single development key; Android does not yet broadcast every v2 control; and the Program has not been independently audited.
+Remaining v2 limits: the verifier is a single configured signer rather than a quorum; evidence records intentionally remain rent-funded accounts with no pruning policy; the live asset is a project-created Devnet test mint rather than canonical USDC; the upgrade authority is a single development key; Android currently broadcasts only authority-bound Pause/Unpause/Revoke controls (create, rotation, freeze/unfreeze, and delegated settlement remain operator flows); and the Program has not been independently audited.
 
 ## Production requirements
 

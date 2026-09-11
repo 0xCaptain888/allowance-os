@@ -26,8 +26,14 @@ data class DevnetProgramMatrix(
     val message: String,
 )
 
+fun parseRpcEndpoints(raw: String): List<String> = raw
+    .split(',')
+    .map(String::trim)
+    .filter(String::isNotBlank)
+    .distinct()
+
 class DevnetRpc(
-    endpoints: List<String> = listOf(BuildConfig.SOLANA_RPC_URL),
+    endpoints: List<String> = parseRpcEndpoints(BuildConfig.SOLANA_RPC_URLS),
     private val attemptsPerEndpoint: Int = 3,
 ) {
     private val clients = endpoints.map(String::trim).filter(String::isNotBlank).distinct().map {

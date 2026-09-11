@@ -9,8 +9,8 @@
   "versionCode": 17,
   "versionName": "0.16.0",
   "artifact": "mobile/android/app/build/outputs/apk/debug/allowance-os-0.16.0-debug.apk",
-  "artifactSize": "18862838 bytes",
-  "sha256": "2c4898e6d84d330f5572e848d4fdeaeaeb7fc89831bad72ce192c192bcd02d72",
+  "artifactSize": "19134977 bytes",
+  "sha256": "5f4f6b9d16396ae5076737866ccac74ef2a68ca8422845c85607f69a7d93186c",
   "publicQaRelease": {
     "tag": "android-test-v0.15.0",
     "workflowRunId": 34481977096,

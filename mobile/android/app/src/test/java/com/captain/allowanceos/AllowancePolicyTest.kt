@@ -119,6 +119,14 @@ class AllowancePolicyTest {
     }
 
     @Test
+    fun rpcEndpointConfigurationIsTrimmedDeduplicatedAndRejectsEmptyEntries() {
+        assertEquals(
+            listOf("https://a.example", "https://b.example"),
+            parseRpcEndpoints(" https://a.example,https://b.example,https://a.example,, "),
+        )
+    }
+
+    @Test
     fun delegatedV2StateDecoderValidatesCapsRolesAndFlags() {
         val authority = SolanaPublicKey.from(DevnetRpc.SOURCE_OWNER)
         val merchant = SolanaPublicKey.from(DevnetRpc.MERCHANT_OWNER)
