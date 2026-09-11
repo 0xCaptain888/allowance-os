@@ -12,12 +12,12 @@
   "artifactSize": "18863018 bytes",
   "sha256": "3b5fa5b86fdb064d05f291f88f5515ed727e69406352211055a93141ea47e658",
   "publicQaRelease": {
-    "tag": "android-test-v0.16.0",
-    "workflowRunId": 34609756821,
-    "artifact": "allowance-os-0.16.0-debug.apk",
-    "artifactSize": "18862838 bytes",
-    "sha256": "fbc6e4e3e5c47d52fe38df8958675ee319bb553c6802fd1342f3e8c1a18d1caa",
-    "note": "The local and CI debug APK hashes differ because each environment uses its own debug signing key."
+    "tag": "android-test-v0.16.1",
+    "workflowRunId": null,
+    "artifact": "allowance-os-0.16.1-debug.apk",
+    "artifactSize": "18863018 bytes",
+    "sha256": "3b5fa5b86fdb064d05f291f88f5515ed727e69406352211055a93141ea47e658",
+    "note": "The public QA asset was uploaded from the clean local build; it is debug-signed and Devnet-only."
   },
   "truthBoundary": "This records the clean local v0.16.1 Android build plus the previous public CI QA artifact metadata. Neither APK is production-signed, a Solana transaction, or a deployed-program receipt."
 }

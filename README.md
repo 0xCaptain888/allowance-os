@@ -190,7 +190,7 @@ mobile/android/app/build/outputs/apk/debug/allowance-os-0.16.1-debug.apk
 
 Latest clean local v0.16.1 debug build SHA-256 is recorded in [`evidence/android-build.json`](evidence/android-build.json).
 
-Latest public QA asset: [`android-test-v0.16.0`](https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.16.0), CI SHA-256 `fbc6e4e3e5c47d52fe38df8958675ee319bb553c6802fd1342f3e8c1a18d1caa`. Local and CI debug hashes differ because each environment uses its own debug signing key. `android-v*` is reserved for protected production-signed releases; `android-test-v*` assets are explicitly labelled as Devnet QA builds.
+Latest public QA asset: [`android-test-v0.16.1`](https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.16.1), SHA-256 `3b5fa5b86fdb064d05f291f88f5515ed727e69406352211055a93141ea47e658`. This release contains the approved AO Monogram and is explicitly labelled as a debug-signed Devnet QA build. `android-v*` remains reserved for protected production-signed releases.
 
 See [`mobile/README.md`](mobile/README.md) for phone setup and [`docs/judge-guide.md`](docs/judge-guide.md) for the two-minute evaluation path.
 
