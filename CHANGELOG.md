@@ -1,5 +1,13 @@
 # Changelog
 
+## Android / SDK v0.16.1 — 2026-09-11
+
+- Replaced the generic launcher artwork with the AO Monogram brand mark across the Android launcher, public Demo favicon, Demo header, and README.
+- Updated the launcher background palette to the new charcoal / ivory / lime / cobalt system.
+- Built and verified a new debug-signed Devnet QA APK as version code `18` / version name `0.16.1`.
+
+The new Logo is a visual identity refresh only: protocol behavior, wallet boundaries, Devnet disclosures, and the evidence model are unchanged.
+
 ## Android / SDK v0.16.0 — 2026-09-11
 
 - Added a live Delegated Settlement v2 control surface in Android: RPC inspection, explicit transaction review, MWA broadcast, confirmation, and post-broadcast state refresh.

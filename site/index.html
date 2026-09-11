@@ -5,15 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Allowance OS — Payment Authorization for Web3 Services</title>
   <meta name="description" content="A non-custodial Solana Mobile control layer for bounded Web3 service payments, verifiable evidence, and explicit revocation." />
-  <meta name="theme-color" content="#07110f" />
+  <meta name="theme-color" content="#111419" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <style>
     :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #060810; color: #f7f8ff; }
     * { box-sizing: border-box; }
     body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 12% 0%, #242050 0, transparent 34rem), radial-gradient(circle at 85% 12%, #0d594c55 0, transparent 30rem), #060810; }
     main { max-width: 1160px; margin: 0 auto; padding: 20px 18px 72px; }
-    nav { position: sticky; top: 12px; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 52px; padding: 12px 14px; border: 1px solid #ffffff18; border-radius: 18px; background: #090d18dd; backdrop-filter: blur(18px); }
-    nav strong { letter-spacing: -.03em; font-size: 1.08rem; }
+    nav { position: sticky; top: 12px; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 52px; padding: 10px 14px; border: 1px solid #ffffff18; border-radius: 18px; background: #090d18dd; backdrop-filter: blur(18px); }
+    nav strong { display: inline-flex; align-items: center; gap: 10px; letter-spacing: -.03em; font-size: 1.08rem; }
+    .brand-mark { width: 34px; height: 34px; border-radius: 10px; display: block; }
     .links { display: flex; gap: 10px; flex-wrap: wrap; }
     a { color: #79e6c1; text-decoration: none; font-weight: 750; }
     .nav-link { border: 1px solid #2b3552; border-radius: 999px; padding: 8px 12px; font-size: .82rem; transition: .2s ease; }
@@ -78,7 +79,7 @@
 </head>
 <body>
   <main>
-    <nav><strong>Allowance OS · Android v0.16</strong><div class="links"><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os">GitHub</a><a class="nav-link" href="#live-commerce">Live AlphaBrief</a><a class="nav-link" href="https://explorer.solana.com/address/7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL?cluster=devnet">Delegated v2 Program</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/evidence/live-alphabrief-v2.json">Commercial Evidence</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/tree/main/mobile/android">Android MWA</a></div></nav>
+    <nav><strong><img class="brand-mark" src="favicon.svg" alt="" />Allowance OS · Android v0.16.1</strong><div class="links"><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os">GitHub</a><a class="nav-link" href="#live-commerce">Live AlphaBrief</a><a class="nav-link" href="https://explorer.solana.com/address/7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL?cluster=devnet">Delegated v2 Program</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/evidence/live-alphabrief-v2.json">Commercial Evidence</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/tree/main/mobile/android">Android MWA</a></div></nav>
     <section class="hero">
       <div><div class="eyebrow">Payment authorization for Web3 services</div><h1>Allowance OS</h1><p class="lede">One mobile control layer for AI subscriptions, research, trading signals, automation bots, and paid APIs. Approve a bounded policy—not an unlimited future.</p></div>
       <div class="card policy"><div class="row"><span class="muted">Active service</span><span id="heroService" class="value">AlphaBrief</span></div><div class="row"><span class="muted">Merchant</span><span id="heroMerchant" class="value">merchant:alphabrief</span></div><div class="row"><span class="muted">Per charge</span><span id="heroCharge" class="value">2 USDC</span></div><div class="row"><span class="muted">Period cap</span><span id="heroCap" class="value">8 USDC</span></div><div class="row"><span class="muted">Status</span><span class="pill verified">READY TEMPLATE</span></div></div>
