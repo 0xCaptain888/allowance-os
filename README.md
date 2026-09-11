@@ -1,6 +1,6 @@
 # Allowance OS
 
-<p><img src="site/favicon.svg" alt="Allowance OS AO Monogram" width="96" /></p>
+<p><img src="site/favicon-ao-v017.svg" alt="Allowance OS AO Monogram" width="96" /></p>
 
 > Approve once. Enforce every charge. Revoke anytime.
 

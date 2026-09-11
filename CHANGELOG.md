@@ -13,6 +13,7 @@
 - Kept Chinese as an optional saved preference while making English the default on a fresh install.
 - Rebuilt the public Judge Demo with the same AO palette, typography, protected-allowance hero, status semantics, control hierarchy, touch sizing, and mobile bottom navigation as the Android client.
 - Preserved the browser policy simulator, AlphaBrief commercial proof, and direct Solana RPC verification while visually separating simulated actions from live Devnet evidence.
+- Versioned the public AO Monogram favicon as `favicon-ao-v017.svg` to prevent stale browser and GitHub Pages favicon caching.
 
 This is a UX and information-architecture release. Protocol behavior, wallet custody boundaries, and existing Devnet evidence are unchanged.
 

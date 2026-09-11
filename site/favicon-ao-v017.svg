@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Allowance OS AO Monogram">
+  <rect width="512" height="512" rx="128" fill="#111419"/>
+  <path d="M119 369 188 143h64l69 226" fill="none" stroke="#F3F1E9" stroke-width="42" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M161 294h126" stroke="#C7F36B" stroke-width="31" stroke-linecap="round"/>
+  <path d="M330 171c43 0 75 30 75 74v92c0 43-32 74-75 74s-75-31-75-74v-92c0-44 32-74 75-74Z" fill="none" stroke="#5E74FF" stroke-width="31"/>
+  <circle cx="330" cy="245" r="10" fill="#F3F1E9"/>
+</svg>
