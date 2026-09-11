@@ -34,6 +34,7 @@ Safety boundaries:
 - `npm run preflight`: all checks READY;
 - `./gradlew testDebugUnitTest assembleDebug --no-daemon`: successful.
 - local APK: `allowance-os-0.16.0-debug.apk`, SHA-256 `5f4f6b9d16396ae5076737866ccac74ef2a68ca8422845c85607f69a7d93186c`.
+- public QA release: [`android-test-v0.16.0`](https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.16.0), CI APK SHA-256 `fbc6e4e3e5c47d52fe38df8958675ee319bb553c6802fd1342f3e8c1a18d1caa`.
 
 ## Truth boundary
 
