@@ -102,7 +102,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
     private val preferences = application.getSharedPreferences("allowance_os", 0)
     private val secureSession = SecureSessionStore(application)
     val preferredChinese: Boolean
-        get() = preferences.getBoolean(KEY_LANGUAGE_CHINESE, true)
+        get() = preferences.getBoolean(KEY_LANGUAGE_CHINESE, false)
     val hasCompletedOnboarding: Boolean
         get() = preferences.getBoolean(KEY_ONBOARDING_COMPLETE, false)
 

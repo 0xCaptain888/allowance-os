@@ -1,5 +1,19 @@
 # Changelog
 
+## Android / SDK v0.17.0 — 2026-09-11
+
+- Rebuilt Android around an English-first fintech control-center hierarchy instead of a long hackathon dashboard.
+- Added an AO Monogram product header, a high-signal active-allowance hero, and dedicated wallet/session status.
+- Reduced duplicate Home content so budget, next charge, anomaly state, and latest payment decision appear first.
+- Replaced Unicode navigation marks with accessible Material icons and renamed the final destination to Wallet.
+- Turned policy review into a visible Service → Budget → Evidence → Review sequence.
+- Redesigned VERIFIED, BLOCKED, FROZEN, and REVOKED results around user consequences such as wallet not opened and zero funds moved.
+- Removed decorative gradients from core cards, adopted the charcoal / ivory / lime / cobalt AO palette, and standardized spacing, radii, and 48dp-or-larger touch targets.
+- Added a centered 760dp content boundary for more credible tablet, landscape, and judge-screen presentation.
+- Kept Chinese as an optional saved preference while making English the default on a fresh install.
+
+This is a UX and information-architecture release. Protocol behavior, wallet custody boundaries, and existing Devnet evidence are unchanged.
+
 ## Android / SDK v0.16.1 — 2026-09-11
 
 - Replaced the generic launcher artwork with the AO Monogram brand mark across the Android launcher, public Demo favicon, Demo header, and README.

@@ -10,7 +10,7 @@
 
 Allowance OS is a Solana Mobile payment-authorization layer for Web3 services. It turns an open-ended wallet approval into a human-readable allowance with merchant, token, program, per-charge, period, expiry, and evidence boundaries—then applies that same model to AI subscriptions, paid research, trading signals, automation bots, and metered APIs.
 
-**v0.16.1 is the AO Monogram branding refresh on top of the v0.16.0 commercial proof:** a real 508-word report is delivered, content-hashed, checked by an independent verifier, settled by Delegated Settlement v2 without the subscriber signing the charge, and followed by a bad-output attempt that freezes the allowance with zero token movement. Android now presents the result through a Daily Habits safety dashboard and authority-bound Pause/Unpause/Revoke review and broadcast.
+**v0.17.0 rebuilds Android as an English-first fintech control center:** the first screen now prioritizes protected spend, remaining budget, next charge, wallet status, anomaly state, and the latest payment decision. The app uses the AO Monogram design system, accessible icon navigation, a four-step allowance review, consequence-led VERIFIED / BLOCKED / FROZEN states, and a dedicated Wallet & Verification destination. The underlying AlphaBrief commercial proof and Delegated Settlement v2 controls remain unchanged.
 
 **Delegated Settlement v2 is Devnet deployed and matrix-verified:** a user approves an allowance-scoped SPL delegate PDA once; later `ChargeDelegated` settlement requires the configured executor and independent verifier, enforces sequential nonces plus per-charge/period/lifetime caps, and does not include the user authority as a signer. Every accepted charge or freeze creates an immutable evidence PDA keyed by the full evidence hash. Read the [v2 specification](docs/delegated-settlement-v2.md) and [machine-readable live evidence](evidence/live-devnet-v2.json).
 
@@ -64,7 +64,7 @@ The **Seeker Integration Lab** also maps Allowance OS to apps featured by Solana
 | Surface | What it proves | Status |
 | --- | --- | --- |
 | [Public Judge Demo](https://0xcaptain888.github.io/allowance-os/) | Instant `VERIFIED` / `BLOCKED` / `FROZEN` policy replay | GitHub Pages deployment |
-| `mobile/android` | Bilingual native Android product with Daily Habits, upcoming charges, today/week spend, budget/anomaly alerts, local pause, delivery/payment timeline, notifications, weekly report, MWA, public v2 evidence, and authority-bound live v2 control review/broadcast | v0.16.1; 18 Android tests |
+| `mobile/android` | English-first, bilingual Android control center with protected-spend overview, upcoming charges, budget/anomaly alerts, four-step allowance review, consequence-led payment states, MWA, public v2 evidence, and authority-bound live v2 control review/broadcast | v0.17.0; 18 Android tests |
 | `program/` | Backward-compatible v1 plus deployed Delegated Settlement v2 with PDA authority, executor/verifier separation, immutable evidence records, governed role rotation, three-level caps, period rollover, recovery and SPL revoke | Devnet deployed; 20 Rust tests; full control matrix verified |
 | Solana Explorer | Connected Devnet wallet and wallet-broadcast authorization proof | Live signature captured |
 | [Deployed allowance program](https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet) | Program-enforced state transitions and settlement | Live `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED` evidence |
@@ -185,12 +185,12 @@ cd mobile/android
 The resulting APK is:
 
 ```text
-mobile/android/app/build/outputs/apk/debug/allowance-os-0.16.1-debug.apk
+mobile/android/app/build/outputs/apk/debug/allowance-os-0.17.0-debug.apk
 ```
 
-Latest clean local v0.16.1 debug build SHA-256 is recorded in [`evidence/android-build.json`](evidence/android-build.json).
+Latest clean local v0.17.0 debug build SHA-256 is recorded in [`evidence/android-build.json`](evidence/android-build.json).
 
-Latest public QA asset: [`android-test-v0.16.1`](https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.16.1), SHA-256 `3b5fa5b86fdb064d05f291f88f5515ed727e69406352211055a93141ea47e658`. This release contains the approved AO Monogram and is explicitly labelled as a debug-signed Devnet QA build. `android-v*` remains reserved for protected production-signed releases.
+Latest public QA asset: `android-test-v0.17.0` (published after the clean build recorded below). It is explicitly labelled as a debug-signed Devnet QA build. `android-v*` remains reserved for protected production-signed releases.
 
 See [`mobile/README.md`](mobile/README.md) for phone setup and [`docs/judge-guide.md`](docs/judge-guide.md) for the two-minute evaluation path.
 

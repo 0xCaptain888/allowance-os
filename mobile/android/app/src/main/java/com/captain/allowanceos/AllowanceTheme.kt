@@ -13,17 +13,20 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Icon
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -31,45 +34,61 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 internal val Ink = Color(0xFF060810)
 internal val Panel = Color(0xFF101525)
 internal val PanelRaised = Color(0xFF181F34)
-internal val Mint = Color(0xFF65F3C5)
-internal val Blue = Color(0xFF8CA7FF)
-internal val Violet = Color(0xFFB78CFF)
-internal val Cyan = Color(0xFF5DDCFF)
-internal val Amber = Color(0xFFFFCB72)
-internal val Rose = Color(0xFFFF759F)
-internal val White = Color(0xFFF7F8FF)
-internal val Muted = Color(0xFF9BA6BF)
-internal val Line = Color(0xFF29324A)
+internal val Mint = Color(0xFFC7F36B)
+internal val Blue = Color(0xFF5E74FF)
+internal val Violet = Color(0xFF9A8CFF)
+internal val Cyan = Color(0xFF73D9E8)
+internal val Amber = Color(0xFFFFC857)
+internal val Rose = Color(0xFFFF7A59)
+internal val White = Color(0xFFF3F1E9)
+internal val Muted = Color(0xFFAFB5C2)
+internal val Line = Color(0xFF2A3140)
 
 internal enum class AppPage { HOME, SERVICES, ALLOWANCES, ACTIVITY, EVIDENCE }
 
 @Composable
+internal fun AoMonogram(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier.clip(RoundedCornerShape(13.dp)).background(Color(0xFF111419)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painter = painterResource(com.captain.allowanceos.R.drawable.ic_ao_monogram),
+            contentDescription = "Allowance OS",
+            tint = Color.Unspecified,
+            modifier = Modifier.fillMaxSize().padding(3.dp),
+        )
+    }
+}
+
+@Composable
 internal fun PageColumn(content: @Composable ColumnScope.() -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-        content = content,
-    )
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        Column(
+            modifier = Modifier.fillMaxHeight().fillMaxWidth().widthIn(max = 760.dp)
+                .verticalScroll(rememberScrollState()).padding(horizontal = 18.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            content = content,
+        )
+    }
 }
 
 @Composable
 internal fun ProductCard(content: @Composable ColumnScope.() -> Unit) {
     Column(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(
-            Brush.linearGradient(listOf(Color(0xFF151C30), Color(0xFF0E1423))),
-        )
-            .border(1.dp, Line, RoundedCornerShape(24.dp)).padding(18.dp),
-        verticalArrangement = Arrangement.spacedBy(11.dp),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Panel)
+            .border(1.dp, Line, RoundedCornerShape(20.dp)).padding(18.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
         content = content,
     )
 }
@@ -91,7 +110,7 @@ internal fun SectionTitle(title: String, badge: String) {
 @Composable
 internal fun MetricCard(modifier: Modifier, value: String, unit: String, label: String, accent: Color) {
     Column(
-        modifier = modifier.clip(RoundedCornerShape(18.dp)).background(PanelRaised).padding(13.dp),
+        modifier = modifier.clip(RoundedCornerShape(16.dp)).background(PanelRaised).border(1.dp, Line, RoundedCornerShape(16.dp)).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
         Text(value, color = accent, fontSize = 20.sp, fontWeight = FontWeight.Black)
@@ -112,7 +131,7 @@ internal fun ValueRow(label: String, value: String) {
 @Composable
 internal fun PrimaryButton(label: String, onClick: () -> Unit) {
     Button(
-        modifier = Modifier.fillMaxWidth().height(50.dp),
+        modifier = Modifier.fillMaxWidth().height(52.dp),
         shape = RoundedCornerShape(14.dp),
         colors = ButtonDefaults.buttonColors(backgroundColor = Mint, contentColor = Ink),
         onClick = onClick,
@@ -122,7 +141,7 @@ internal fun PrimaryButton(label: String, onClick: () -> Unit) {
 @Composable
 internal fun SecondaryButton(modifier: Modifier, label: String, onClick: () -> Unit) {
     OutlinedButton(
-        modifier = modifier.height(46.dp),
+        modifier = modifier.height(50.dp),
         shape = RoundedCornerShape(13.dp),
         border = BorderStroke(1.dp, Line),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = White),
@@ -133,7 +152,7 @@ internal fun SecondaryButton(modifier: Modifier, label: String, onClick: () -> U
 @Composable
 internal fun StateAction(modifier: Modifier, label: String, color: Color, onClick: () -> Unit) {
     Button(
-        modifier = modifier.height(43.dp),
+        modifier = modifier.height(48.dp),
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(backgroundColor = color, contentColor = Ink),
         contentPadding = PaddingValues(horizontal = 4.dp),
@@ -144,18 +163,59 @@ internal fun StateAction(modifier: Modifier, label: String, color: Color, onClic
 @Composable
 internal fun DecisionCard(state: AllowanceUiState, chinese: Boolean) {
     val accent = stateColor(state.allowanceState)
+    val title = when (state.allowanceState) {
+        AllowanceState.IDLE -> t("准备检查", "Ready to check", chinese)
+        AllowanceState.VERIFIED -> t("可以继续付款", "Payment may proceed", chinese)
+        AllowanceState.BLOCKED -> t("付款未开始", "Payment never started", chinese)
+        AllowanceState.FROZEN -> t("授权已受控冻结", "Allowance contained", chinese)
+        AllowanceState.REVOKED -> t("授权已撤销", "Allowance revoked", chinese)
+    }
+    val consequence = when (state.allowanceState) {
+        AllowanceState.IDLE -> t("先运行付款前预检。", "Run the pre-payment check first.", chinese)
+        AllowanceState.VERIFIED -> t("预算、商户和证据检查通过。", "Budget, merchant, and evidence checks passed.", chinese)
+        AllowanceState.BLOCKED -> t("钱包未打开，资金移动为 0。", "Wallet not opened. Zero funds moved.", chinese)
+        AllowanceState.FROZEN -> t("坏结果被隔离，资金移动为 0。", "Bad output isolated. Zero funds moved.", chinese)
+        AllowanceState.REVOKED -> t("新的请求无法继续。", "No new request may proceed.", chinese)
+    }
     Column(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(17.dp)).background(accent.copy(alpha = 0.09f))
-            .border(1.dp, accent.copy(alpha = 0.45f), RoundedCornerShape(17.dp)).padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(accent.copy(alpha = 0.08f))
+            .border(1.dp, accent.copy(alpha = 0.55f), RoundedCornerShape(22.dp)).padding(18.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             StatusPill(state.allowanceState)
             Spacer(Modifier.weight(1f))
             Text("${"%.1f".format(state.requestedAmount)} USDC", color = White, fontWeight = FontWeight.Bold)
         }
-        Text(localizedReason(state, chinese), color = White, fontSize = 13.sp)
+        Text(title, color = White, fontSize = 22.sp, fontWeight = FontWeight.Black)
+        Text(consequence, color = accent, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        Text(localizedReason(state, chinese), color = Muted, fontSize = 12.sp)
         if (state.error.isNotBlank()) Notice(state.error, Rose)
+    }
+}
+
+@Composable
+internal fun ReviewSteps(active: Int, chinese: Boolean) {
+    val labels = listOf(
+        t("服务", "Service", chinese),
+        t("预算", "Budget", chinese),
+        t("证据", "Evidence", chinese),
+        t("审查", "Review", chinese),
+    )
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        labels.forEachIndexed { index, label ->
+            val selected = index + 1 <= active
+            Column(
+                modifier = Modifier.weight(1f).clip(RoundedCornerShape(13.dp))
+                    .background(if (selected) Color(0xFF25321A) else PanelRaised)
+                    .border(1.dp, if (selected) Mint.copy(alpha = .55f) else Line, RoundedCornerShape(13.dp))
+                    .padding(vertical = 9.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text("0${index + 1}", color = if (selected) Mint else Muted, fontSize = 9.sp, fontWeight = FontWeight.Black)
+                Text(label, color = if (selected) White else Muted, fontSize = 9.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+            }
+        }
     }
 }
 
@@ -174,7 +234,7 @@ internal fun ToggleRow(label: String, first: String, second: String, firstSelect
 private fun ToggleChoice(modifier: Modifier, label: String, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = modifier.clip(RoundedCornerShape(12.dp)).background(if (selected) Color(0xFF203C34) else PanelRaised)
-            .border(1.dp, if (selected) Mint else Line, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(vertical = 11.dp),
+            .border(1.dp, if (selected) Mint else Line, RoundedCornerShape(12.dp)).clickable(onClick = onClick).height(48.dp),
         contentAlignment = Alignment.Center,
     ) { Text(label, color = if (selected) Mint else Muted, fontSize = 11.sp, fontWeight = FontWeight.Black) }
 }
@@ -284,25 +344,26 @@ internal fun StatusPill(state: AllowanceState) {
 @Composable
 internal fun BottomBar(page: AppPage, chinese: Boolean, onSelect: (AppPage) -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().background(Panel).navigationBarsPadding().padding(horizontal = 10.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = Modifier.fillMaxWidth().background(Ink).navigationBarsPadding().padding(horizontal = 10.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        BottomItem(Modifier.weight(1f), "⌂", t("首页", "Home", chinese), page == AppPage.HOME) { onSelect(AppPage.HOME) }
-        BottomItem(Modifier.weight(1f), "◇", t("服务", "Services", chinese), page == AppPage.SERVICES) { onSelect(AppPage.SERVICES) }
-        BottomItem(Modifier.weight(1f), "◎", t("授权", "Allowances", chinese), page == AppPage.ALLOWANCES) { onSelect(AppPage.ALLOWANCES) }
-        BottomItem(Modifier.weight(1f), "≡", t("活动", "Activity", chinese), page == AppPage.ACTIVITY) { onSelect(AppPage.ACTIVITY) }
-        BottomItem(Modifier.weight(1f), "✓", t("证据", "Evidence", chinese), page == AppPage.EVIDENCE) { onSelect(AppPage.EVIDENCE) }
+        BottomItem(Modifier.weight(1f), R.drawable.ic_nav_home, t("首页", "Home", chinese), page == AppPage.HOME) { onSelect(AppPage.HOME) }
+        BottomItem(Modifier.weight(1f), R.drawable.ic_nav_services, t("服务", "Services", chinese), page == AppPage.SERVICES) { onSelect(AppPage.SERVICES) }
+        BottomItem(Modifier.weight(1f), R.drawable.ic_nav_allowance, t("授权", "Allowances", chinese), page == AppPage.ALLOWANCES) { onSelect(AppPage.ALLOWANCES) }
+        BottomItem(Modifier.weight(1f), R.drawable.ic_nav_activity, t("活动", "Activity", chinese), page == AppPage.ACTIVITY) { onSelect(AppPage.ACTIVITY) }
+        BottomItem(Modifier.weight(1f), R.drawable.ic_nav_wallet, t("钱包", "Wallet", chinese), page == AppPage.EVIDENCE) { onSelect(AppPage.EVIDENCE) }
     }
 }
 
 @Composable
-private fun BottomItem(modifier: Modifier, icon: String, label: String, selected: Boolean, onClick: () -> Unit) {
+private fun BottomItem(modifier: Modifier, iconRes: Int, label: String, selected: Boolean, onClick: () -> Unit) {
     Column(
-        modifier = modifier.clip(RoundedCornerShape(14.dp)).background(if (selected) Color(0xFF203C34) else Color.Transparent)
-            .clickable(onClick = onClick).padding(vertical = 8.dp),
+        modifier = modifier.clip(RoundedCornerShape(16.dp)).background(if (selected) Color(0xFF25321A) else Color.Transparent)
+            .clickable(onClick = onClick).padding(vertical = 9.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(icon, color = if (selected) Mint else Muted, fontWeight = FontWeight.Black, fontSize = 13.sp)
+        Icon(painterResource(iconRes), contentDescription = label, tint = if (selected) Mint else Muted, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.height(3.dp))
         Text(label, color = if (selected) Mint else Muted, fontWeight = if (selected) FontWeight.Black else FontWeight.Medium, fontSize = 10.sp, maxLines = 1)
     }
 }

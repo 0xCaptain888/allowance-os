@@ -16,8 +16,8 @@ android {
         applicationId 'com.captain.allowanceos'
         minSdk 27
         targetSdk 37
-        versionCode 18
-        versionName '0.16.1'
+        versionCode 19
+        versionName '0.17.0'
 
         def solanaRpcUrls = providers.gradleProperty('allowanceOsSolanaRpcUrls')
             .orElse(providers.gradleProperty('allowanceOsSolanaRpcUrl').orElse('https://api.devnet.solana.com')).get()

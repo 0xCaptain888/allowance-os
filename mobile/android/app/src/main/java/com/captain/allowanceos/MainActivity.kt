@@ -159,10 +159,7 @@ private fun AppHeader(chinese: Boolean, onLanguageToggle: () -> Unit) {
         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier = Modifier.size(42.dp).clip(RoundedCornerShape(13.dp)).background(Mint),
-            contentAlignment = Alignment.Center,
-        ) { Text("A", color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Black) }
+        AoMonogram(Modifier.size(42.dp))
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text("Allowance OS · v${BuildConfig.VERSION_NAME}", color = White, fontSize = 18.sp, fontWeight = FontWeight.Black)
@@ -178,9 +175,58 @@ private fun AppHeader(chinese: Boolean, onLanguageToggle: () -> Unit) {
         }
         Spacer(Modifier.width(8.dp))
         Box(
-            modifier = Modifier.clip(RoundedCornerShape(10.dp)).border(1.dp, Line, RoundedCornerShape(10.dp))
-                .clickable(onClick = onLanguageToggle).padding(horizontal = 10.dp, vertical = 7.dp),
+            modifier = Modifier.height(48.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, Line, RoundedCornerShape(12.dp))
+                .clickable(onClick = onLanguageToggle).padding(horizontal = 12.dp),
+            contentAlignment = Alignment.Center,
         ) { Text(if (chinese) "EN" else "中文", color = White, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
+    }
+}
+
+@Composable
+private fun ControlCenterHero(
+    state: AllowanceUiState,
+    activeTemplate: CommercialServiceTemplate,
+    habits: DailyHabitsSnapshot,
+    chinese: Boolean,
+) {
+    val remaining = (activeTemplate.periodCap - habits.weekSpend).coerceAtLeast(0.0)
+    Column(
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp))
+            .background(Color(0xFF151A1F)).border(1.dp, Mint.copy(alpha = 0.38f), RoundedCornerShape(24.dp)).padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Row(verticalAlignment = Alignment.Top) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(t("当前授权", "ACTIVE ALLOWANCE", chinese), color = Muted, fontSize = 11.sp, fontWeight = FontWeight.Black)
+                Text(if (chinese) activeTemplate.nameZh else activeTemplate.name, color = White, fontSize = 23.sp, fontWeight = FontWeight.Black)
+                Text(short(activeTemplate.merchant), color = Muted, fontSize = 12.sp)
+            }
+            StatusPill(state.allowanceState)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            HeroMetric(Modifier.weight(1f), "${"%.2f".format(habits.weekSpend)}", t("本周已用", "SPENT THIS WEEK", chinese), Mint)
+            HeroMetric(Modifier.weight(1f), "${"%.2f".format(remaining)}", t("剩余额度", "REMAINING", chinese), Blue)
+            HeroMetric(Modifier.weight(1f), "${"%.2f".format(activeTemplate.perCharge)}", t("下一笔", "NEXT CHARGE", chinese), Amber)
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(8.dp).background(if (state.walletAddress.isBlank()) Amber else Mint, CircleShape))
+            Spacer(Modifier.width(8.dp))
+            Text(
+                if (state.walletAddress.isBlank()) t("连接钱包后可发布授权证据", "Connect a wallet to publish authorization evidence", chinese)
+                else t("钱包已连接 · 证据检查仍在付款前执行", "Wallet connected · evidence checks still run before payment", chinese),
+                color = Muted,
+                fontSize = 12.sp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun HeroMetric(modifier: Modifier, value: String, label: String, accent: Color) {
+    Column(modifier = modifier.clip(RoundedCornerShape(14.dp)).background(Color(0xFF20262B)).padding(11.dp)) {
+        Text(value, color = accent, fontSize = 19.sp, fontWeight = FontWeight.Black)
+        Text("TEST", color = White, fontSize = 9.sp, fontWeight = FontWeight.Black)
+        Text(label, color = Muted, fontSize = 9.sp, maxLines = 2)
     }
 }
 
@@ -196,18 +242,14 @@ private fun OverviewPage(
     val activeTemplate = CommercialCatalog.byId(state.selectedServiceId)
     val habits = viewModel.dailyHabits()
     PageColumn {
-        Text(t("Daily Habits · 每日资金安全", "Daily Habits · money safety", chinese), color = White, fontSize = 30.sp, fontWeight = FontWeight.Black)
+        Text(t("控制中心", "Control Center", chinese), color = White, fontSize = 30.sp, fontWeight = FontWeight.Black)
         Text(
-            t("先看今天会花什么、哪里接近预算、服务是否真正交付，再决定是否继续付款。", "See what may charge, what is nearing budget, and what was actually delivered before more money moves.", chinese),
+            t("付款前看清预算，付款后验证交付。", "See the budget before payment. Verify delivery after payment.", chinese),
             color = Muted,
             fontSize = 15.sp,
         )
 
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            MetricCard(Modifier.weight(1f), "%.2f".format(habits.todaySpend), t("今日", "TODAY", chinese), "TEST", Mint)
-            MetricCard(Modifier.weight(1f), "%.2f".format(habits.weekSpend), t("本周", "THIS WEEK", chinese), "TEST", Blue)
-            MetricCard(Modifier.weight(1f), "%.2f".format(habits.blockedSpend), t("已拦截", "BLOCKED", chinese), "TEST", Amber)
-        }
+        ControlCenterHero(state, activeTemplate, habits, chinese)
 
         ProductCard {
             SectionTitle(t("即将扣款", "UPCOMING CHARGES", chinese), t("预计 · 需证据", "PROJECTED · EVIDENCE", chinese))
@@ -258,6 +300,18 @@ private fun OverviewPage(
             SecondaryButton(Modifier.fillMaxWidth(), t("运行每日安全检查并发送提醒", "Run daily safety check & notify", chinese)) {
                 viewModel.runDailySafetyCheck()
             }
+        }
+
+        ProductCard {
+            SectionTitle(t("最新付款决策", "LATEST PAYMENT DECISION", chinese), t("付款前执行", "BEFORE WALLET", chinese))
+            Text(t("检查一个安全请求，或故意触发预算和证据失败。", "Check a safe request or deliberately trigger budget and evidence failures.", chinese), color = Muted, fontSize = 13.sp)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                StateAction(Modifier.weight(1f), "VERIFIED", Mint) { viewModel.runVerified() }
+                StateAction(Modifier.weight(1f), "BLOCKED", Amber) { viewModel.runBlocked() }
+                StateAction(Modifier.weight(1f), "FROZEN", Rose) { viewModel.runFrozen() }
+            }
+            DecisionCard(state, chinese)
+            SecondaryButton(Modifier.fillMaxWidth(), t("打开完整策略审查", "Open full allowance review", chinese)) { navigate(AppPage.ALLOWANCES) }
         }
 
         ProductCard {
@@ -343,78 +397,8 @@ private fun OverviewPage(
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            MetricCard(Modifier.weight(1f), "5", t("模板", "TEMPLATES", chinese), t("商业场景", "USE CASES", chinese), Mint)
-            MetricCard(Modifier.weight(1f), "55", "USDC", t("组合预算", "CONTROLLED", chinese), Blue)
-            MetricCard(Modifier.weight(1f), "4", "GUARDS", t("每笔请求", "PER REQUEST", chinese), Amber)
-        }
-
-        ProductCard {
-            SectionTitle(t("服务目录", "SERVICE CATALOG", chinese), t("可立即试用", "READY", chinese))
-            Text(t("从可复用策略开始，而不是每次重新理解授权风险。", "Start from reusable policies instead of rebuilding payment safety for every app.", chinese), color = Muted, fontSize = 13.sp)
-            Row(
-                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                CommercialCatalog.templates.forEach { template ->
-                    ServiceMiniCard(template, state.selectedServiceId == template.id, chinese) {
-                        viewModel.selectCommercialTemplate(template.id)
-                    }
-                }
-            }
-            TextButton(onClick = { navigate(AppPage.SERVICES) }, contentPadding = PaddingValues(0.dp)) {
-                Text(t("查看全部服务与 Seeker 接入蓝图  →", "Explore services and Seeker blueprints  →", chinese), color = Mint, fontWeight = FontWeight.Bold)
-            }
-        }
-
-        ProductCard {
-            SectionTitle(t("风险概览", "RISK SNAPSHOT", chinese), t("可审计", "AUDITABLE", chinese))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                MetricCard(Modifier.weight(1f), "${state.auditEvents.count { it.state == AllowanceState.VERIFIED }}", "PASS", t("已通过", "VERIFIED", chinese), Mint)
-                MetricCard(Modifier.weight(1f), "${state.auditEvents.count { it.state == AllowanceState.BLOCKED }}", "STOP", t("已拦截", "BLOCKED", chinese), Amber)
-                MetricCard(Modifier.weight(1f), "${state.auditEvents.count { it.state == AllowanceState.FROZEN }}", "HOLD", t("已冻结", "FROZEN", chinese), Rose)
-            }
-            TextButton(onClick = { navigate(AppPage.ACTIVITY) }, contentPadding = PaddingValues(0.dp)) {
-                Text(t("查看完整活动记录  →", "View full activity log  →", chinese), color = Mint, fontWeight = FontWeight.Bold)
-            }
-        }
-
-        ProductCard {
-            SectionTitle(t("当前授权草案", "ACTIVE ALLOWANCE DRAFT", chinese), t("可撤销", "REVOCABLE", chinese))
-            Text(if (chinese) activeTemplate.nameZh else activeTemplate.name, color = White, fontSize = 21.sp, fontWeight = FontWeight.Black)
-            Text(activeTemplate.merchant, color = Muted, fontSize = 13.sp)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TinyTag(activeTemplate.token, Blue)
-                TinyTag(t("证据必需", "EVIDENCE REQUIRED", chinese), Mint)
-                TinyTag(activeTemplate.riskTier, if (activeTemplate.riskTier == "HIGH") Rose else Amber)
-            }
-            Divider(color = Line)
-            Text(t("单笔额度占周期上限", "Per-charge share of cycle cap", chinese), color = Muted, fontSize = 12.sp)
-            LinearProgressIndicator(
-                progress = (activeTemplate.perCharge / activeTemplate.periodCap).toFloat(),
-                modifier = Modifier.fillMaxWidth().height(7.dp).clip(RoundedCornerShape(8.dp)),
-                color = Mint,
-                backgroundColor = Line,
-            )
-            ValueRow(t("策略哈希", "Policy hash", chinese), short(viewModel.policyHash))
-            ValueRow(t("周期", "Billing", chinese), if (chinese) activeTemplate.billingPeriodZh else activeTemplate.billingPeriod)
-            TextButton(onClick = { navigate(AppPage.ALLOWANCES) }, contentPadding = PaddingValues(0.dp)) {
-                Text(t("审查并测试授权策略  →", "Review and test allowance  →", chinese), color = Mint, fontWeight = FontWeight.Bold)
-            }
-        }
-
-        ProductCard {
-            SectionTitle(t("快速验证矩阵", "QUICK VERIFICATION MATRIX", chinese), "LIVE UI")
-            Text(t("点击任一结果，查看策略引擎如何处理请求。", "Replay a request and inspect how the policy engine handles it.", chinese), color = Muted, fontSize = 13.sp)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StateAction(Modifier.weight(1f), "VERIFIED", Mint) { viewModel.runVerified() }
-                StateAction(Modifier.weight(1f), "BLOCKED", Amber) { viewModel.runBlocked() }
-                StateAction(Modifier.weight(1f), "FROZEN", Rose) { viewModel.runFrozen() }
-            }
-            SecondaryButton(Modifier.fillMaxWidth(), t("评委模式：一次生成三种结果", "Judge mode: generate all three outcomes", chinese)) {
-                viewModel.runJudgeDemo()
-                navigate(AppPage.ACTIVITY)
-            }
-            DecisionCard(state, chinese)
+            SecondaryButton(Modifier.weight(1f), t("浏览服务", "Browse services", chinese)) { navigate(AppPage.SERVICES) }
+            SecondaryButton(Modifier.weight(1f), t("查看活动", "View activity", chinese)) { navigate(AppPage.ACTIVITY) }
         }
         Spacer(Modifier.height(12.dp))
     }
@@ -435,9 +419,7 @@ private fun ServiceMiniCard(
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
         Box(
-            modifier = Modifier.size(34.dp).clip(RoundedCornerShape(11.dp)).background(
-                Brush.linearGradient(listOf(Violet, Blue)),
-            ),
+            modifier = Modifier.size(34.dp).clip(RoundedCornerShape(11.dp)).background(serviceAccent(template.category)),
             contentAlignment = Alignment.Center,
         ) { Text(template.icon, color = White, fontSize = 10.sp, fontWeight = FontWeight.Black) }
         Text(if (chinese) template.nameZh else template.name, color = White, fontSize = 13.sp, fontWeight = FontWeight.Black, maxLines = 2)
@@ -487,9 +469,7 @@ private fun ServicesPage(
             ProductCard {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
-                        modifier = Modifier.size(48.dp).clip(RoundedCornerShape(15.dp)).background(
-                            Brush.linearGradient(listOf(Violet, Blue, Cyan)),
-                        ),
+                        modifier = Modifier.size(48.dp).clip(RoundedCornerShape(15.dp)).background(serviceAccent(template.category)),
                         contentAlignment = Alignment.Center,
                     ) { Text(template.icon, color = White, fontSize = 12.sp, fontWeight = FontWeight.Black) }
                     Spacer(Modifier.width(12.dp))
@@ -553,9 +533,10 @@ private fun PolicyPage(state: AllowanceUiState, viewModel: AllowanceViewModel, s
     PageColumn {
         Text(t("授权中心", "Allowance center", chinese), color = White, fontSize = 30.sp, fontWeight = FontWeight.Black)
         Text(t("审查服务预算与证据边界，再决定是否允许钱包签名。", "Review service budgets and evidence boundaries before the wallet may sign.", chinese), color = Muted)
+        ReviewSteps(active = 4, chinese = chinese)
 
         ProductCard {
-            SectionTitle(t("当前服务", "CURRENT SERVICE", chinese), "READY TEMPLATE")
+            SectionTitle(t("01 · 当前服务", "01 · SERVICE", chinese), "READY TEMPLATE")
             Text(if (chinese) template.nameZh else template.name, color = White, fontSize = 22.sp, fontWeight = FontWeight.Black)
             Text(if (chinese) template.summaryZh else template.summary, color = Muted, fontSize = 13.sp)
             ValueRow(t("商户", "Merchant", chinese), template.merchant)
@@ -564,7 +545,7 @@ private fun PolicyPage(state: AllowanceUiState, viewModel: AllowanceViewModel, s
         }
 
         ProductCard {
-            SectionTitle(t("本地请求模拟器", "LOCAL REQUEST SIMULATOR", chinese), t("仅展示", "DISPLAY ONLY", chinese))
+            SectionTitle(t("02 · 预算与请求", "02 · BUDGET", chinese), t("仅展示", "DISPLAY ONLY", chinese))
             Notice(
                 t(
                     "滑块金额和周期支出只用于本地策略演示，不是链上余额或真实账务。真实结算必须读取 Token Mint、Decimals 和整数 raw units。",
@@ -609,8 +590,15 @@ private fun PolicyPage(state: AllowanceUiState, viewModel: AllowanceViewModel, s
                 fontSize = 12.sp,
             )
             Divider(color = Line)
+            Text(t("03 · 证据条件", "03 · EVIDENCE", chinese), color = Muted, fontSize = 11.sp, fontWeight = FontWeight.Black)
             ToggleRow(t("商户身份", "Merchant identity", chinese), t("可信", "TRUSTED", chinese), t("不匹配", "MISMATCH", chinese), trustedMerchant) { trustedMerchant = it }
             ToggleRow(t("结果证据", "Result evidence", chinese), t("已提供", "PRESENT", chinese), t("缺失", "MISSING", chinese), evidencePresent) { evidencePresent = it }
+            Divider(color = Line)
+            Text(t("04 · 最终审查", "04 · REVIEW", chinese), color = Muted, fontSize = 11.sp, fontWeight = FontWeight.Black)
+            ValueRow(t("服务", "Service", chinese), if (chinese) template.nameZh else template.name)
+            ValueRow(t("单笔上限", "Per-charge cap", chinese), "${template.perCharge} ${template.token}")
+            ValueRow(t("周期上限", "Period cap", chinese), "${template.periodCap} ${template.token}")
+            ValueRow(t("交付证明", "Delivery proof", chinese), t("付款前必须通过", "Required before payment", chinese))
             PrimaryButton(t("运行策略预检", "Run policy pre-flight", chinese)) {
                 viewModel.evaluateCustom(amount.toDouble(), trustedMerchant, evidencePresent, periodSpent.toDouble())
             }
@@ -719,8 +707,37 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
     val uriHandler = LocalUriHandler.current
     val clipboard = LocalClipboardManager.current
     PageColumn {
-        Text(t("证据中心", "Evidence center", chinese), color = White, fontSize = 30.sp, fontWeight = FontWeight.Black)
-        Text(t("把策略决定、钱包授权与链上证明拆开验证。", "Verify policy decisions, wallet authorization, and onchain proof as separate layers.", chinese), color = Muted)
+        Text(t("钱包与验证", "Wallet & verification", chinese), color = White, fontSize = 30.sp, fontWeight = FontWeight.Black)
+        Text(t("管理钱包会话，并独立验证策略、授权和链上证明。", "Manage the wallet session and independently verify policy, authorization, and onchain proof.", chinese), color = Muted)
+
+        ProductCard {
+            val walletStatus = when (state.walletSessionState) {
+                WalletSessionState.CONNECTED -> t("已授权", "AUTHORIZED", chinese)
+                WalletSessionState.REAUTH_REQUIRED -> t("需要重新授权", "REAUTH REQUIRED", chinese)
+                WalletSessionState.DISCONNECTED -> t("未连接", "DISCONNECTED", chinese)
+            }
+            SectionTitle(t("钱包会话", "WALLET SESSION", chinese), walletStatus)
+            if (state.walletAddress.isBlank()) {
+                Text(t("连接 Phantom 或其他兼容 MWA 的钱包。私钥始终留在钱包中。", "Connect Phantom or another MWA-compatible wallet. Private keys always remain in the wallet.", chinese), color = Muted, fontSize = 13.sp)
+                PrimaryButton(t("连接钱包", "Connect wallet", chinese)) { viewModel.connect(sender) }
+            } else {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(t("Solana Devnet", "SOLANA DEVNET", chinese), color = Muted, fontSize = 11.sp, fontWeight = FontWeight.Black)
+                        Text("${state.solBalance?.let { "%.4f".format(it) } ?: "—"} SOL", color = White, fontSize = 28.sp, fontWeight = FontWeight.Black)
+                    }
+                    StatusDot(t("已加密保存", "SECURE SESSION", chinese))
+                }
+                ValueRow(t("地址", "Address", chinese), short(state.walletAddress))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SecondaryButton(Modifier.weight(1f), t("复制", "Copy", chinese)) { clipboard.setText(AnnotatedString(state.walletAddress)) }
+                    SecondaryButton(Modifier.weight(1f), t("刷新", "Refresh", chinese)) { viewModel.refreshBalance() }
+                }
+                TextButton(onClick = { viewModel.forgetLocalConnection() }, contentPadding = PaddingValues(0.dp)) {
+                    Text(t("清除本地钱包会话", "Forget local wallet session", chinese), color = Rose, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
 
         ProductCard {
             SectionTitle(t("最新证明", "LATEST PROOF", chinese), if (state.signature.isBlank()) t("待生成", "PENDING", chinese) else "LIVE DEVNET")
@@ -1045,6 +1062,14 @@ private fun AuditEventRow(event: AuditEvent, chinese: Boolean) {
         }
         Text(date, color = Muted, fontSize = 10.sp)
     }
+}
+
+private fun serviceAccent(category: ServiceCategory): Color = when (category) {
+    ServiceCategory.AGENT -> Blue
+    ServiceCategory.RESEARCH -> Mint
+    ServiceCategory.SIGNALS -> Cyan
+    ServiceCategory.AUTOMATION -> Violet
+    ServiceCategory.API -> Amber
 }
 
 private fun eventTitle(kind: String, chinese: Boolean): String = when (kind) {
