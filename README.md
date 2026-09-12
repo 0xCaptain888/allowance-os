@@ -153,7 +153,7 @@ The Android app is not a mockup. It uses Solana Mobile's official `mobile-wallet
 - an explicitly unofficial Seeker integration lab covering service subscriptions, games, commerce, fitness, and DeFi automation;
 - persistent Activity Log with decision counts, wallet events, and error history;
 - portable JSON Activity Log export with a SHA-256 audit fingerprint;
-- `Connect Phantom / MWA Wallet`;
+- `Connect Solflare Wallet / MWA Wallet` on the Home control-center entry point;
 - reconnect, balance refresh, address copy, and safe local-session reset;
 - Solana Devnet authorization;
 - wallet public-key and SOL-balance display;

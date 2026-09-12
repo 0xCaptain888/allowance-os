@@ -365,11 +365,11 @@ private fun OverviewPage(
             }
             SectionTitle(t("钱包授权", "WALLET AUTHORIZATION", chinese), walletStatus)
             if (state.walletAddress.isBlank()) {
-                Text(t("连接 Phantom 或任意 MWA 钱包，为多个服务创建统一授权。", "Connect Phantom or any MWA wallet to control multiple services from one place.", chinese), color = Muted)
+                Text(t("连接 Solflare Wallet 或任意 MWA 钱包，为多个服务创建统一授权。", "Connect Solflare Wallet or any MWA wallet to control multiple services from one place.", chinese), color = Muted)
                 if (state.walletSessionState == WalletSessionState.REAUTH_REQUIRED) {
                     Notice(t("已保存的加密会话无法恢复。旧地址已从本地连接状态中清除，请重新授权。", "The encrypted session could not be restored. The stale local identity was cleared; reauthorize the wallet.", chinese), Amber)
                 }
-                PrimaryButton(t("连接 Phantom / MWA 钱包", "Connect Phantom / MWA wallet", chinese)) { viewModel.connect(sender) }
+                PrimaryButton(t("连接 Solflare Wallet / MWA 钱包", "Connect Solflare Wallet / MWA wallet", chinese)) { viewModel.connect(sender) }
             } else {
                 Row(verticalAlignment = Alignment.Bottom) {
                     Column(modifier = Modifier.weight(1f)) {
@@ -392,7 +392,7 @@ private fun OverviewPage(
                 TextButton(onClick = { viewModel.forgetLocalConnection() }, contentPadding = PaddingValues(0.dp)) {
                     Text(t("清除本地钱包会话", "Forget local wallet session", chinese), color = Rose, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
-                Text(t("清除本地会话不会改变 Phantom 资产、私钥或链上状态。", "Forgetting this local session never changes Phantom funds, keys, or onchain state.", chinese), color = Muted, fontSize = 11.sp)
+                Text(t("清除本地会话不会改变 Solflare Wallet 资产、私钥或链上状态。", "Forgetting this local session never changes Solflare Wallet funds, keys, or onchain state.", chinese), color = Muted, fontSize = 11.sp)
             }
         }
 

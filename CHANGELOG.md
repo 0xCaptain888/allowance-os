@@ -1,5 +1,10 @@
 # Changelog
 
+## Android / SDK v0.17.1 — 2026-09-12
+
+- Updated the Home wallet entry point to lead with Solflare Wallet while retaining compatibility with any MWA wallet.
+- Clarified the local-session copy so wallet custody and onchain state are not tied to a single provider.
+
 ## Android / SDK v0.17.0 — 2026-09-11
 
 - Rebuilt Android around an English-first fintech control-center hierarchy instead of a long hackathon dashboard.
