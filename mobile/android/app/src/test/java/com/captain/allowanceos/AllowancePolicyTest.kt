@@ -24,6 +24,30 @@ class AllowancePolicyTest {
     }
 
     @Test
+    fun commercialMobileSettlementUsesARealPositiveTransferAndDistinctMerchant() {
+        assertTrue(AlphaBriefLiveEvidence.MOBILE_SETTLEMENT_LAMPORTS > 0L)
+        assertEquals(
+            AlphaBriefLiveEvidence.MOBILE_SETTLEMENT_MERCHANT,
+            SolanaPublicKey.from(AlphaBriefLiveEvidence.MOBILE_SETTLEMENT_MERCHANT).base58(),
+        )
+        assertNotEquals(
+            "D3XJqkeFiPNtuwKkyeJfVG1Gjvi88AV6fiNs29ukjKm6",
+            AlphaBriefLiveEvidence.MOBILE_SETTLEMENT_MERCHANT,
+        )
+        assertEquals(64, AlphaBriefLiveEvidence.ACCEPTED_EVIDENCE_HASH.length)
+    }
+
+    @Test
+    fun judgeRunKeepsSimulationRpcAndWalletApprovalInExplicitOrder() {
+        assertTrue(JudgeRunStage.VERIFIED.ordinal < JudgeRunStage.BLOCKED.ordinal)
+        assertTrue(JudgeRunStage.BLOCKED.ordinal < JudgeRunStage.FROZEN.ordinal)
+        assertTrue(JudgeRunStage.FROZEN.ordinal < JudgeRunStage.LIVE_PROOF.ordinal)
+        assertTrue(JudgeRunStage.LIVE_PROOF.ordinal < JudgeRunStage.PROGRAM_MATRIX.ordinal)
+        assertTrue(JudgeRunStage.PROGRAM_MATRIX.ordinal < JudgeRunStage.WALLET_APPROVAL.ordinal)
+        assertTrue(JudgeRunStage.WALLET_APPROVAL.ordinal < JudgeRunStage.COMPLETE.ordinal)
+    }
+
+    @Test
     fun validChargeIsVerified() {
         val decision = PolicyEngine.evaluate(policy, 1.0, policy.merchant, "evidence")
         assertEquals(AllowanceState.VERIFIED, decision.state)

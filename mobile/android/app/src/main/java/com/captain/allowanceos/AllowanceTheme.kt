@@ -52,8 +52,8 @@ internal val Cyan = Color(0xFF73D9E8)
 internal val Amber = Color(0xFFFFC857)
 internal val Rose = Color(0xFFFF7A59)
 internal val White = Color(0xFFF3F1E9)
-internal val Muted = Color(0xFFAFB5C2)
-internal val Line = Color(0xFF2A3140)
+internal val Muted = Color(0xFFC8CDD7)
+internal val Line = Color(0xFF384153)
 
 internal enum class AppPage { HOME, SERVICES, ALLOWANCES, ACTIVITY, EVIDENCE }
 
@@ -297,7 +297,7 @@ internal fun EmptyProof(chinese: Boolean) {
         Text("◇", color = Mint, fontSize = 32.sp)
         Text(t("还没有真实链上签名", "No live onchain signature yet", chinese), color = White, fontWeight = FontWeight.Bold)
         Text(
-            t("完成 MWA 授权并发布 Devnet Memo 后，证明会显示在这里。", "Authorize through MWA and publish a Devnet Memo to populate this evidence card.", chinese),
+            t("通过 MWA 批准一笔 AlphaBrief Devnet 微结算后，交易和 RPC 核验会显示在这里。", "Approve an AlphaBrief Devnet micro-settlement through MWA to populate this card with its transaction and RPC verification.", chinese),
             color = Muted,
             textAlign = TextAlign.Center,
             fontSize = 12.sp,

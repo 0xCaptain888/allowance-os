@@ -6,9 +6,9 @@
   <title>Allowance OS — Payment Authorization for Web3 Services</title>
   <meta name="description" content="A non-custodial Solana Mobile control layer for bounded Web3 service payments, verifiable evidence, and explicit revocation." />
   <meta name="theme-color" content="#111419" />
-  <link rel="icon" href="favicon-ao-v017.svg?v=0.17.4" type="image/svg+xml" />
-  <link rel="shortcut icon" href="favicon-ao-v017.svg?v=0.17.4" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="favicon-ao-v017.svg?v=0.17.4" />
+  <link rel="icon" href="favicon-ao-v017.svg?v=0.18.0" type="image/svg+xml" />
+  <link rel="shortcut icon" href="favicon-ao-v017.svg?v=0.18.0" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="favicon-ao-v017.svg?v=0.18.0" />
   <style>
     :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #060810; color: #f7f8ff; }
     * { box-sizing: border-box; }
@@ -90,8 +90,8 @@
       --amber: #ffc857;
       --rose: #ff7a59;
       --white: #f3f1e9;
-      --muted: #afb5c2;
-      --line: #2a3140;
+      --muted: #c8cdd7;
+      --line: #384153;
       color-scheme: dark;
       background: var(--ink);
       color: var(--white);
@@ -241,6 +241,12 @@
     .budget-meter span { background: linear-gradient(90deg, var(--mint), var(--blue)); }
     .timeline-step { background: var(--panel-raised); border-color: var(--line); }
     .timeline-step i { border-radius: 11px; background: #25321a; color: var(--mint); }
+    .judge-run { border-color: #5e74ff80; background: linear-gradient(145deg, #151a2d, var(--panel)); }
+    .judge-stages { display: grid; gap: 10px; margin: 18px 0; }
+    .judge-stage { display: grid; grid-template-columns: 38px 1fr auto; gap: 12px; align-items: center; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel-raised); }
+    .judge-stage i { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: #252d45; color: var(--muted); font-style: normal; font-weight: 900; }
+    .judge-stage.done { border-color: #c7f36b66; }
+    .judge-stage.done i { background: var(--mint); color: var(--ink); }
     .service-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
     .service { min-height: 268px; }
     .service:hover, .service.active { border-color: #c7f36b8c; box-shadow: 0 22px 46px #0000004d; }
@@ -315,13 +321,26 @@
 </head>
 <body>
   <main>
-    <nav><strong><img class="brand-mark" src="favicon-ao-v017.svg?v=0.17.4" alt="Allowance OS AO monogram" /><span class="brand-copy">Allowance OS<small>Fintech control center · v0.17.4</small></span></strong><div class="links"><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.17.4">Download APK</a><a class="nav-link" href="#live-commerce">Live AlphaBrief</a><a class="nav-link" href="https://explorer.solana.com/address/7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL?cluster=devnet">Delegated v2</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/evidence/live-alphabrief-v2.json">Evidence</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os">GitHub</a></div></nav>
+    <nav><strong><img class="brand-mark" src="favicon-ao-v017.svg?v=0.18.0" alt="Allowance OS AO monogram" /><span class="brand-copy">Allowance OS<small>Solana payment control</small></span></strong><div class="links"><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.18.0">Download APK</a><a class="nav-link" href="#judge-run">Judge Run</a><a class="nav-link" href="#live-commerce">Live AlphaBrief</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/evidence/live-alphabrief-v2.json">Evidence</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os">GitHub</a></div></nav>
     <section id="overview" class="hero">
-<div class="hero-copy"><div class="eyebrow">Control center · Solana Devnet</div><h1>Approve once.<br />Stay in control.</h1><p class="lede">The payment-authorization layer for AI subscriptions, paid research, trading signals, automation bots, and metered APIs. Every future charge stays inside a visible budget and evidence boundary.</p><div class="hero-actions"><a class="primary-cta" href="https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.17.4">Download Android v0.17.4</a><a class="secondary-cta" href="#live-commerce">Inspect live commerce proof</a></div><div class="state-strip"><span class="pill verified">VERIFIED · MAY SETTLE</span><span class="pill blocked">BLOCKED · NEVER STARTED</span><span class="pill frozen">FROZEN · ZERO MOVED</span></div></div>
+<div class="hero-copy"><div class="eyebrow">Control center · Solana Devnet</div><h1>Approve once.<br />Stay in control.</h1><p class="lede">The payment-authorization layer for AI subscriptions, paid research, trading signals, automation bots, and metered APIs. Every future charge stays inside a visible budget and evidence boundary.</p><div class="hero-actions"><a class="primary-cta" href="https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.18.0">Download Android v0.18.0</a><a class="secondary-cta" href="#judge-run">Run judge verification</a></div><div class="state-strip"><span class="pill verified">VERIFIED · MAY SETTLE</span><span class="pill blocked">BLOCKED · NEVER STARTED</span><span class="pill frozen">FROZEN · ZERO MOVED</span></div></div>
       <div class="card policy"><div class="policy-head"><small>PROTECTED ALLOWANCE</small><span class="pill verified">DEVNET READY</span></div><div class="policy-total"><b>6.00 TEST</b><span>remaining from an 8.00 weekly cap</span><div class="budget-meter"><span></span></div></div><div class="row"><span class="muted">Active service</span><span id="heroService" class="value">AlphaBrief</span></div><div class="row"><span class="muted">Merchant</span><span id="heroMerchant" class="value">merchant:alphabrief</span></div><div class="row"><span class="muted">Next charge</span><span id="heroCharge" class="value">2 TEST</span></div><div class="row"><span class="muted">Period cap</span><span id="heroCap" class="value">8 TEST</span></div><div class="row"><span class="muted">Latest decision</span><span class="pill frozen">BAD OUTPUT CONTAINED</span></div></div>
     </section>
 
     <p class="truth-note"><strong>Pre-production boundary:</strong> this public site never moves funds. Browser policy receipts remain simulated, while the linked AlphaBrief delivery, v2 settlement, and bad-output freeze are real Solana Devnet evidence using a project-created test mint—not canonical USDC or Mainnet.</p>
+
+    <section id="judge-run" class="card judge-run" style="margin-top:14px">
+      <div class="section-heading"><div><div class="eyebrow">One tap · mixed evidence</div><h2>Run the judge path without blurring truth levels.</h2></div><span class="pill blocked">NO SILENT SIGNING</span></div>
+      <p class="muted">The browser runs the same ordered review as Android: deterministic policy outcomes, live AlphaBrief signatures, then independent Program and balance verification. The final wallet-approved 0.00001 SOL commercial settlement is available only in the Android app and always pauses for one explicit Solflare approval.</p>
+      <div class="judge-stages">
+        <div id="judgePolicy" class="judge-stage"><i>1</i><div><strong>VERIFIED → BLOCKED → FROZEN</strong><br><span class="muted">Deterministic local policy replay</span></div><span class="pill blocked">SIMULATED</span></div>
+        <div id="judgeLive" class="judge-stage"><i>2</i><div><strong>AlphaBrief public proof</strong><br><span class="muted">Settlement + bad-output freeze signatures</span></div><span class="pill verified">LIVE RPC</span></div>
+        <div id="judgeMatrix" class="judge-stage"><i>3</i><div><strong>Program state + balance matrix</strong><br><span class="muted">Onchain failures and token deltas</span></div><span class="pill verified">LIVE RPC</span></div>
+        <div id="judgeWallet" class="judge-stage"><i>4</i><div><strong>Commercial micro-settlement</strong><br><span class="muted">0.00001 SOL + accepted report evidence hash</span></div><span class="pill blocked">ANDROID WALLET</span></div>
+      </div>
+      <button id="judgeRunButton" onclick="runJudgePath()">Start Judge Run</button>
+      <div id="judgeRunOutput" class="proof-state muted" style="margin-top:14px">Ready. This run performs no browser write operation.</div>
+    </section>
 
     <section id="live-commerce" class="card" style="margin-top:14px">
       <div class="section-heading"><div><div class="eyebrow">AlphaBrief · real service commerce</div><h2>A delivered report—not another template.</h2></div><span class="pill verified">LIVE DEVNET VERIFIED</span></div>
@@ -457,7 +476,7 @@
       <button style="margin:16px 0" onclick="verifyProgramMatrix()">Verify state + token settlement via Solana RPC</button>
       <div id="programProof" class="proof-state muted">Not checked yet. This reads five signatures, three transaction balance records, and the final allowance account.</div>
     </section>
-    <footer>Allowance OS v0.17.4 · Browser simulation is clearly separated from public Solana Devnet evidence · Project-created test mint, not canonical USDC.</footer>
+    <footer>Allowance OS v0.18.0 · Browser simulation is clearly separated from live Solana Devnet evidence · Project-created test mint, not canonical USDC.</footer>
   </main>
   <div class="mobile-dock" aria-label="Mobile navigation"><a href="#overview"><span class="dock-icon">⌂</span>Home</a><a href="#services"><span class="dock-icon">◆</span>Services</a><a href="#simulator"><span class="dock-icon">◎</span>Review</a><a href="#proof-center"><span class="dock-icon">✓</span>Evidence</a></div>
   <script>
@@ -471,6 +490,10 @@
     let selectedService = 'alphabrief';
     let base = { allowanceId: 'allowance-alphabrief-001', merchant: services.alphabrief.merchant, token: 'TEST', program: services.alphabrief.program };
     const recordedSignature = '4w1cjWABu9L9NGMe4NrRTkqFxZVnJBsdket94ifiuKrGaMsMDnYquFpirq4kte4hsCxRuT6Jo79U8zvKNgzQ3B9k';
+    const alphaBriefSignatures = {
+      settled: '5xSyTrMr1iZ47VJcZKfLjLmE5E1XrzYABhWD7fJJsgz7SbKnhqewvHLNNBo3Lcs5uDNfVxmrwzVPMm4yZtY4K1qB',
+      frozen: '39oy73khQh35jYZdrHtxXXxJnmFPpPRfRFQBD1gTAwthvq8GMMKfoDrhxedVnFERyXDCyexL11HYotmuWSG7WHSG'
+    };
     const programId = 'DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE';
     const allowanceAccount = 'BRqgbZzdZPrueoWEcjusZ49etotWfNGtu2Bs1HiQ7E5x';
     const tokenMint = '3KVq4nkUnb7GS7DjYCaGR7JJGAhDG1YPsz84xxThn5de';
@@ -493,7 +516,7 @@
     async function purchaseAlphaBrief() { const evidenceHash = await sha256(alphaBriefContent); const requestedAt = new Date(); const request = { requestId: 'req_web_' + crypto.randomUUID().replaceAll('-', ''), nonce: Date.now(), allowanceId: 'allowance-alphabrief-001', merchant: 'merchant:alphabrief', token: 'TEST', amount: 2, program: services.alphabrief.program, requestedAt: requestedAt.toISOString(), expiresAt: new Date(requestedAt.getTime() + 300000).toISOString(), evidenceHash, evidenceUri: 'demo://embedded/alphabrief-report-v1', evidenceType: 'content-delivery' }; const receipt = { receiptVersion: '2', ...request, state: 'VERIFIED', checks: { requestIdBound: true, nonceUnused: true, requestFresh: true, merchantMatches: true, perChargeWithinPolicy: true, periodCapWithinPolicy: true, evidenceBound: true, evidenceUnused: true }, receiptType: 'SIMULATED_REFERENCE', reasons: [] }; const webhook = { eventType: 'allowance.charge.completed', requestId: request.requestId, state: receipt.state, evidenceHash }; const signature = await webhookSignature(webhook); alphaBriefSession = { request, receipt, webhook, signature }; document.querySelector('#reportState').textContent = 'UNLOCKED'; document.querySelector('#requestState').textContent = 'VERIFIED'; document.querySelector('#replayState').textContent = 'ARMED'; document.querySelector('#alphaBriefReport').className = 'proof-state ok'; document.querySelector('#alphaBriefReport').textContent = alphaBriefContent; document.querySelector('#alphaBriefReceipt').textContent = JSON.stringify({ receipt, signedWebhook: { payload: webhook, signature }, disclosure: 'SIMULATED reference integration; no chain transaction is claimed.' }, null, 2); }
     function retryAlphaBrief() { const el = document.querySelector('#alphaBriefReceipt'); if (!alphaBriefSession) { el.textContent = 'Run the purchase first.'; return; } document.querySelector('#requestState').textContent = 'IDEMPOTENT'; el.textContent = JSON.stringify({ state: 'VERIFIED', requestId: alphaBriefSession.request.requestId, idempotentReplay: true, chargeCount: 1, explanation: 'Same request ID and identical payload return the stored receipt; spending is not advanced.' }, null, 2); }
     function replayAlphaBrief() { const el = document.querySelector('#alphaBriefReceipt'); if (!alphaBriefSession) { el.textContent = 'Run the purchase first.'; return; } document.querySelector('#replayState').textContent = 'BLOCKED'; el.textContent = JSON.stringify({ state: 'BLOCKED', requestId: 'req_web_replay_' + Date.now(), evidenceHash: alphaBriefSession.request.evidenceHash, reasons: ['evidence_replayed'], chargeCount: 1, explanation: 'A new request cannot collect a second payment for the same delivered content.' }, null, 2); }
-    function chooseService(id) {
+    function chooseService(id, scrollToControls = true) {
       selectedService = id;
       const service = services[id];
       base = { allowanceId: `allowance-${id}-001`, merchant: service.merchant, token: 'TEST', program: service.program };
@@ -510,12 +533,46 @@
       document.querySelector('#merchant').value = 'trusted';
       document.querySelector('#evidence').value = 'present';
       evaluateDynamic();
-      document.querySelector('.controls').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (scrollToControls) document.querySelector('.controls').scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
     function syncControls() { const policy = services[selectedService]; document.querySelector('#amountValue').textContent = Number(document.querySelector('#amount').value).toFixed(2) + ' TEST'; document.querySelector('#spentValue').textContent = Number(document.querySelector('#spent').value).toFixed(2) + ' / ' + policy.periodCap + ' TEST'; }
     function evaluateDynamic() { syncControls(); const policy = services[selectedService]; const amount = Number(document.querySelector('#amount').value); const spent = Number(document.querySelector('#spent').value); const merchantMatches = document.querySelector('#merchant').value === 'trusted'; const evidenceBound = document.querySelector('#evidence').value === 'present'; const perChargeWithinPolicy = amount <= policy.perCharge; const periodCapWithinPolicy = spent + amount <= policy.periodCap; const frozen = !merchantMatches || !evidenceBound; const state = frozen ? 'FROZEN' : (perChargeWithinPolicy && periodCapWithinPolicy ? 'VERIFIED' : 'BLOCKED'); const reasons = []; if (!merchantMatches) reasons.push('merchant_identity_mismatch'); if (!evidenceBound) reasons.push('evidence_not_bound'); if (!perChargeWithinPolicy) reasons.push('per_charge_limit_exceeded'); if (!periodCapWithinPolicy) reasons.push('period_cap_exceeded'); const now = new Date(); const data = { ...base, requestId: 'req_browser_preview', nonce: 0, requestedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 300000).toISOString(), service: policy.name, amount, spentInPeriod: spent, periodCap: policy.periodCap, perChargeCap: policy.perCharge, merchant: merchantMatches ? base.merchant : 'merchant:lookalike', requiredEvidence: policy.evidence, state, checks: { requestIdBound: true, nonceUnused: true, requestFresh: true, merchantMatches, evidenceBound, evidenceUnused: true, perChargeWithinPolicy, periodCapWithinPolicy, programAllowed: true }, evidenceHash: evidenceBound ? 'demo-' + state.toLowerCase() + '-evidence' : undefined, receiptType: 'SIMULATED', reasons, nextAction: state === 'VERIFIED' ? 'open_wallet_then_settle' : state === 'BLOCKED' ? 'reject_before_broadcast' : 'freeze_and_revoke' }; output.textContent = JSON.stringify({ receiptVersion: '2', ...data, txHash: state === 'VERIFIED' ? 'simulated:demo-receipt' : undefined }, null, 2); }
     function run(kind) { const policy = services[selectedService]; document.querySelector('#amount').value = kind === 'blocked' ? Math.max(policy.perCharge * 2, policy.perCharge + 1) : policy.perCharge; document.querySelector('#spent').value = 0; document.querySelector('#merchant').value = kind === 'frozen' ? 'mismatch' : 'trusted'; document.querySelector('#evidence').value = 'present'; evaluateDynamic(); }
     function revoke() { output.textContent = JSON.stringify({ action: 'REVOKE_ALLOWANCE_PREVIEW', allowanceId: base.allowanceId, state: 'REVOKED', receiptType: 'SIMULATED', onchainTransactionSubmitted: false, nextAction: 'send_program_revoke_instruction_with_authority_wallet', disclosure: 'This browser action does not disconnect MWA and does not change onchain state.' }, null, 2); }
+    const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+    async function verifyAlphaBriefProofs() {
+      const result = await rpc('getSignatureStatuses', [Object.values(alphaBriefSignatures), { searchTransactionHistory: true }]);
+      return result.value.every(status => status && !status.err && ['confirmed', 'finalized'].includes(status.confirmationStatus));
+    }
+    async function runJudgePath() {
+      const button = document.querySelector('#judgeRunButton');
+      const judgeOutput = document.querySelector('#judgeRunOutput');
+      ['#judgePolicy', '#judgeLive', '#judgeMatrix', '#judgeWallet'].forEach(selector => document.querySelector(selector).classList.remove('done'));
+      button.disabled = true;
+      judgeOutput.className = 'proof-state muted';
+      try {
+        judgeOutput.textContent = 'Resetting to AlphaBrief safe baseline…';
+        chooseService('alphabrief', false);
+        webPaused = false;
+        run('verified'); await wait(250);
+        run('blocked'); await wait(250);
+        run('frozen'); await wait(250);
+        document.querySelector('#judgePolicy').classList.add('done');
+        judgeOutput.textContent = 'SIMULATED policy matrix passed. Verifying live AlphaBrief transactions…';
+        if (!await verifyAlphaBriefProofs()) throw new Error('AlphaBrief settlement or freeze is not confirmed');
+        document.querySelector('#judgeLive').classList.add('done');
+        judgeOutput.textContent = 'LIVE RPC signatures passed. Reading Program state and token deltas…';
+        if (!await verifyProgramMatrix()) throw new Error('Program matrix did not pass every check');
+        document.querySelector('#judgeMatrix').classList.add('done');
+        judgeOutput.className = 'proof-state ok';
+        judgeOutput.textContent = 'Browser Judge Run passed: local three-state replay + live AlphaBrief proof + live Program matrix. Final write step: open Android v0.18.0 and approve exactly one 0.00001 SOL AlphaBrief settlement in Solflare.';
+      } catch (error) {
+        judgeOutput.className = 'proof-state limited';
+        judgeOutput.textContent = 'Judge Run stopped safely: ' + error.message + '. No wallet action or unverified success is claimed.';
+      } finally {
+        button.disabled = false;
+      }
+    }
     async function verifyLiveProof() { const el = document.querySelector('#liveProof'); el.textContent = 'Querying https://api.devnet.solana.com …'; try { const response = await fetch('https://api.devnet.solana.com', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getSignatureStatuses', params: [[recordedSignature], { searchTransactionHistory: true }] }) }); if (!response.ok) throw new Error('RPC HTTP ' + response.status); const body = await response.json(); const status = body.result?.value?.[0]; if (!status) throw new Error('Signature not found on Devnet'); const passed = !status.err && ['confirmed', 'finalized'].includes(status.confirmationStatus); el.className = 'proof-state ' + (passed ? 'ok' : 'limited'); el.textContent = JSON.stringify({ evidenceLevel: 'LIVE_DEVNET_PROOF', verified: passed, confirmationStatus: status.confirmationStatus, slot: status.slot, confirmations: status.confirmations, executionError: status.err, signature: recordedSignature }, null, 2); } catch (error) { el.className = 'proof-state limited'; el.textContent = 'Verification unavailable: ' + error.message + '\nOpen the Explorer link above to cross-check manually.'; } }
     async function rpc(method, params) { const response = await fetch('https://api.devnet.solana.com', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: method, method, params }) }); if (!response.ok) throw new Error('RPC HTTP ' + response.status); const body = await response.json(); if (body.error) throw new Error(body.error.message); return body.result; }
     function readU64(bytes, offset) { const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength); return view.getBigUint64(offset, true).toString(); }
@@ -592,9 +649,11 @@
           finalState,
           disclosure: 'Project-created Devnet test token; not canonical USDC.',
         }, null, 2);
+        return verified;
       } catch (error) {
         el.className = 'proof-state limited';
         el.textContent = 'Program verification unavailable: ' + error.message + '\nUse the Explorer links above for manual cross-checking.';
+        return false;
       }
     }
   </script>

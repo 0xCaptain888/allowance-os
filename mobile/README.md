@@ -63,7 +63,7 @@ JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home" \
 5. Tap `BLOCKED`; confirm no wallet request opens.
 6. Tap `FROZEN`; confirm no wallet request opens.
 7. Tap `VERIFIED`.
-8. Tap **Review and publish Devnet Memo**, review the `0 TEST` asset movement disclosure, and continue.
+8. Tap **Review and settle AlphaBrief**, review the exact `0.00001 Devnet SOL` amount, recipient, and evidence hash, then approve once in Solflare.
 9. Inspect the Memo transaction in Phantom and approve it.
 10. Open the returned signature in Solana Explorer.
 11. Tap **Disconnect wallet and deauthorize MWA** to remove the reconnect session. This does not revoke an onchain allowance.

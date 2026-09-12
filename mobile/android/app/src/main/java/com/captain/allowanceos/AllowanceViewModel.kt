@@ -10,6 +10,7 @@ import com.solana.mobilewalletadapter.clientlib.MobileWalletAdapter
 import com.solana.mobilewalletadapter.clientlib.Solana
 import com.solana.mobilewalletadapter.clientlib.TransactionResult
 import com.solana.programs.MemoProgram
+import com.solana.programs.SystemProgram
 import com.solana.publickey.SolanaPublicKey
 import com.solana.transaction.Message
 import com.solana.transaction.toUnsignedTransaction
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import org.bitcoinj.base.Base58
@@ -40,6 +42,19 @@ enum class WalletSessionState {
     DISCONNECTED,
     CONNECTED,
     REAUTH_REQUIRED,
+}
+
+enum class JudgeRunStage {
+    IDLE,
+    RESETTING,
+    VERIFIED,
+    BLOCKED,
+    FROZEN,
+    LIVE_PROOF,
+    PROGRAM_MATRIX,
+    WALLET_APPROVAL,
+    COMPLETE,
+    FAILED,
 }
 
 data class RestoredWalletSession(
@@ -104,6 +119,12 @@ data class AllowanceUiState(
     val v2StateMessage: String = "",
     val v2ControlSignature: String = "",
     val actionFeedback: String = "",
+    val judgeRunStage: JudgeRunStage = JudgeRunStage.IDLE,
+    val judgeRunMessage: String = "",
+    val commercialSettlementVerified: Boolean? = null,
+    val commercialSettlementLamports: Long = 0L,
+    val commercialMerchantBalanceBefore: Long = 0L,
+    val commercialMerchantBalanceAfter: Long = 0L,
 )
 
 class AllowanceViewModel(application: Application) : AndroidViewModel(application) {
@@ -171,6 +192,10 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                 ?: CommercialCatalog.DEFAULT_ID,
             alphaBriefLiveProofSynced = preferences.getBoolean(KEY_ALPHABRIEF_SYNCED, false),
             locallyPaused = preferences.getBoolean(KEY_LOCAL_PAUSED, false),
+            commercialSettlementVerified = preferences.getBoolean(KEY_COMMERCIAL_SETTLEMENT_VERIFIED, false),
+            commercialSettlementLamports = preferences.getLong(KEY_COMMERCIAL_SETTLEMENT_LAMPORTS, 0L),
+            commercialMerchantBalanceBefore = preferences.getLong(KEY_COMMERCIAL_MERCHANT_BALANCE_BEFORE, 0L),
+            commercialMerchantBalanceAfter = preferences.getLong(KEY_COMMERCIAL_MERCHANT_BALANCE_AFTER, 0L),
         ),
     )
     val state: StateFlow<AllowanceUiState> = _state
@@ -297,11 +322,97 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         respectLocalPause = false,
     )
 
-    fun runJudgeDemo() {
-        val amount = policy.perChargeCap
-        evaluate(amount, policy.merchant, "service-delivery-sha256", 0.0, respectLocalPause = false)
-        evaluate(amount + maxOf(1.0, amount), policy.merchant, "service-delivery-sha256", 0.0, respectLocalPause = false)
-        evaluate(amount, "merchant:lookalike", "service-delivery-sha256", 0.0, respectLocalPause = false)
+    fun runJudgeDemo(sender: ActivityResultSender) {
+        if (_state.value.judgeRunStage in JUDGE_RUN_ACTIVE_STAGES) return
+        viewModelScope.launch {
+            try {
+                val template = CommercialCatalog.byId(CommercialCatalog.DEFAULT_ID)
+                activePolicy = template.toPolicy()
+                preferences.edit()
+                    .putString(KEY_SELECTED_SERVICE, template.id)
+                    .putBoolean(KEY_LOCAL_PAUSED, false)
+                    .apply()
+                _state.update {
+                    it.copy(
+                        selectedServiceId = template.id,
+                        locallyPaused = false,
+                        allowanceState = AllowanceState.IDLE,
+                        requestedAmount = template.perCharge,
+                        periodSpent = 0.0,
+                        merchantTrusted = true,
+                        evidencePresent = true,
+                        signature = "",
+                        error = "",
+                        proofCheckPassed = null,
+                        programCheckPassed = null,
+                        commercialSettlementVerified = null,
+                        commercialSettlementLamports = 0L,
+                        commercialMerchantBalanceBefore = 0L,
+                        commercialMerchantBalanceAfter = 0L,
+                        judgeRunStage = JudgeRunStage.RESETTING,
+                        judgeRunMessage = "Safe baseline restored. Running deterministic policy checks…",
+                        actionFeedback = "Judge Run started. Local replay, public Devnet verification, and one wallet-approved settlement are clearly separated.",
+                    )
+                }
+                logEvent("JUDGE_RUN_STARTED", AllowanceState.IDLE, message = "Judge Run reset local pause and selected the AlphaBrief testable baseline")
+                delay(450)
+
+                evaluate(template.perCharge, policy.merchant, "service-delivery-sha256", 0.0, respectLocalPause = false)
+                _state.update { it.copy(judgeRunStage = JudgeRunStage.VERIFIED, judgeRunMessage = "VERIFIED: budget, merchant, and delivery evidence passed locally.") }
+                delay(550)
+
+                evaluate(template.perCharge + maxOf(1.0, template.perCharge), policy.merchant, "service-delivery-sha256", 0.0, respectLocalPause = false)
+                _state.update { it.copy(judgeRunStage = JudgeRunStage.BLOCKED, judgeRunMessage = "BLOCKED: an oversized request stopped before the wallet opened.") }
+                delay(550)
+
+                evaluate(template.perCharge, "merchant:lookalike", "service-delivery-sha256", 0.0, respectLocalPause = false)
+                _state.update { it.copy(judgeRunStage = JudgeRunStage.FROZEN, judgeRunMessage = "FROZEN: merchant identity drift was contained with zero funds moved.") }
+                delay(550)
+
+                _state.update { it.copy(judgeRunStage = JudgeRunStage.LIVE_PROOF, judgeRunMessage = "Checking the published AlphaBrief settlement and bad-output freeze through Devnet RPC…") }
+                val historicalSettlement = rpc.signatureStatus(AlphaBriefLiveEvidence.SETTLEMENT_SIGNATURE)
+                val historicalFreeze = rpc.signatureStatus(AlphaBriefLiveEvidence.FREEZE_SIGNATURE)
+                check(historicalSettlement.succeeded && historicalSettlement.confirmation in CONFIRMED_STATUSES) {
+                    "Published AlphaBrief settlement is not confirmed successfully"
+                }
+                check(historicalFreeze.succeeded && historicalFreeze.confirmation in CONFIRMED_STATUSES) {
+                    "Published AlphaBrief freeze is not confirmed successfully"
+                }
+                _state.update { it.copy(alphaBriefLiveProofSynced = true) }
+                logEvent("JUDGE_RUN_LIVE_PROOF_VERIFIED", AllowanceState.VERIFIED, message = "RPC independently confirmed the published AlphaBrief settlement and freeze")
+
+                _state.update { it.copy(judgeRunStage = JudgeRunStage.PROGRAM_MATRIX, judgeRunMessage = "Checking Program state transitions and SPL-token balance deltas…") }
+                val matrix = rpc.programMatrix()
+                check(matrix.passed) { matrix.message }
+                _state.update {
+                    it.copy(
+                        programCheckPassed = true,
+                        programCheckMessage = matrix.message,
+                        programSpentInPeriod = matrix.spentInPeriod,
+                        programBlockedRejected = matrix.blockedRejected,
+                        programFrozenPersisted = matrix.frozenPersisted,
+                        programRevokedPersisted = matrix.revokedPersisted,
+                        programSettlementVerified = matrix.settlementVerified,
+                        programSourceTokenRaw = matrix.sourceTokenRaw,
+                        programMerchantTokenRaw = matrix.merchantTokenRaw,
+                    )
+                }
+                delay(350)
+
+                evaluate(template.perCharge, policy.merchant, AlphaBriefLiveEvidence.ACCEPTED_EVIDENCE_HASH, 0.0, respectLocalPause = false)
+                _state.update {
+                    it.copy(
+                        judgeRunStage = JudgeRunStage.WALLET_APPROVAL,
+                        judgeRunMessage = "All read-only checks passed. Confirm one 0.00001 SOL Devnet AlphaBrief micro-settlement in Solflare.",
+                    )
+                }
+                submitAlphaBriefSettlement(sender, fromJudgeRun = true)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                failJudgeRun(error.message ?: "Judge Run could not complete")
+            }
+        }
     }
 
     fun runAlphaBriefDelivery() {
@@ -695,24 +806,37 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
             return
         }
 
-        viewModelScope.launch {
-            setLoading("Policy passed. Approve the Devnet authorization proof in your wallet.")
-            try {
-                when (val result = withTimeout(WALLET_OPERATION_TIMEOUT_MS) { walletAdapter.transact(sender) { authorization ->
+        viewModelScope.launch { submitAlphaBriefSettlement(sender, fromJudgeRun = false) }
+    }
+
+    private suspend fun submitAlphaBriefSettlement(sender: ActivityResultSender, fromJudgeRun: Boolean) {
+        val merchant = SolanaPublicKey.from(AlphaBriefLiveEvidence.MOBILE_SETTLEMENT_MERCHANT)
+        var merchantBalanceBefore = 0L
+        setLoading("Policy and delivery evidence passed. Approve the AlphaBrief Devnet micro-settlement in your wallet.")
+        try {
+            merchantBalanceBefore = rpc.balanceLamports(merchant)
+            when (val result = withTimeout(WALLET_OPERATION_TIMEOUT_MS) { walletAdapter.transact(sender) { authorization ->
                 val publicKey = SolanaPublicKey(authorization.accounts.first().publicKey)
+                check(publicKey != merchant) { "Buyer and AlphaBrief merchant must be different wallets" }
                 val memo = listOf(
                     "ALLOWANCE_OS",
-                    "CREATE",
+                    "ALPHABRIEF_SETTLEMENT",
                     policy.allowanceId,
                     "policy=$policyHash",
-                    "merchant=${policy.merchant}",
-                    "amount=${current.requestedAmount}",
-                    "periodSpent=${current.periodSpent}",
-                    "cap=${policy.perChargeCap}-${policy.token}",
+                    "merchant=${AlphaBriefLiveEvidence.MOBILE_SETTLEMENT_MERCHANT}",
+                    "lamports=${AlphaBriefLiveEvidence.MOBILE_SETTLEMENT_LAMPORTS}",
+                    "evidence=${AlphaBriefLiveEvidence.ACCEPTED_EVIDENCE_HASH}",
                 ).joinToString("|")
 
                 val transaction = Message.Builder()
                     .setRecentBlockhash(rpc.latestBlockhash())
+                    .addInstruction(
+                        SystemProgram.transfer(
+                            fromPublicKey = publicKey,
+                            toPublickKey = merchant,
+                            lamports = AlphaBriefLiveEvidence.MOBILE_SETTLEMENT_LAMPORTS,
+                        ),
+                    )
                     .addInstruction(MemoProgram.publishMemo(publicKey, memo))
                     .build()
                     .toUnsignedTransaction()
@@ -721,52 +845,95 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                     .signatures
                     .first()
                 Base58.encode(signatureBytes)
-                } }) {
+            } }) {
                 is TransactionResult.Success -> {
                     val account = result.authResult.accounts.first()
+                    val publicKey = SolanaPublicKey(account.publicKey)
                     try {
                         persistConnection(
-                            publicKey = SolanaPublicKey(account.publicKey).base58(),
+                            publicKey = publicKey.base58(),
                             accountLabel = account.accountLabel.orEmpty(),
                             authToken = result.authResult.authToken,
                         )
                     } catch (error: Exception) {
                         clearConnection()
-                        fail(
-                            "The proof was broadcast, but the encrypted reconnect session could not be saved. Verify the signature, then reconnect the wallet.",
-                            "WALLET_SESSION_STORAGE_ERROR",
-                        )
                         preferences.edit().putString(KEY_LAST_SIGNATURE, result.payload).apply()
                         _state.update { it.copy(signature = result.payload) }
-                        return@launch
+                        val message = "The settlement was broadcast, but the encrypted reconnect session could not be saved. Verify the signature, then reconnect the wallet."
+                        if (fromJudgeRun) failJudgeRun(message) else fail(message, "WALLET_SESSION_STORAGE_ERROR")
+                        return
                     }
+
+                    val status = awaitSuccessfulSignature(result.payload)
+                    val merchantBalanceAfter = rpc.balanceLamports(merchant)
+                    val merchantDelta = merchantBalanceAfter - merchantBalanceBefore
+                    check(merchantDelta >= AlphaBriefLiveEvidence.MOBILE_SETTLEMENT_LAMPORTS) {
+                        "Transaction finalized, but the expected merchant balance increase was not observed"
+                    }
+                    val refreshedBalance = rpc.balance(publicKey)
+                    preferences.edit()
+                        .putString(KEY_LAST_SIGNATURE, result.payload)
+                        .putBoolean(KEY_COMMERCIAL_SETTLEMENT_VERIFIED, true)
+                        .putLong(KEY_COMMERCIAL_SETTLEMENT_LAMPORTS, AlphaBriefLiveEvidence.MOBILE_SETTLEMENT_LAMPORTS)
+                        .putLong(KEY_COMMERCIAL_MERCHANT_BALANCE_BEFORE, merchantBalanceBefore)
+                        .putLong(KEY_COMMERCIAL_MERCHANT_BALANCE_AFTER, merchantBalanceAfter)
+                        .apply()
                     _state.update {
                         it.copy(
                             loading = false,
-                            walletAddress = SolanaPublicKey(account.publicKey).base58(),
+                            loadingMessage = "",
+                            walletAddress = publicKey.base58(),
                             walletLabel = account.accountLabel.orEmpty(),
                             walletSessionState = WalletSessionState.CONNECTED,
+                            solBalance = refreshedBalance,
                             allowanceState = AllowanceState.VERIFIED,
-                            decisionReason = "Policy passed and the wallet broadcast a real Devnet Memo authorization proof.",
+                            decisionReason = "Policy and delivery evidence passed; the wallet-approved AlphaBrief Devnet micro-settlement finalized and the merchant balance increased.",
                             signature = result.payload,
                             error = "",
-                            actionFeedback = "Devnet Memo broadcast succeeded. The signature is now available for independent verification.",
+                            proofCheckLoading = false,
+                            proofCheckPassed = true,
+                            proofCheckSlot = status.slot,
+                            proofCheckConfirmation = status.confirmation,
+                            proofCheckedSignature = result.payload,
+                            proofCheckMessage = "RPC confirmed the settlement and the merchant balance delta.",
+                            commercialSettlementVerified = true,
+                            commercialSettlementLamports = AlphaBriefLiveEvidence.MOBILE_SETTLEMENT_LAMPORTS,
+                            commercialMerchantBalanceBefore = merchantBalanceBefore,
+                            commercialMerchantBalanceAfter = merchantBalanceAfter,
+                            judgeRunStage = if (fromJudgeRun) JudgeRunStage.COMPLETE else it.judgeRunStage,
+                            judgeRunMessage = if (fromJudgeRun) {
+                                "Complete: local safety matrix, public Program proof, wallet-approved settlement, and independent RPC verification all passed."
+                            } else it.judgeRunMessage,
+                            actionFeedback = "AlphaBrief Devnet settlement finalized and independently verified.",
                         )
                     }
-                    preferences.edit().putString(KEY_LAST_SIGNATURE, result.payload).apply()
-                    logEvent("DEVNET_MEMO_BROADCAST", AllowanceState.VERIFIED, current.requestedAmount, "Real Devnet Memo authorization proof", result.payload)
+                    logEvent(
+                        "ALPHABRIEF_MOBILE_SETTLED",
+                        AllowanceState.VERIFIED,
+                        message = "Wallet-approved 0.00001 SOL AlphaBrief settlement finalized; merchant balance delta verified by RPC",
+                        signature = result.payload,
+                        serviceId = CommercialCatalog.DEFAULT_ID,
+                    )
+                    if (fromJudgeRun) {
+                        logEvent("JUDGE_RUN_COMPLETED", AllowanceState.VERIFIED, message = "All simulated and live Judge Run stages passed", signature = result.payload)
+                    }
                 }
 
-                    is TransactionResult.NoWalletFound -> fail(result.message, "WALLET_ERROR")
-                    is TransactionResult.Failure -> fail(result.message, "WALLET_ERROR")
+                is TransactionResult.NoWalletFound -> {
+                    if (fromJudgeRun) failJudgeRun(result.message) else fail(result.message, "WALLET_ERROR")
                 }
-            } catch (error: TimeoutCancellationException) {
-                fail("Wallet did not respond within 90 seconds. The app is unlocked and no success is assumed.", "WALLET_TIMEOUT")
-            } catch (error: CancellationException) {
-                throw error
-            } catch (error: Exception) {
-                fail(error.message ?: "Devnet proof broadcast was interrupted", "WALLET_ERROR")
+                is TransactionResult.Failure -> {
+                    if (fromJudgeRun) failJudgeRun(result.message) else fail(result.message, "WALLET_ERROR")
+                }
             }
+        } catch (error: TimeoutCancellationException) {
+            val message = "Wallet did not respond within 90 seconds. No settlement success is assumed."
+            if (fromJudgeRun) failJudgeRun(message) else fail(message, "WALLET_TIMEOUT")
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            val message = error.message ?: "AlphaBrief Devnet settlement was interrupted"
+            if (fromJudgeRun) failJudgeRun(message) else fail(message, "WALLET_ERROR")
         }
     }
 
@@ -853,6 +1020,35 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
     private fun fail(message: String, kind: String = "ERROR") {
         _state.update { it.copy(loading = false, loadingMessage = "", error = message) }
         logEvent(kind, AllowanceState.IDLE, message = message)
+    }
+
+    private fun failJudgeRun(message: String) {
+        _state.update {
+            it.copy(
+                loading = false,
+                loadingMessage = "",
+                error = message,
+                judgeRunStage = JudgeRunStage.FAILED,
+                judgeRunMessage = "Stopped safely: $message",
+                actionFeedback = "Judge Run stopped safely. No unverified success is claimed.",
+            )
+        }
+        logEvent("JUDGE_RUN_FAILED", AllowanceState.IDLE, message = message)
+    }
+
+    private suspend fun awaitSuccessfulSignature(signature: String): DevnetSignatureStatus {
+        var lastFailure: Throwable? = null
+        repeat(15) { attempt ->
+            try {
+                val status = rpc.signatureStatus(signature)
+                if (status.succeeded && status.confirmation in CONFIRMED_STATUSES) return status
+                lastFailure = IllegalStateException("Transaction is ${status.confirmation}")
+            } catch (error: Throwable) {
+                lastFailure = error
+            }
+            if (attempt < 14) delay(1_000)
+        }
+        error("Settlement was broadcast but did not reach confirmed status: ${lastFailure?.message ?: "unknown status"}")
     }
 
     private fun persistConnection(publicKey: String, accountLabel: String, authToken: String) {
@@ -1024,7 +1220,16 @@ $events
               "requestExpiresAt": ${current.requestExpiresAt},
               "checks": {$checks},
               "signature": "${current.signature}",
-              "evidenceLevel": "${if (current.signature.isBlank()) "SIMULATED" else "LIVE_DEVNET_PROOF"}"
+              "evidenceLevel": "${if (current.commercialSettlementVerified == true && current.signature.isNotBlank()) "LIVE_DEVNET_SETTLEMENT" else if (current.signature.isBlank()) "SIMULATED" else "LIVE_DEVNET_PROOF"}",
+              "settlement": {
+                "asset": "DEVNET_SOL",
+                "lamports": ${current.commercialSettlementLamports},
+                "merchant": "${AlphaBriefLiveEvidence.MOBILE_SETTLEMENT_MERCHANT}",
+                "merchantBalanceBefore": ${current.commercialMerchantBalanceBefore},
+                "merchantBalanceAfter": ${current.commercialMerchantBalanceAfter},
+                "merchantBalanceDelta": ${current.commercialMerchantBalanceAfter - current.commercialMerchantBalanceBefore},
+                "rpcVerified": ${current.commercialSettlementVerified == true}
+              }
             }
         """.trimIndent()
     }
@@ -1114,7 +1319,21 @@ $events
         private const val KEY_ONBOARDING_COMPLETE = "onboarding_complete_v1"
         private const val KEY_ALPHABRIEF_SYNCED = "alphabrief_live_proof_synced_v1"
         private const val KEY_LOCAL_PAUSED = "local_safety_paused"
+        private const val KEY_COMMERCIAL_SETTLEMENT_VERIFIED = "commercial_settlement_verified_v1"
+        private const val KEY_COMMERCIAL_SETTLEMENT_LAMPORTS = "commercial_settlement_lamports_v1"
+        private const val KEY_COMMERCIAL_MERCHANT_BALANCE_BEFORE = "commercial_merchant_balance_before_v1"
+        private const val KEY_COMMERCIAL_MERCHANT_BALANCE_AFTER = "commercial_merchant_balance_after_v1"
         private const val WALLET_OPERATION_TIMEOUT_MS = 90_000L
+        private val CONFIRMED_STATUSES = setOf("CONFIRMED", "FINALIZED")
+        private val JUDGE_RUN_ACTIVE_STAGES = setOf(
+            JudgeRunStage.RESETTING,
+            JudgeRunStage.VERIFIED,
+            JudgeRunStage.BLOCKED,
+            JudgeRunStage.FROZEN,
+            JudgeRunStage.LIVE_PROOF,
+            JudgeRunStage.PROGRAM_MATRIX,
+            JudgeRunStage.WALLET_APPROVAL,
+        )
         const val RECORDED_LIVE_SIGNATURE = "4w1cjWABu9L9NGMe4NrRTkqFxZVnJBsdket94ifiuKrGaMsMDnYquFpirq4kte4hsCxRuT6Jo79U8zvKNgzQ3B9k"
     }
 }

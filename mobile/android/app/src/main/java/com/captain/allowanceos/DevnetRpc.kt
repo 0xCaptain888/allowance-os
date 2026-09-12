@@ -53,14 +53,16 @@ class DevnetRpc(
         }
     }
 
-    suspend fun balance(publicKey: SolanaPublicKey): Double = withContext(Dispatchers.IO) {
-        val lamports = withRpcFailover { client ->
+    suspend fun balanceLamports(publicKey: SolanaPublicKey): Long = withContext(Dispatchers.IO) {
+        withRpcFailover { client ->
             client.getBalance(publicKey).run {
                 result ?: error(error?.message ?: "Unable to fetch wallet balance")
             }
         }
-        lamports.toDouble() / 1_000_000_000.0
     }
+
+    suspend fun balance(publicKey: SolanaPublicKey): Double =
+        balanceLamports(publicKey).toDouble() / 1_000_000_000.0
 
     suspend fun signatureStatus(signature: String): DevnetSignatureStatus = withContext(Dispatchers.IO) {
         withRpcFailover { client ->

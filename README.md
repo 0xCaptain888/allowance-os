@@ -4,15 +4,15 @@
 
 > Approve once. Enforce every charge. Revoke anytime.
 
-**[Open the public Judge Demo](https://0xcaptain888.github.io/allowance-os/)** · **[Download Android v0.17.4](https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.17.4)** · **[Two-minute judge guide](docs/judge-guide.md)**
+**[Open the public Judge Demo](https://0xcaptain888.github.io/allowance-os/)** · **[Download Android v0.18.0](https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.18.0)** · **[Two-minute judge guide](docs/judge-guide.md)**
 
 **[Android MWA client](mobile/android)** · **[All versioned releases](https://github.com/0xCaptain888/allowance-os/releases)** · **[Product maturity audit](docs/product-maturity-audit.md)** · **[Changelog](CHANGELOG.md)** · **[Release process](docs/android-release-process.md)**
 
 Allowance OS is a Solana Mobile payment-authorization layer for Web3 services. It turns an open-ended wallet approval into a human-readable allowance with merchant, token, program, per-charge, period, expiry, and evidence boundaries—then applies that same model to AI subscriptions, paid research, trading signals, automation bots, and metered APIs.
 
-**v0.17.0 rebuilds Android and the public Judge Demo as one English-first fintech control center:** both surfaces now share the AO Monogram, charcoal / ivory / lime / cobalt design system, protected-allowance hierarchy, and consequence-led VERIFIED / BLOCKED / FROZEN states. Android prioritizes protected spend, remaining budget, next charge, wallet status, anomaly state, and the latest payment decision; the responsive browser surface preserves its interactive policy simulator and direct Devnet verification tools. The underlying AlphaBrief commercial proof and Delegated Settlement v2 controls remain unchanged.
+**v0.18.0 is the current Android QA build:** it replaces the Memo-only mobile checkpoint with a wallet-approved AlphaBrief micro-settlement: `0.00001 Devnet SOL` is transferred to a distinct merchant address while the accepted report evidence hash is bound in the same transaction. The app waits for confirmation, verifies the merchant lamport balance delta through RPC, and stores a portable settlement receipt. A new one-tap Judge Run resets the local safety baseline, replays `VERIFIED → BLOCKED → FROZEN`, verifies the published AlphaBrief and Program evidence, then pauses exactly once for explicit Solflare approval. Simulated, live-RPC, and wallet-approved evidence remain visibly separate.
 
-**v0.17.4 is the current Android QA patch:** it restores Solflare/MWA authorization by supplying the wallet identity icon as a URI relative to the public identity URI, exactly as required by Mobile Wallet Adapter. A regression test now locks that constraint. It retains the v0.17.3 reliability work: service-scoped audit accounting, consistent `TEST` labels, contextual notifications, visible action feedback, top-level local Pause state, read-only revoked-v2 controls, and collapsible advanced wallet evidence.
+The v0.17 design foundation remains intact: Android and the public Judge Demo share the AO Monogram, charcoal / ivory / lime / cobalt system, protected-allowance hierarchy, and consequence-led payment states.
 
 **Delegated Settlement v2 is Devnet deployed and matrix-verified:** a user approves an allowance-scoped SPL delegate PDA once; later `ChargeDelegated` settlement requires the configured executor and independent verifier, enforces sequential nonces plus per-charge/period/lifetime caps, and does not include the user authority as a signer. Every accepted charge or freeze creates an immutable evidence PDA keyed by the full evidence hash. Read the [v2 specification](docs/delegated-settlement-v2.md) and [machine-readable live evidence](evidence/live-devnet-v2.json).
 
@@ -66,7 +66,7 @@ The **Seeker Integration Lab** also maps Allowance OS to apps featured by Solana
 | Surface | What it proves | Status |
 | --- | --- | --- |
 | [Public Judge Demo](https://0xcaptain888.github.io/allowance-os/) | Instant `VERIFIED` / `BLOCKED` / `FROZEN` policy replay | GitHub Pages deployment |
-| `mobile/android` | English-first, bilingual Android control center with protected-spend overview, upcoming charges, budget/anomaly alerts, four-step allowance review, consequence-led payment states, MWA, public v2 evidence, and authority-bound live v2 control review/broadcast | v0.17.4; Android unit tests |
+| `mobile/android` | English-first, bilingual Android control center with first-screen wallet access, one-tap Judge Run, a real AlphaBrief SOL micro-settlement, RPC balance-delta verification, public v2 evidence, and authority-bound live v2 controls | v0.18.0; Android unit tests |
 | `program/` | Backward-compatible v1 plus deployed Delegated Settlement v2 with PDA authority, executor/verifier separation, immutable evidence records, governed role rotation, three-level caps, period rollover, recovery and SPL revoke | Devnet deployed; 20 Rust tests; full control matrix verified |
 | Solana Explorer | Connected Devnet wallet and wallet-broadcast authorization proof | Live signature captured |
 | [Deployed allowance program](https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet) | Program-enforced state transitions and settlement | Live `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED` evidence |
@@ -144,7 +144,7 @@ The Android app is not a mockup. It uses Solana Mobile's official `mobile-wallet
 
 - Chinese and English product interfaces with a persisted in-app language switch;
 - Android Keystore encryption for the MWA reconnect token, including migration from the legacy plaintext preference;
-- a pre-sign review that clearly shows network, payload, and `0 TEST` asset movement for the current Memo proof;
+- a pre-sign review that discloses the exact `0.00001 Devnet SOL` AlphaBrief transfer, recipient, and evidence hash;
 - separate language and controls for disconnecting MWA versus revoking an onchain allowance;
 - five product surfaces: Home, Services, Allowances, Activity, and Evidence;
 - a Daily Habits dashboard with upcoming charge projections, today/week verified spend, budget pressure, merchant anomaly alerts, one-tap local Pause, and a delivered-service/payment timeline;
@@ -162,7 +162,7 @@ The Android app is not a mockup. It uses Solana Mobile's official `mobile-wallet
 - deterministic policy hash;
 - adjustable amount, current-period spend, merchant identity, and evidence inputs;
 - period-cap enforcement that blocks a request when `spentInPeriod + amount` would exceed the allowance;
-- one-tap judge mode that records VERIFIED, BLOCKED, and FROZEN decisions in the local activity trail;
+- one-tap Judge Run that restores a testable baseline, records the local three-state replay, verifies live public evidence, and pauses once for explicit wallet approval;
 - portable JSON receipt with a SHA-256 fingerprint for cross-surface evidence binding;
 - direct `getSignatureStatuses` verification of either the current device proof or the repository's recorded live proof;
 - in-app verification of the five Program transactions plus final frozen/revoked allowance state;
@@ -170,12 +170,12 @@ The Android app is not a mockup. It uses Solana Mobile's official `mobile-wallet
 - configurable Devnet RPC selection with bounded retries;
 - persistence of the last wallet-broadcast signature across app restarts;
 - `VERIFIED`, `BLOCKED`, and `FROZEN` policy replay before wallet invocation;
-- real `signAndSendTransactions` for a Devnet Memo authorization proof;
+- real `signAndSendTransactions` for a Devnet SOL transfer plus evidence Memo, followed by RPC confirmation and merchant-balance-delta verification;
 - Solana Explorer evidence link;
 - `deauthorize` and `REVOKED` state;
 - honest standard-Android capability labels for Seed Vault and Genesis Token.
 
-The first live device checkpoint is recorded in [`evidence/live-devnet-wallet.json`](evidence/live-devnet-wallet.json). The resulting wallet-broadcast Memo proof is recorded in [`evidence/live-devnet-memo.json`](evidence/live-devnet-memo.json). The proof is a real authorization transaction, not a deployed allowance-program settlement.
+The first live device checkpoint is recorded in [`evidence/live-devnet-wallet.json`](evidence/live-devnet-wallet.json), and its historical Memo-only proof remains in [`evidence/live-devnet-memo.json`](evidence/live-devnet-memo.json). v0.18.0 does not relabel that older proof: the new mobile commercial settlement receives its own signature only after a judge approves it in Solflare.
 
 Build it with JDK 21:
 
@@ -187,12 +187,12 @@ cd mobile/android
 The resulting APK is:
 
 ```text
-mobile/android/app/build/outputs/apk/debug/allowance-os-0.17.4-debug.apk
+mobile/android/app/build/outputs/apk/debug/allowance-os-0.18.0-debug.apk
 ```
 
-Latest clean local v0.17.4 debug build SHA-256 is recorded in [`evidence/android-build.json`](evidence/android-build.json).
+Latest clean local v0.18.0 debug build SHA-256 is recorded in [`evidence/android-build.json`](evidence/android-build.json).
 
-Latest public QA asset: [`android-test-v0.17.4`](https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.17.4). It contains the exact clean local APK recorded below and is explicitly labelled as a debug-signed Devnet QA build. `android-v*` remains reserved for protected production-signed releases.
+Latest public QA asset: [`android-test-v0.18.0`](https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.18.0). It contains the exact clean local APK recorded below and is explicitly labelled as a debug-signed Devnet QA build. `android-v*` remains reserved for protected production-signed releases.
 
 See [`mobile/README.md`](mobile/README.md) for phone setup and [`docs/judge-guide.md`](docs/judge-guide.md) for the two-minute evaluation path.
 

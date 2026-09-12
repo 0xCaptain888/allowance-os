@@ -1,6 +1,6 @@
 # Two-Minute Judge Guide
 
-> Current QA build: **v0.17.4**. This build restores Solflare/MWA authorization after v0.17.3 supplied an invalid absolute identity-icon URI. The Android app uses `TEST` consistently for the project-created Devnet mint; canonical USDC references are production targets, not claims about the live proof.
+> Current QA build: **v0.18.0**. It adds one-tap Judge Run and a real wallet-approved `0.00001 Devnet SOL` AlphaBrief micro-settlement with evidence-hash binding and RPC balance-delta verification. The separate delegated-v2 proof still uses a project-created `TEST` mint, not canonical USDC.
 
 ## 1. Understand the product in 20 seconds
 
@@ -30,16 +30,16 @@ Every browser replay is visibly labelled as simulated. Then scroll to **Program-
 Build or install the Android app from `mobile/android`:
 
 1. Use the header switch to inspect the complete Chinese or English interface.
-2. On **Overview**, tap **Connect Solflare Wallet / MWA Wallet** and approve Solana Devnet authorization. Notification permission is requested only when you first run a notification-producing action; denying it does not block the safety check.
+2. Connect from the Header or the Home hero and approve Solana Devnet authorization in Solflare. No scrolling is required.
 3. On **Daily Habits**, inspect upcoming charges, today/week spend, budget pressure, merchant anomaly status, and the weekly safety report.
-4. Tap **Sync public proofs & notify** to link the real AlphaBrief settlement and freeze signatures into the device timeline and trigger local delivery/freeze notifications.
+4. Tap **Verify live AlphaBrief proof** to link the real AlphaBrief settlement and freeze signatures into the device timeline and trigger local delivery/freeze notifications.
 5. Use **One-tap Pause** and confirm `LOCAL PAUSE ON` appears at the top of the control-center card. It is a local request stop—not an onchain pause transaction. Then tap **Resume** or **Reset interactive demo** before testing live requests.
 6. On Home, tap `VERIFIED`, `BLOCKED`, and `FROZEN`; each local replay must update the decision card even while live requests are paused. `BLOCKED` deliberately exceeds the policy cap; it does not mean the wallet balance is insufficient.
 7. In **Allowance center**, change the requested amount, current-period spend, merchant identity, and evidence availability. Use **Use charge cap** and **Reset period spend** to restore a passing baseline.
 8. Run `BLOCKED` or `FROZEN` and confirm the wallet is not opened.
-9. Run `VERIFIED`, then publish the real Devnet authorization proof and approve it in Solflare Wallet or another compatible MWA wallet.
-10. On **Evidence**, run **Independent RPC Verification**, inspect the AlphaBrief live-commerce card, and open both settlement and freeze transactions.
-11. Copy the portable JSON receipt and Activity audit fingerprint; test reconnect and safe local-session reset without exposing a wallet key. On Wallet, expand **Advanced onchain evidence** only when you need the Program matrix or v2 control details; a terminally revoked allowance is intentionally inspect-only.
+9. For the fastest complete path, tap **Start Judge Run**. It clears local Pause, runs the three local outcomes, verifies both public evidence layers, then pauses once for an explicit wallet approval.
+10. Review the exact recipient and `0.00001 Devnet SOL` amount in Solflare, approve, and wait for the App to confirm both the transaction and merchant balance delta.
+11. On **Evidence**, inspect the settlement summary, expand raw receipt JSON only if needed, and open the transaction or advanced Program/v2 evidence.
 
 The Android v0.16 source contains a strict 332-byte Delegated Allowance v2 state decoder plus authority-bound Pause, Unpause, and Revoke review/broadcast controls. Its Evidence and Activity pages link directly to the AlphaBrief allowance, accepted/frozen evidence hashes, and public transactions. Create, rotation, freeze/unfreeze, and delegated settlement remain operator flows; the public evidence allowance is already revoked.
 
@@ -71,7 +71,9 @@ The deployed Devnet Program is [`DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE`](
 | Label | Meaning |
 | --- | --- |
 | SIMULATED | Deterministic local policy replay |
-| LIVE DEVNET PROOF | Real wallet-broadcast Memo authorization evidence |
+| LIVE DEVNET PROOF | Historical wallet-broadcast Memo authorization evidence; never relabelled as settlement |
+| LIVE MOBILE SETTLEMENT | MWA-approved `0.00001 Devnet SOL` transfer plus accepted evidence hash, verified by RPC |
+| LIVE DEVNET RPC | Read-only checks of public signatures, Program state, and balance deltas |
 | PROGRAM ENFORCEMENT | Real deployed Program and persistent state transitions |
 | SPL TOKEN SETTLEMENT | Real VERIFIED CPI transfer using a project-created Devnet test mint; not canonical USDC |
 

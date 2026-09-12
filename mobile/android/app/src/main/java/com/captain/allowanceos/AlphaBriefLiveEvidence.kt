@@ -9,4 +9,6 @@ object AlphaBriefLiveEvidence {
     const val ACCEPTED_EVIDENCE_HASH = "d6cb3d5b51e711668ac6e9d506118666daad80913bd273b788ec06f71d4a345c"
     const val BAD_OUTPUT_EVIDENCE_HASH = "8d8b0b90773781ddd2b956cd690a7f18f25d3a84262ed12fe7f779c6bd371733"
     const val PRICE = 2.0
+    const val MOBILE_SETTLEMENT_MERCHANT = "ETJL7fK6CkaYsjrfXm6NhyNcztes8PcZKJ6jK3xGgMXF"
+    const val MOBILE_SETTLEMENT_LAMPORTS = 10_000L
 }

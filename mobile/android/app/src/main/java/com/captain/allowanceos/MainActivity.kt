@@ -44,6 +44,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.material.darkColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -64,6 +65,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.solana.mobilewalletadapter.clientlib.ActivityResultSender
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     private val viewModel: AllowanceViewModel by viewModels()
@@ -122,10 +124,17 @@ private fun AllowanceApp(viewModel: AllowanceViewModel, sender: ActivityResultSe
         ),
     ) {
         Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
-            AppHeader(chinese = chinese, onLanguageToggle = {
-                chinese = !chinese
-                viewModel.setPreferredChinese(chinese)
-            })
+            AppHeader(
+                state = state,
+                chinese = chinese,
+                onWalletClick = {
+                    if (state.walletAddress.isBlank()) viewModel.connect(sender) else page = AppPage.EVIDENCE
+                },
+                onLanguageToggle = {
+                    chinese = !chinese
+                    viewModel.setPreferredChinese(chinese)
+                },
+            )
             if (state.actionFeedback.isNotBlank()) {
                 ActionFeedbackBanner(state.actionFeedback, chinese) { viewModel.clearActionFeedback() }
             }
@@ -155,6 +164,14 @@ private fun AllowanceApp(viewModel: AllowanceViewModel, sender: ActivityResultSe
         }
     }
 
+    LaunchedEffect(state.actionFeedback) {
+        val displayedMessage = state.actionFeedback
+        if (displayedMessage.isNotBlank()) {
+            delay(4_000)
+            if (viewModel.state.value.actionFeedback == displayedMessage) viewModel.clearActionFeedback()
+        }
+    }
+
     if (showOnboarding) {
         AlertDialog(
             onDismissRequest = {},
@@ -179,31 +196,43 @@ private fun AllowanceApp(viewModel: AllowanceViewModel, sender: ActivityResultSe
 }
 
 @Composable
-private fun AppHeader(chinese: Boolean, onLanguageToggle: () -> Unit) {
+private fun AppHeader(
+    state: AllowanceUiState,
+    chinese: Boolean,
+    onWalletClick: () -> Unit,
+    onLanguageToggle: () -> Unit,
+) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AoMonogram(Modifier.size(42.dp))
-        Spacer(Modifier.width(12.dp))
+        AoMonogram(Modifier.size(36.dp))
+        Spacer(Modifier.width(9.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text("Allowance OS · v${BuildConfig.VERSION_NAME}", color = White, fontSize = 18.sp, fontWeight = FontWeight.Black)
-            Text(t("Web3 服务支付与授权层", "Payment authorization for Web3 services", chinese), color = Muted, fontSize = 11.sp)
+            Text("Allowance OS", color = White, fontSize = 17.sp, fontWeight = FontWeight.Black, maxLines = 1)
+            Text(t("SOLANA DEVNET · 支付控制", "SOLANA DEVNET · PAYMENT CONTROL", chinese), color = Mint, fontSize = 9.sp, fontWeight = FontWeight.Bold, maxLines = 1)
         }
-        Row(
-            modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(androidx.compose.ui.graphics.Color(0xFF142820)).padding(horizontal = 9.dp, vertical = 7.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(Modifier.size(6.dp).background(Mint, CircleShape))
-            Spacer(Modifier.width(6.dp))
-            Text("DEVNET", color = Mint, fontSize = 10.sp, fontWeight = FontWeight.Black)
-        }
-        Spacer(Modifier.width(8.dp))
         Box(
-            modifier = Modifier.height(48.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, Line, RoundedCornerShape(12.dp))
-                .clickable(onClick = onLanguageToggle).padding(horizontal = 12.dp),
+            modifier = Modifier.height(42.dp).clip(RoundedCornerShape(12.dp))
+                .background(if (state.walletAddress.isBlank()) Mint else Color(0xFF142820))
+                .border(1.dp, if (state.walletAddress.isBlank()) Mint else Mint.copy(alpha = 0.42f), RoundedCornerShape(12.dp))
+                .clickable(onClick = onWalletClick).padding(horizontal = 11.dp),
             contentAlignment = Alignment.Center,
-        ) { Text(if (chinese) "EN" else "中文", color = White, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
+        ) {
+            Text(
+                if (state.walletAddress.isBlank()) t("连接", "CONNECT", chinese) else short(state.walletAddress),
+                color = if (state.walletAddress.isBlank()) Ink else Mint,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Black,
+                maxLines = 1,
+            )
+        }
+        Spacer(Modifier.width(6.dp))
+        Box(
+            modifier = Modifier.height(42.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, Line, RoundedCornerShape(12.dp))
+                .clickable(onClick = onLanguageToggle).padding(horizontal = 9.dp),
+            contentAlignment = Alignment.Center,
+        ) { Text(if (chinese) "EN" else "中文", color = White, fontSize = 10.sp, fontWeight = FontWeight.Bold) }
     }
 }
 
@@ -214,6 +243,7 @@ private fun ControlCenterHero(
     habits: DailyHabitsSnapshot,
     chinese: Boolean,
     onTogglePause: () -> Unit,
+    onWalletClick: () -> Unit,
 ) {
     val remaining = (activeTemplate.periodCap - habits.weekSpend).coerceAtLeast(0.0)
     Column(
@@ -243,6 +273,9 @@ private fun ControlCenterHero(
                 color = Muted,
                 fontSize = 12.sp,
             )
+        }
+        if (state.walletAddress.isBlank()) {
+            PrimaryButton(t("连接 Solflare · 开始评委测试", "Connect Solflare · Start judge test", chinese), onClick = onWalletClick)
         }
         if (state.locallyPaused) {
             Row(
@@ -292,7 +325,16 @@ private fun OverviewPage(
             fontSize = 15.sp,
         )
 
-        ControlCenterHero(state, activeTemplate, habits, chinese) { viewModel.toggleLocalPause() }
+        ControlCenterHero(
+            state = state,
+            activeTemplate = activeTemplate,
+            habits = habits,
+            chinese = chinese,
+            onTogglePause = { viewModel.toggleLocalPause() },
+            onWalletClick = { viewModel.connect(sender) },
+        )
+
+        JudgeRunCard(state, chinese) { viewModel.runJudgeDemo(sender) }
 
         ProductCard {
             SectionTitle(t("即将扣款", "UPCOMING CHARGES", chinese), t("预计 · 需证据", "PROJECTED · EVIDENCE", chinese))
@@ -375,7 +417,7 @@ private fun OverviewPage(
             TimelineStep("03", t("独立验证与结算", "Independent verify + settle", chinese), t("8 项检查通过，Executor + Verifier 自动结算 2.0 测试币", "8 checks passed; executor + verifier settled 2.0 test tokens", chinese), true)
             TimelineStep("04", t("坏结果冻结", "Bad output frozen", chinese), t("3 项检查失败，FROZEN 且资金移动为 0", "3 checks failed; FROZEN with zero token movement", chinese), true)
             if (!state.alphaBriefLiveProofSynced) {
-                PrimaryButton(t("同步公开链上证据并通知", "Sync public proofs & notify", chinese)) { runNotifyingAction("SYNC_ALPHABRIEF") }
+                PrimaryButton(t("验证真实 AlphaBrief 链上证明", "Verify live AlphaBrief proof", chinese)) { runNotifyingAction("SYNC_ALPHABRIEF") }
             } else {
                 Notice(t("公开交易已同步到本机时间线。系统通知是否送达取决于 Android 通知权限。", "Public transactions are linked to the device timeline. Android notification delivery depends on notification permission.", chinese), Mint)
             }
@@ -402,7 +444,7 @@ private fun OverviewPage(
                 TinyTag(t("无静默扣款", "NO SILENT DEBIT", chinese), Amber)
             }
             Text(
-                t("策略回放、钱包 Memo 和 v2 Program 结算是独立证据层。自动结算已在 Devnet 由 Executor + Verifier 完成，但手机端不会静默扣款。", "Policy replay, wallet Memo, and v2 Program settlement are separate evidence layers. Executor + verifier settlement is live on Devnet, while the mobile app never silently debits a wallet.", chinese),
+                t("本地策略回放、历史 v2 Program 证明与新的钱包批准微结算是三个独立证据层。手机端永不静默签名。", "Local policy replay, historical v2 Program proof, and the new wallet-approved micro-settlement are three separate evidence layers. The mobile app never signs silently.", chinese),
                 color = Muted,
                 fontSize = 12.sp,
             )
@@ -456,6 +498,82 @@ private fun OverviewPage(
             SecondaryButton(Modifier.weight(1f), t("查看活动", "View activity", chinese)) { navigate(AppPage.ACTIVITY) }
         }
         Spacer(Modifier.height(12.dp))
+    }
+}
+
+@Composable
+private fun JudgeRunCard(
+    state: AllowanceUiState,
+    chinese: Boolean,
+    onRun: () -> Unit,
+) {
+    val active = state.judgeRunStage in setOf(
+        JudgeRunStage.RESETTING,
+        JudgeRunStage.VERIFIED,
+        JudgeRunStage.BLOCKED,
+        JudgeRunStage.FROZEN,
+        JudgeRunStage.LIVE_PROOF,
+        JudgeRunStage.PROGRAM_MATRIX,
+        JudgeRunStage.WALLET_APPROVAL,
+    )
+    ProductCard {
+        SectionTitle(t("评委一键测试", "ONE-TAP JUDGE RUN", chinese), t("混合证据 · 透明", "MIXED EVIDENCE · EXPLICIT", chinese))
+        Text(
+            t(
+                "一次运行安全基线、三态策略、公开链上证明与 RPC 核验；最后只暂停一次，请你在 Solflare 中确认真实微结算。",
+                "Runs the safe baseline, three policy outcomes, public onchain proof, and RPC verification; it pauses once for your explicit Solflare approval of a real micro-settlement.",
+                chinese,
+            ),
+            color = Muted,
+            fontSize = 13.sp,
+        )
+        JudgeStageRow("01", "VERIFIED → BLOCKED → FROZEN", t("本地确定性策略回放", "Deterministic local policy replay", chinese), "SIMULATED", state.judgeRunStage.ordinal >= JudgeRunStage.FROZEN.ordinal && state.judgeRunStage != JudgeRunStage.FAILED, Blue)
+        JudgeStageRow("02", t("AlphaBrief + Program 矩阵", "AlphaBrief + Program matrix", chinese), t("读取公开交易、状态和余额", "Reads public transactions, state, and balances", chinese), "LIVE RPC", state.judgeRunStage.ordinal >= JudgeRunStage.PROGRAM_MATRIX.ordinal && state.judgeRunStage != JudgeRunStage.FAILED, Mint)
+        JudgeStageRow("03", t("商业微结算", "Commercial micro-settlement", chinese), t("0.00001 SOL + evidence hash", "0.00001 SOL + evidence hash", chinese), "WALLET APPROVAL", state.judgeRunStage == JudgeRunStage.COMPLETE, Amber)
+        when (state.judgeRunStage) {
+            JudgeRunStage.FAILED -> Notice(state.judgeRunMessage, Rose)
+            JudgeRunStage.COMPLETE -> Notice(t("Judge Run 完成：真实结算已确认，商户余额增量已由 RPC 验证。", "Judge Run complete: the real settlement finalized and its merchant balance delta was verified by RPC.", chinese), Mint)
+            JudgeRunStage.IDLE -> Notice(t("点击后会自动清除本地 Pause 并恢复 AlphaBrief 可测试基线。不会自动签名。", "Starting clears local Pause and restores the AlphaBrief testable baseline. It never signs automatically.", chinese), Blue)
+            else -> Notice(state.judgeRunMessage, if (state.judgeRunStage == JudgeRunStage.WALLET_APPROVAL) Amber else Blue)
+        }
+        PrimaryButton(
+            label = when {
+                active -> t("Judge Run 运行中…", "Judge Run in progress…", chinese)
+                state.judgeRunStage == JudgeRunStage.COMPLETE -> t("重新运行 Judge Run", "Run Judge Run again", chinese)
+                state.judgeRunStage == JudgeRunStage.FAILED -> t("安全重试 Judge Run", "Retry Judge Run safely", chinese)
+                else -> t("启动 Judge Run", "Start Judge Run", chinese)
+            },
+            enabled = !active,
+            onClick = onRun,
+        )
+    }
+}
+
+@Composable
+private fun JudgeStageRow(
+    number: String,
+    title: String,
+    detail: String,
+    evidenceLevel: String,
+    complete: Boolean,
+    accent: Color,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+            .background(accent.copy(alpha = 0.08f)).border(1.dp, accent.copy(alpha = 0.28f), RoundedCornerShape(14.dp))
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier.size(30.dp).clip(CircleShape).background(if (complete) accent else PanelRaised),
+            contentAlignment = Alignment.Center,
+        ) { Text(if (complete) "✓" else number, color = if (complete) Ink else Muted, fontSize = 10.sp, fontWeight = FontWeight.Black) }
+        Spacer(Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, color = White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text(detail, color = Muted, fontSize = 11.sp)
+        }
+        TinyTag(evidenceLevel, accent)
     }
 }
 
@@ -729,19 +847,22 @@ private fun PolicyPage(state: AllowanceUiState, viewModel: AllowanceViewModel, s
         }
 
         ProductCard {
-            SectionTitle(t("真实钱包动作", "LIVE WALLET ACTION", chinese), "MWA")
+            SectionTitle(t("真实商业结算", "LIVE COMMERCIAL SETTLEMENT", chinese), "MWA · DEVNET")
             Notice(
                 t(
-                    "当前动作只发布一笔 Solana Devnet Memo 作为钱包授权证明：不会转移 TEST 测试币或其他代币，也不会创建可自动扣款的生产授权。只会产生极少量 Devnet 网络费。",
-                    "This action publishes only a Solana Devnet Memo as wallet-authorization proof. It transfers no TEST token or other asset and creates no production recurring-charge allowance; only a tiny Devnet network fee may apply.",
+                    "这不是 Memo-only 演示。钱包将向另一个 AlphaBrief 商户地址支付 0.00001 Devnet SOL，并把已接受的报告 evidence hash 写入同一笔交易。广播后 App 会通过 RPC 核验确认状态与商户余额增量。",
+                    "This is not a Memo-only demo. The wallet pays 0.00001 Devnet SOL to a distinct AlphaBrief merchant address and binds the accepted report evidence hash in the same transaction. The app then verifies confirmation and the merchant balance delta by RPC.",
                     chinese,
                 ),
-                Blue,
+                Mint,
             )
-            PrimaryButton(t("审查并发布 Devnet Memo", "Review and publish Devnet Memo", chinese)) { showPublishConfirmation = true }
+            ValueRow(t("收款商户", "Merchant recipient", chinese), short(AlphaBriefLiveEvidence.MOBILE_SETTLEMENT_MERCHANT))
+            ValueRow(t("支付金额", "Settlement amount", chinese), "0.00001 DEVNET SOL")
+            ValueRow(t("交付证据", "Delivery evidence", chinese), short(AlphaBriefLiveEvidence.ACCEPTED_EVIDENCE_HASH))
+            PrimaryButton(t("审查并结算 AlphaBrief", "Review and settle AlphaBrief", chinese)) { showPublishConfirmation = true }
             if (state.signature.isNotBlank()) {
                 Notice(
-                    t("广播成功。签名已保存，可在钱包页通过 RPC 独立验证。", "Broadcast succeeded. The signature is saved and can be independently verified by RPC on the Wallet page.", chinese),
+                    t("结算成功。签名与 RPC 核验结果已保存到 Evidence。", "Settlement succeeded. Its signature and RPC verification are saved in Evidence.", chinese),
                     Mint,
                 )
                 Text(state.signature, color = Muted, fontSize = 11.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -769,12 +890,14 @@ private fun PolicyPage(state: AllowanceUiState, viewModel: AllowanceViewModel, s
     if (showPublishConfirmation) {
         AlertDialog(
             onDismissRequest = { showPublishConfirmation = false },
-            title = { Text(t("确认发布测试网证明", "Confirm Devnet proof", chinese), color = White, fontWeight = FontWeight.Black) },
+            title = { Text(t("确认 AlphaBrief 微结算", "Confirm AlphaBrief settlement", chinese), color = White, fontWeight = FontWeight.Black) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(t("网络：Solana Devnet", "Network: Solana Devnet", chinese), color = White)
-                    Text(t("资产转移：0 TEST（仅 Memo）", "Asset transfer: 0 TEST (Memo only)", chinese), color = Mint, fontWeight = FontWeight.Bold)
-                    Text(t("内容：策略哈希、商户和请求额度的 Memo 证明", "Payload: Memo proof containing policy hash, merchant, and requested allowance amount", chinese), color = Muted)
+                    Text(t("资产转移：0.00001 Devnet SOL", "Asset transfer: 0.00001 Devnet SOL", chinese), color = Mint, fontWeight = FontWeight.Bold)
+                    Text(t("收款方：", "Recipient: ", chinese) + AlphaBriefLiveEvidence.MOBILE_SETTLEMENT_MERCHANT, color = Muted, fontSize = 11.sp)
+                    Text(t("绑定内容：策略哈希、商户、金额和报告 evidence hash", "Bound payload: policy hash, merchant, amount, and report evidence hash", chinese), color = Muted)
+                    Notice(t("需要一次明确的钱包确认；Allowance OS 不会静默签名。", "One explicit wallet approval is required; Allowance OS never signs silently.", chinese), Amber)
                 }
             },
             confirmButton = {
@@ -814,6 +937,7 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
     val uriHandler = LocalUriHandler.current
     val clipboard = LocalClipboardManager.current
     var showAdvancedEvidence by rememberSaveable { mutableStateOf(false) }
+    var showReceiptDetails by rememberSaveable { mutableStateOf(false) }
     PageColumn {
         Text(t("钱包与验证", "Wallet & verification", chinese), color = White, fontSize = 30.sp, fontWeight = FontWeight.Black)
         Text(t("管理钱包会话，并独立验证策略、授权和链上证明。", "Manage the wallet session and independently verify policy, authorization, and onchain proof.", chinese), color = Muted)
@@ -856,8 +980,24 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
                 EmptyProof(chinese)
             } else {
                 StatusPill(AllowanceState.VERIFIED)
-                Text(t("真实 Devnet Memo 已广播", "Real Devnet Memo broadcast", chinese), color = White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                Text(
+                    if (state.commercialSettlementVerified == true) {
+                        t("AlphaBrief 商业微结算已确认", "AlphaBrief commercial micro-settlement confirmed", chinese)
+                    } else {
+                        t("历史 Devnet 钱包证明", "Historical Devnet wallet proof", chinese)
+                    },
+                    color = White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Black,
+                )
                 Text(state.signature, color = Muted, fontSize = 12.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                if (state.commercialSettlementVerified == true) {
+                    ValueRow(t("结算资产", "Settlement asset", chinese), "0.00001 DEVNET SOL")
+                    ValueRow(t("商户", "Merchant", chinese), short(AlphaBriefLiveEvidence.MOBILE_SETTLEMENT_MERCHANT))
+                    ValueRow(t("商户余额增量", "Merchant balance delta", chinese), "+${state.commercialMerchantBalanceAfter - state.commercialMerchantBalanceBefore} lamports")
+                } else {
+                    Notice(t("这是升级前保留的 Memo 授权证明，不会被描述成真实商业结算。运行 Judge Run 可生成新的结算证明。", "This retained pre-upgrade signature is a Memo authorization proof and is not presented as a commercial settlement. Run Judge Run to create a new settlement proof.", chinese), Blue)
+                }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     SecondaryButton(Modifier.weight(1f), t("复制签名", "Copy signature", chinese)) {
                         clipboard.setText(AnnotatedString(state.signature))
@@ -870,15 +1010,16 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
             }
             Divider(color = Line)
             ValueRow(t("策略哈希", "Policy hash", chinese), short(viewModel.policyHash))
-            ValueRow(t("证明类型", "Proof type", chinese), "SOLANA MEMO")
+            ValueRow(t("证明类型", "Proof type", chinese), if (state.commercialSettlementVerified == true) "SOL TRANSFER + EVIDENCE MEMO" else "WALLET AUTHORIZATION MEMO")
             ValueRow(t("网络", "Network", chinese), "SOLANA DEVNET")
+            ValueRow(t("版本", "Build", chinese), "v0.18.0")
         }
 
         ProductCard {
             SectionTitle(t("验证流水线", "VERIFICATION PIPELINE", chinese), "5 LAYERS")
             TimelineStep("01", t("策略预检", "Policy pre-flight", chinese), t("金额、商户和证据在本地确定结果", "Amount, merchant, and evidence determine the local outcome", chinese), true)
             TimelineStep("02", t("MWA 用户授权", "MWA user authorization", chinese), t("钱包密钥始终留在 Solflare 或所选钱包内", "Wallet keys remain inside Solflare or the selected wallet", chinese), state.walletAddress.isNotBlank())
-            TimelineStep("03", t("Devnet 广播", "Devnet broadcast", chinese), t("签名后的 Memo 形成公开授权证据", "Signed Memo creates public authorization evidence", chinese), state.signature.isNotBlank())
+            TimelineStep("03", t("钱包批准结算", "Wallet-approved settlement", chinese), t("SOL 转账与报告 evidence hash 在同一笔交易中绑定", "SOL transfer and report evidence hash are bound in one transaction", chinese), state.commercialSettlementVerified == true)
             TimelineStep("04", t("Program 强制执行", "Program enforcement", chinese), t("Devnet 已部署，并有真实 VERIFIED / BLOCKED / FROZEN / REVOKED 证明", "Deployed on Devnet with real VERIFIED / BLOCKED / FROZEN / REVOKED proof", chinese), true)
             TimelineStep("05", t("SPL 代币结算", "SPL-token settlement", chinese), t("VERIFIED 已通过 Program CPI 完成真实 Devnet 代币转账", "VERIFIED completed a real Devnet token transfer through Program CPI", chinese), true)
             SecondaryButton(Modifier.fillMaxWidth(), t("打开 Devnet Program", "Open Devnet Program", chinese)) {
@@ -937,7 +1078,20 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
                 fontSize = 13.sp,
             )
             ValueRow(t("收据指纹", "Receipt fingerprint", chinese), short(viewModel.receiptFingerprint()))
-            Text(viewModel.receiptSummary(), color = Muted, fontSize = 10.sp, maxLines = 10, overflow = TextOverflow.Ellipsis)
+            ValueRow(t("决策状态", "Decision state", chinese), state.allowanceState.name)
+            ValueRow(t("证据级别", "Evidence level", chinese), when {
+                state.signature.isBlank() -> "SIMULATED"
+                state.commercialSettlementVerified == true -> "LIVE DEVNET SETTLEMENT"
+                else -> "LIVE DEVNET PROOF"
+            })
+            if (state.signature.isNotBlank()) ValueRow(t("交易签名", "Signature", chinese), short(state.signature))
+            SecondaryButton(
+                Modifier.fillMaxWidth(),
+                if (showReceiptDetails) t("收起原始 JSON", "Collapse raw JSON", chinese) else t("展开原始 JSON", "Expand raw JSON", chinese),
+            ) { showReceiptDetails = !showReceiptDetails }
+            if (showReceiptDetails) {
+                Text(viewModel.receiptSummary(), color = Muted, fontSize = 10.sp)
+            }
             SecondaryButton(Modifier.fillMaxWidth(), t("复制完整收据", "Copy full receipt", chinese)) {
                 clipboard.setText(AnnotatedString(viewModel.receiptSummary()))
                 viewModel.setActionFeedback("Portable receipt copied to the clipboard.")
@@ -1015,7 +1169,8 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
         if (showAdvancedEvidence) ProductCard {
             SectionTitle(t("真实性边界", "TRUTH BOUNDARY", chinese), t("透明披露", "HONEST DISCLOSURE", chinese))
             BoundaryRow("SIMULATED", t("策略参数回放与三态矩阵", "Policy replay and three-state matrix", chinese), Blue)
-            BoundaryRow("LIVE DEVNET PROOF", t("真实 MWA 钱包授权 + Memo 签名", "Real MWA wallet authorization + Memo signature", chinese), Mint)
+            BoundaryRow("LIVE MOBILE SETTLEMENT", t("MWA 批准的 0.00001 SOL 转账 + evidence Memo", "MWA-approved 0.00001 SOL transfer + evidence Memo", chinese), Mint)
+            BoundaryRow("LIVE DEVNET RPC", t("独立查询交易状态、Program 账户与余额差", "Independently queries transaction status, Program accounts, and balance deltas", chinese), Mint)
             BoundaryRow("PROGRAM ENFORCEMENT", t("真实链上状态变更：通过、拒绝、冻结和撤销", "Real onchain state transitions: verify, reject, freeze, and revoke", chinese), Mint)
             BoundaryRow("SPL TOKEN SETTLEMENT", t("VERIFIED 通过 CPI 转移 1,000,000 raw 单位；测试 mint 不是官方 USDC", "VERIFIED transferred 1,000,000 raw units by CPI; the test mint is not canonical USDC", chinese), Mint)
             BoundaryRow("DELEGATED V2", t("真实无用户签名后续结算与完整控制矩阵", "Real authority-free later settlement and full control matrix", chinese), Mint)
@@ -1227,7 +1382,12 @@ private fun eventTitle(kind: String, chinese: Boolean): String = when (kind) {
     "ALPHABRIEF_UNLOCKED" -> t("研究报告已解锁", "Research report unlocked", chinese)
     "REPLAY_REJECTED" -> t("证据重放已拒绝", "Evidence replay rejected", chinese)
     "ALPHABRIEF_LIVE_SETTLED" -> t("AlphaBrief 已交付并结算", "AlphaBrief delivered and settled", chinese)
+    "ALPHABRIEF_MOBILE_SETTLED" -> t("AlphaBrief 手机结算已验证", "AlphaBrief mobile settlement verified", chinese)
     "ALPHABRIEF_BAD_OUTPUT_FROZEN" -> t("坏结果触发冻结", "Bad output frozen", chinese)
+    "JUDGE_RUN_STARTED" -> t("Judge Run 已启动", "Judge Run started", chinese)
+    "JUDGE_RUN_LIVE_PROOF_VERIFIED" -> t("Judge Run 公开证明已验证", "Judge Run live proof verified", chinese)
+    "JUDGE_RUN_COMPLETED" -> t("Judge Run 已完成", "Judge Run completed", chinese)
+    "JUDGE_RUN_FAILED" -> t("Judge Run 安全停止", "Judge Run stopped safely", chinese)
     "LOCAL_SAFETY_PAUSED" -> t("本地安全暂停", "Local safety pause", chinese)
     "LOCAL_SAFETY_RESUMED" -> t("本地安全恢复", "Local safety resumed", chinese)
     "DAILY_SAFETY_CHECK" -> t("每日安全检查", "Daily safety check", chinese)

@@ -1,5 +1,17 @@
 # Changelog
 
+## Android / SDK v0.18.0 — 2026-09-12
+
+- Replaced the mobile Memo-only action with a real wallet-approved AlphaBrief micro-settlement: `0.00001 Devnet SOL` to a distinct merchant plus the accepted report evidence hash in the same transaction.
+- Added post-broadcast RPC confirmation, buyer-balance refresh, and merchant lamport balance-delta verification.
+- Added a one-tap Judge Run that resets local Pause, executes `VERIFIED → BLOCKED → FROZEN`, verifies live AlphaBrief and Program evidence, and pauses once for explicit Solflare approval.
+- Moved wallet access into the compact first-screen Header and added a disconnected-state CTA inside the Home hero.
+- Auto-dismissed success feedback after four seconds while preserving every material action in Activity.
+- Increased dark-theme text and divider contrast, removed the version from the primary Header, and moved build identity into Evidence.
+- Collapsed Portable Receipt JSON behind an explicit disclosure control and added a readable receipt summary.
+- Renamed the public-proof action to **Verify live AlphaBrief proof** and updated all commercial-settlement disclosures.
+- Updated the matching browser Judge Demo with a truth-labelled one-click verification path and stronger contrast.
+
 ## Android / SDK v0.17.4 — 2026-09-12
 
 - Fixed a critical Mobile Wallet Adapter authorization regression introduced in v0.17.3: the wallet identity icon is once again supplied as a URI relative to the public identity URI, as required by MWA.
