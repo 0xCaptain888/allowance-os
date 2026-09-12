@@ -16,7 +16,10 @@ import com.solana.transaction.toUnsignedTransaction
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import org.bitcoinj.base.Base58
 import java.security.MessageDigest
 
@@ -168,40 +171,48 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
     fun connect(sender: ActivityResultSender) {
         viewModelScope.launch {
             setLoading()
-            when (val result = walletAdapter.connect(sender)) {
-                is TransactionResult.Success -> {
-                    val account = result.authResult.accounts.first()
-                    val publicKey = SolanaPublicKey(account.publicKey)
-                    try {
-                        persistConnection(
-                            publicKey = publicKey.base58(),
-                            accountLabel = account.accountLabel.orEmpty(),
-                            authToken = result.authResult.authToken,
-                        )
-                    } catch (error: Exception) {
-                        clearConnection()
-                        fail(
-                            "Wallet authorization succeeded, but the encrypted reconnect session could not be saved. Reconnect and try again.",
-                            "WALLET_SESSION_STORAGE_ERROR",
-                        )
-                        return@launch
+            try {
+                when (val result = withTimeout(WALLET_OPERATION_TIMEOUT_MS) { walletAdapter.connect(sender) }) {
+                    is TransactionResult.Success -> {
+                        val account = result.authResult.accounts.first()
+                        val publicKey = SolanaPublicKey(account.publicKey)
+                        try {
+                            persistConnection(
+                                publicKey = publicKey.base58(),
+                                accountLabel = account.accountLabel.orEmpty(),
+                                authToken = result.authResult.authToken,
+                            )
+                        } catch (error: Exception) {
+                            clearConnection()
+                            fail(
+                                "Wallet authorization succeeded, but the encrypted reconnect session could not be saved. Reconnect and try again.",
+                                "WALLET_SESSION_STORAGE_ERROR",
+                            )
+                            return@launch
+                        }
+                        _state.update {
+                            it.copy(
+                                loading = false,
+                                walletAddress = publicKey.base58(),
+                                walletLabel = account.accountLabel.orEmpty(),
+                                walletSessionState = WalletSessionState.CONNECTED,
+                                solBalance = runCatching { rpc.balance(publicKey) }.getOrNull(),
+                                error = "",
+                                decisionReason = "MWA authorization succeeded on Solana Devnet.",
+                            )
+                        }
+                        logEvent("WALLET_CONNECTED", AllowanceState.IDLE, message = "MWA wallet authorization succeeded")
                     }
-                    _state.update {
-                        it.copy(
-                            loading = false,
-                            walletAddress = publicKey.base58(),
-                            walletLabel = account.accountLabel.orEmpty(),
-                            walletSessionState = WalletSessionState.CONNECTED,
-                            solBalance = runCatching { rpc.balance(publicKey) }.getOrNull(),
-                            error = "",
-                            decisionReason = "MWA authorization succeeded on Solana Devnet.",
-                        )
-                    }
-                    logEvent("WALLET_CONNECTED", AllowanceState.IDLE, message = "MWA wallet authorization succeeded")
-                }
 
-                is TransactionResult.NoWalletFound -> fail(result.message, "WALLET_ERROR")
-                is TransactionResult.Failure -> fail(result.message, "WALLET_ERROR")
+                    is TransactionResult.NoWalletFound -> fail(result.message, "WALLET_ERROR")
+                    is TransactionResult.Failure -> fail(result.message, "WALLET_ERROR")
+                }
+            } catch (error: TimeoutCancellationException) {
+                fail("Wallet did not respond within 90 seconds. The app is unlocked; try again when the wallet is ready.", "WALLET_TIMEOUT")
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                fail(error.message ?: "Wallet connection was interrupted", "WALLET_ERROR")
             }
         }
     }
@@ -234,29 +245,53 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         preferences.edit().putBoolean(KEY_ONBOARDING_COMPLETE, true).apply()
     }
 
+    fun resetInteractiveDemo() {
+        preferences.edit().putBoolean(KEY_LOCAL_PAUSED, false).apply()
+        _state.update {
+            it.copy(
+                loading = false,
+                loadingMessage = "",
+                allowanceState = AllowanceState.IDLE,
+                decisionReason = "Demo reset. Choose VERIFIED, BLOCKED, or FROZEN, or adjust the policy controls.",
+                requestedAmount = policy.perChargeCap,
+                periodSpent = 0.0,
+                merchantTrusted = true,
+                evidencePresent = true,
+                alphaBriefUnlocked = false,
+                replayRejected = false,
+                locallyPaused = false,
+                error = "",
+            )
+        }
+        logEvent("INTERACTIVE_DEMO_RESET", AllowanceState.IDLE, message = "Local pause cleared and policy demo restored to a testable baseline")
+    }
+
     fun runVerified() = evaluate(
         amount = policy.perChargeCap,
         merchant = policy.merchant,
         evidence = "service-delivery-sha256",
+        respectLocalPause = false,
     )
 
     fun runBlocked() = evaluate(
         amount = policy.perChargeCap + maxOf(1.0, policy.perChargeCap),
         merchant = policy.merchant,
         evidence = "service-delivery-sha256",
+        respectLocalPause = false,
     )
 
     fun runFrozen() = evaluate(
         amount = policy.perChargeCap,
         merchant = "merchant:lookalike",
         evidence = "service-delivery-sha256",
+        respectLocalPause = false,
     )
 
     fun runJudgeDemo() {
         val amount = policy.perChargeCap
-        evaluate(amount, policy.merchant, "service-delivery-sha256", 0.0)
-        evaluate(amount + maxOf(1.0, amount), policy.merchant, "service-delivery-sha256", 0.0)
-        evaluate(amount, "merchant:lookalike", "service-delivery-sha256", 0.0)
+        evaluate(amount, policy.merchant, "service-delivery-sha256", 0.0, respectLocalPause = false)
+        evaluate(amount + maxOf(1.0, amount), policy.merchant, "service-delivery-sha256", 0.0, respectLocalPause = false)
+        evaluate(amount, "merchant:lookalike", "service-delivery-sha256", 0.0, respectLocalPause = false)
     }
 
     fun runAlphaBriefDelivery() {
@@ -464,7 +499,8 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         }
         viewModelScope.launch {
             setLoading("Review the $action v2 transaction in your wallet…")
-            when (val result = walletAdapter.transact(sender) { authorization ->
+            try {
+                when (val result = withTimeout(WALLET_OPERATION_TIMEOUT_MS) { walletAdapter.transact(sender) { authorization ->
                 val signer = SolanaPublicKey(authorization.accounts.first().publicKey)
                 check(signer.base58() == DelegatedAllowanceV2.AUTHORITY) {
                     "Wallet account changed; expected the delegated v2 authority account"
@@ -475,7 +511,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                     .build()
                     .toUnsignedTransaction()
                 Base58.encode(signAndSendTransactions(arrayOf(transaction.serialize())).signatures.first())
-            }) {
+                } }) {
                 is TransactionResult.Success -> {
                     val account = result.authResult.accounts.first()
                     runCatching {
@@ -502,8 +538,15 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                     logEvent("V2_${action}_BROADCAST", AllowanceState.VERIFIED, message = "Live delegated v2 $action transaction broadcast", signature = result.payload)
                     inspectDelegatedV2()
                 }
-                is TransactionResult.NoWalletFound -> fail(result.message, "V2_WALLET_ERROR")
-                is TransactionResult.Failure -> fail(result.message, "V2_CONTROL_ERROR")
+                    is TransactionResult.NoWalletFound -> fail(result.message, "V2_WALLET_ERROR")
+                    is TransactionResult.Failure -> fail(result.message, "V2_CONTROL_ERROR")
+                }
+            } catch (error: TimeoutCancellationException) {
+                fail("Wallet did not respond within 90 seconds. The app is unlocked; review the v2 action and try again.", "V2_WALLET_TIMEOUT")
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                fail(error.message ?: "The v2 control broadcast was interrupted", "V2_CONTROL_ERROR")
             }
         }
     }
@@ -551,7 +594,17 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
     )
 
     private fun evaluate(amount: Double, merchant: String, evidence: String, periodSpent: Double = 0.0) {
-        if (blockIfLocallyPaused(amount)) return
+        evaluate(amount, merchant, evidence, periodSpent, respectLocalPause = true)
+    }
+
+    private fun evaluate(
+        amount: Double,
+        merchant: String,
+        evidence: String,
+        periodSpent: Double = 0.0,
+        respectLocalPause: Boolean,
+    ) {
+        if (respectLocalPause && blockIfLocallyPaused(amount)) return
         val decision = PolicyEngine.evaluate(policy, amount, merchant, evidence, periodSpent)
         _state.update {
             it.copy(
@@ -599,7 +652,8 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
 
         viewModelScope.launch {
             setLoading("Policy passed. Approve the Devnet authorization proof in your wallet.")
-            when (val result = walletAdapter.transact(sender) { authorization ->
+            try {
+                when (val result = withTimeout(WALLET_OPERATION_TIMEOUT_MS) { walletAdapter.transact(sender) { authorization ->
                 val publicKey = SolanaPublicKey(authorization.accounts.first().publicKey)
                 val memo = listOf(
                     "ALLOWANCE_OS",
@@ -622,7 +676,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                     .signatures
                     .first()
                 Base58.encode(signatureBytes)
-            }) {
+                } }) {
                 is TransactionResult.Success -> {
                     val account = result.authResult.accounts.first()
                     try {
@@ -657,8 +711,15 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                     logEvent("DEVNET_MEMO_BROADCAST", AllowanceState.VERIFIED, current.requestedAmount, "Real Devnet Memo authorization proof", result.payload)
                 }
 
-                is TransactionResult.NoWalletFound -> fail(result.message, "WALLET_ERROR")
-                is TransactionResult.Failure -> fail(result.message, "WALLET_ERROR")
+                    is TransactionResult.NoWalletFound -> fail(result.message, "WALLET_ERROR")
+                    is TransactionResult.Failure -> fail(result.message, "WALLET_ERROR")
+                }
+            } catch (error: TimeoutCancellationException) {
+                fail("Wallet did not respond within 90 seconds. The app is unlocked and no success is assumed.", "WALLET_TIMEOUT")
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                fail(error.message ?: "Devnet proof broadcast was interrupted", "WALLET_ERROR")
             }
         }
     }
@@ -666,7 +727,8 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
     fun disconnectWalletSession(sender: ActivityResultSender) {
         viewModelScope.launch {
             setLoading("Requesting MWA wallet disconnect…")
-            when (val result = walletAdapter.disconnect(sender)) {
+            try {
+                when (val result = withTimeout(WALLET_OPERATION_TIMEOUT_MS) { walletAdapter.disconnect(sender) }) {
                 is TransactionResult.Success -> {
                     clearConnection()
                     _state.value = AllowanceUiState(
@@ -680,8 +742,15 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                     logEvent("MWA_DISCONNECTED", AllowanceState.IDLE, message = "MWA wallet session deauthorized; onchain allowance unchanged")
                 }
 
-                is TransactionResult.NoWalletFound -> fail(result.message, "WALLET_ERROR")
-                is TransactionResult.Failure -> fail(result.message, "WALLET_ERROR")
+                    is TransactionResult.NoWalletFound -> fail(result.message, "WALLET_ERROR")
+                    is TransactionResult.Failure -> fail(result.message, "WALLET_ERROR")
+                }
+            } catch (error: TimeoutCancellationException) {
+                fail("Wallet did not respond within 90 seconds. The app is unlocked; local session state was not cleared.", "WALLET_TIMEOUT")
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                fail(error.message ?: "Wallet disconnect was interrupted", "WALLET_ERROR")
             }
         }
     }
@@ -948,6 +1017,7 @@ $events
         private const val KEY_ONBOARDING_COMPLETE = "onboarding_complete_v1"
         private const val KEY_ALPHABRIEF_SYNCED = "alphabrief_live_proof_synced_v1"
         private const val KEY_LOCAL_PAUSED = "local_safety_paused"
+        private const val WALLET_OPERATION_TIMEOUT_MS = 90_000L
         const val RECORDED_LIVE_SIGNATURE = "4w1cjWABu9L9NGMe4NrRTkqFxZVnJBsdket94ifiuKrGaMsMDnYquFpirq4kte4hsCxRuT6Jo79U8zvKNgzQ3B9k"
     }
 }

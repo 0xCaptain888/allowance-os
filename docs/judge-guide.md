@@ -31,9 +31,9 @@ Build or install the Android app from `mobile/android`:
 2. On **Overview**, tap **Connect Solflare Wallet / MWA Wallet** and approve Solana Devnet authorization.
 3. On **Daily Habits**, inspect upcoming charges, today/week spend, budget pressure, merchant anomaly status, and the weekly safety report.
 4. Tap **Sync public proofs & notify** to link the real AlphaBrief settlement and freeze signatures into the device timeline and trigger local delivery/freeze notifications.
-5. Use **One-tap Pause** and confirm the UI labels it as a local request stop—not an onchain pause transaction.
-6. Tap **Judge mode** to generate the three policy outcomes and open **Activity**; the audit trail should contain VERIFIED, BLOCKED, and FROZEN decisions.
-7. On **Policy**, change the requested amount, current-period spend, merchant identity, and evidence availability.
+5. Use **One-tap Pause** and confirm the UI labels it as a local request stop—not an onchain pause transaction. Then tap **Resume** or **Reset interactive demo** before testing live requests.
+6. On Home, tap `VERIFIED`, `BLOCKED`, and `FROZEN`; each local replay must update the decision card even while live requests are paused. `BLOCKED` deliberately exceeds the policy cap; it does not mean the wallet balance is insufficient.
+7. In **Allowance center**, change the requested amount, current-period spend, merchant identity, and evidence availability. Use **Use charge cap** and **Reset period spend** to restore a passing baseline.
 8. Run `BLOCKED` or `FROZEN` and confirm the wallet is not opened.
 9. Run `VERIFIED`, then publish the real Devnet authorization proof and approve it in Solflare Wallet or another compatible MWA wallet.
 10. On **Evidence**, run **Independent RPC Verification**, inspect the AlphaBrief live-commerce card, and open both settlement and freeze transactions.

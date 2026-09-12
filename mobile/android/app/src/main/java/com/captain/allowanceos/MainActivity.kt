@@ -305,12 +305,23 @@ private fun OverviewPage(
         ProductCard {
             SectionTitle(t("最新付款决策", "LATEST PAYMENT DECISION", chinese), t("付款前执行", "BEFORE WALLET", chinese))
             Text(t("检查一个安全请求，或故意触发预算和证据失败。", "Check a safe request or deliberately trigger budget and evidence failures.", chinese), color = Muted, fontSize = 13.sp)
+            Notice(
+                t(
+                    "这里的“限额”是当前服务的策略上限，不是钱包余额不足。BLOCKED 会故意提交超额请求，用来证明付款前拦截有效。",
+                    "A limit here is the active service policy cap, not an insufficient wallet balance. BLOCKED intentionally submits an oversized request to prove pre-payment enforcement.",
+                    chinese,
+                ),
+                Blue,
+            )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 StateAction(Modifier.weight(1f), "VERIFIED", Mint) { viewModel.runVerified() }
                 StateAction(Modifier.weight(1f), "BLOCKED", Amber) { viewModel.runBlocked() }
                 StateAction(Modifier.weight(1f), "FROZEN", Rose) { viewModel.runFrozen() }
             }
             DecisionCard(state, chinese)
+            SecondaryButton(Modifier.fillMaxWidth(), t("重置为可测试状态", "Reset interactive demo", chinese)) {
+                viewModel.resetInteractiveDemo()
+            }
             SecondaryButton(Modifier.fillMaxWidth(), t("打开完整策略审查", "Open full allowance review", chinese)) { navigate(AppPage.ALLOWANCES) }
         }
 
@@ -535,6 +546,26 @@ private fun PolicyPage(state: AllowanceUiState, viewModel: AllowanceViewModel, s
         Text(t("审查服务预算与证据边界，再决定是否允许钱包签名。", "Review service budgets and evidence boundaries before the wallet may sign.", chinese), color = Muted)
         ReviewSteps(active = 4, chinese = chinese)
 
+        if (state.locallyPaused) {
+            ProductCard {
+                SectionTitle(t("本地安全暂停已开启", "LOCAL SAFETY PAUSE IS ON", chinese), t("请求被拦截", "REQUESTS BLOCKED", chinese))
+                Text(
+                    t(
+                        "真实服务请求和钱包广播会被暂停；三态策略回放仍可正常运行。点击恢复后即可继续测试。",
+                        "Live service requests and wallet broadcasts are paused; the three-state policy replays remain available. Resume to continue testing.",
+                        chinese,
+                    ),
+                    color = Muted,
+                    fontSize = 13.sp,
+                )
+                StateAction(
+                    Modifier.fillMaxWidth(),
+                    t("恢复本地请求", "RESUME LOCAL REQUESTS", chinese),
+                    Mint,
+                ) { viewModel.toggleLocalPause() }
+            }
+        }
+
         ProductCard {
             SectionTitle(t("01 · 当前服务", "01 · SERVICE", chinese), "READY TEMPLATE")
             Text(if (chinese) template.nameZh else template.name, color = White, fontSize = 22.sp, fontWeight = FontWeight.Black)
@@ -562,9 +593,23 @@ private fun PolicyPage(state: AllowanceUiState, viewModel: AllowanceViewModel, s
                 value = amount,
                 onValueChange = { amount = it },
                 valueRange = 0.05f..requestMax,
-                steps = 39,
+                // A fixed 39-step slider made small-cap templates such as
+                // DataPipe jump over their 0.05 cap. Continuous input keeps
+                // every template testable while policy evaluation remains the
+                // source of truth.
+                steps = 0,
                 colors = SliderDefaults.colors(thumbColor = Mint, activeTrackColor = Mint, inactiveTrackColor = Line),
             )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                SecondaryButton(
+                    Modifier.weight(1f),
+                    t("使用单笔上限", "USE CHARGE CAP", chinese),
+                ) { amount = template.perCharge.toFloat() }
+                SecondaryButton(
+                    Modifier.weight(1f),
+                    t("清零周期支出", "RESET PERIOD SPEND", chinese),
+                ) { periodSpent = 0f }
+            }
             ValueRow(t("允许上限", "Allowed maximum", chinese), "${template.perCharge} ${template.token}")
             Divider(color = Line)
             Row(verticalAlignment = Alignment.Bottom) {
@@ -575,7 +620,7 @@ private fun PolicyPage(state: AllowanceUiState, viewModel: AllowanceViewModel, s
                 value = periodSpent,
                 onValueChange = { periodSpent = it },
                 valueRange = 0f..template.periodCap.toFloat(),
-                steps = 15,
+                steps = 0,
                 colors = SliderDefaults.colors(thumbColor = Blue, activeTrackColor = Blue, inactiveTrackColor = Line),
             )
             LinearProgressIndicator(
@@ -718,7 +763,7 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
             }
             SectionTitle(t("钱包会话", "WALLET SESSION", chinese), walletStatus)
             if (state.walletAddress.isBlank()) {
-                Text(t("连接 Phantom 或其他兼容 MWA 的钱包。私钥始终留在钱包中。", "Connect Phantom or another MWA-compatible wallet. Private keys always remain in the wallet.", chinese), color = Muted, fontSize = 13.sp)
+                Text(t("连接 Solflare Wallet 或其他兼容 MWA 的钱包。私钥始终留在钱包中。", "Connect Solflare Wallet or another MWA-compatible wallet. Private keys always remain in the wallet.", chinese), color = Muted, fontSize = 13.sp)
                 PrimaryButton(t("连接钱包", "Connect wallet", chinese)) { viewModel.connect(sender) }
             } else {
                 Row(verticalAlignment = Alignment.Bottom) {
@@ -763,7 +808,7 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
         ProductCard {
             SectionTitle(t("验证流水线", "VERIFICATION PIPELINE", chinese), "5 LAYERS")
             TimelineStep("01", t("策略预检", "Policy pre-flight", chinese), t("金额、商户和证据在本地确定结果", "Amount, merchant, and evidence determine the local outcome", chinese), true)
-            TimelineStep("02", t("MWA 用户授权", "MWA user authorization", chinese), t("钱包密钥始终留在 Phantom", "Wallet keys remain inside Phantom", chinese), state.walletAddress.isNotBlank())
+            TimelineStep("02", t("MWA 用户授权", "MWA user authorization", chinese), t("钱包密钥始终留在 Solflare 或所选钱包内", "Wallet keys remain inside Solflare or the selected wallet", chinese), state.walletAddress.isNotBlank())
             TimelineStep("03", t("Devnet 广播", "Devnet broadcast", chinese), t("签名后的 Memo 形成公开授权证据", "Signed Memo creates public authorization evidence", chinese), state.signature.isNotBlank())
             TimelineStep("04", t("Program 强制执行", "Program enforcement", chinese), t("Devnet 已部署，并有真实 VERIFIED / BLOCKED / FROZEN / REVOKED 证明", "Deployed on Devnet with real VERIFIED / BLOCKED / FROZEN / REVOKED proof", chinese), true)
             TimelineStep("05", t("SPL 代币结算", "SPL-token settlement", chinese), t("VERIFIED 已通过 Program CPI 完成真实 Devnet 代币转账", "VERIFIED completed a real Devnet token transfer through Program CPI", chinese), true)

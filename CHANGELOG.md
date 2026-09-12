@@ -1,5 +1,16 @@
 # Changelog
 
+## Android / SDK v0.17.2 — 2026-09-12
+
+- Fixed the persisted local Pause state preventing the Home `VERIFIED`, `BLOCKED`, and `FROZEN` policy-replay buttons from being tested.
+- Added an explicit **Reset interactive demo** action that clears local Pause and restores safe policy inputs.
+- Added a prominent Pause explanation and Resume action inside the Allowance center.
+- Clarified that a displayed limit is the service policy cap—not an insufficient wallet balance—and that `BLOCKED` deliberately tests an oversized request.
+- Replaced coarse amount/spend slider steps with continuous controls so small-cap templates such as DataPipe remain testable.
+- Added one-tap controls to restore the per-charge cap and reset period spend.
+- Added 90-second timeout and exception recovery around MWA connect, broadcast, disconnect, and live v2 controls so a cancelled wallet flow cannot leave a permanent input-blocking overlay.
+- Updated remaining wallet copy from Phantom to Solflare Wallet while preserving generic MWA support.
+
 ## Android / SDK v0.17.1 — 2026-09-12
 
 - Updated the Home wallet entry point to lead with Solflare Wallet while retaining compatibility with any MWA wallet.
