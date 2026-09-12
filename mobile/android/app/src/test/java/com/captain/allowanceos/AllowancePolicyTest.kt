@@ -1,15 +1,27 @@
 package com.captain.allowanceos
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import com.solana.publickey.SolanaPublicKey
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.net.URI
 
 class AllowancePolicyTest {
     private val policy = AllowancePolicy()
+
+    @Test
+    fun mwaIdentityIconRemainsRelativeToThePublicIdentityUri() {
+        assertTrue(URI(MWA_IDENTITY_URI).isAbsolute)
+        assertFalse(URI(MWA_ICON_RELATIVE_URI).isAbsolute)
+        assertEquals(
+            "https://0xcaptain888.github.io/allowance-os/favicon-ao-v017.svg",
+            URI(MWA_IDENTITY_URI).resolve(MWA_ICON_RELATIVE_URI).toString(),
+        )
+    }
 
     @Test
     fun validChargeIsVerified() {

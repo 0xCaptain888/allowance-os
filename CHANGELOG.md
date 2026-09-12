@@ -1,5 +1,11 @@
 # Changelog
 
+## Android / SDK v0.17.4 — 2026-09-12
+
+- Fixed a critical Mobile Wallet Adapter authorization regression introduced in v0.17.3: the wallet identity icon is once again supplied as a URI relative to the public identity URI, as required by MWA.
+- Added an Android regression test that verifies the identity URI is absolute, the icon URI is relative, and the resolved public icon URL remains correct.
+- Supersedes v0.17.3 for device testing. No policy, settlement, custody, or Devnet evidence semantics changed.
+
 ## Android / SDK v0.17.3 — 2026-09-12
 
 - Isolated Daily Habits spend and anomaly calculations by selected service, with backward-compatible migration for old local audit records.

@@ -1,6 +1,6 @@
 # Two-Minute Judge Guide
 
-> Current QA build: **v0.17.3**. The Android app uses `TEST` consistently for the project-created Devnet mint; canonical USDC references are production targets, not claims about the live proof.
+> Current QA build: **v0.17.4**. This build restores Solflare/MWA authorization after v0.17.3 supplied an invalid absolute identity-icon URI. The Android app uses `TEST` consistently for the project-created Devnet mint; canonical USDC references are production targets, not claims about the live proof.
 
 ## 1. Understand the product in 20 seconds
 

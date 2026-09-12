@@ -6,9 +6,9 @@
   <title>Allowance OS — Payment Authorization for Web3 Services</title>
   <meta name="description" content="A non-custodial Solana Mobile control layer for bounded Web3 service payments, verifiable evidence, and explicit revocation." />
   <meta name="theme-color" content="#111419" />
-  <link rel="icon" href="favicon-ao-v017.svg?v=0.17.3" type="image/svg+xml" />
-  <link rel="shortcut icon" href="favicon-ao-v017.svg?v=0.17.3" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="favicon-ao-v017.svg?v=0.17.3" />
+  <link rel="icon" href="favicon-ao-v017.svg?v=0.17.4" type="image/svg+xml" />
+  <link rel="shortcut icon" href="favicon-ao-v017.svg?v=0.17.4" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="favicon-ao-v017.svg?v=0.17.4" />
   <style>
     :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #060810; color: #f7f8ff; }
     * { box-sizing: border-box; }
@@ -315,9 +315,9 @@
 </head>
 <body>
   <main>
-    <nav><strong><img class="brand-mark" src="favicon-ao-v017.svg?v=0.17.3" alt="Allowance OS AO monogram" /><span class="brand-copy">Allowance OS<small>Fintech control center · v0.17.3</small></span></strong><div class="links"><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.17.3">Download APK</a><a class="nav-link" href="#live-commerce">Live AlphaBrief</a><a class="nav-link" href="https://explorer.solana.com/address/7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL?cluster=devnet">Delegated v2</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/evidence/live-alphabrief-v2.json">Evidence</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os">GitHub</a></div></nav>
+    <nav><strong><img class="brand-mark" src="favicon-ao-v017.svg?v=0.17.4" alt="Allowance OS AO monogram" /><span class="brand-copy">Allowance OS<small>Fintech control center · v0.17.4</small></span></strong><div class="links"><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.17.4">Download APK</a><a class="nav-link" href="#live-commerce">Live AlphaBrief</a><a class="nav-link" href="https://explorer.solana.com/address/7zARKWKDLawLgR7qokvQdkAv6ye2cXGNEvNQswBd6xvL?cluster=devnet">Delegated v2</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os/blob/main/evidence/live-alphabrief-v2.json">Evidence</a><a class="nav-link" href="https://github.com/0xCaptain888/allowance-os">GitHub</a></div></nav>
     <section id="overview" class="hero">
-<div class="hero-copy"><div class="eyebrow">Control center · Solana Devnet</div><h1>Approve once.<br />Stay in control.</h1><p class="lede">The payment-authorization layer for AI subscriptions, paid research, trading signals, automation bots, and metered APIs. Every future charge stays inside a visible budget and evidence boundary.</p><div class="hero-actions"><a class="primary-cta" href="https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.17.3">Download Android v0.17.3</a><a class="secondary-cta" href="#live-commerce">Inspect live commerce proof</a></div><div class="state-strip"><span class="pill verified">VERIFIED · MAY SETTLE</span><span class="pill blocked">BLOCKED · NEVER STARTED</span><span class="pill frozen">FROZEN · ZERO MOVED</span></div></div>
+<div class="hero-copy"><div class="eyebrow">Control center · Solana Devnet</div><h1>Approve once.<br />Stay in control.</h1><p class="lede">The payment-authorization layer for AI subscriptions, paid research, trading signals, automation bots, and metered APIs. Every future charge stays inside a visible budget and evidence boundary.</p><div class="hero-actions"><a class="primary-cta" href="https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.17.4">Download Android v0.17.4</a><a class="secondary-cta" href="#live-commerce">Inspect live commerce proof</a></div><div class="state-strip"><span class="pill verified">VERIFIED · MAY SETTLE</span><span class="pill blocked">BLOCKED · NEVER STARTED</span><span class="pill frozen">FROZEN · ZERO MOVED</span></div></div>
       <div class="card policy"><div class="policy-head"><small>PROTECTED ALLOWANCE</small><span class="pill verified">DEVNET READY</span></div><div class="policy-total"><b>6.00 TEST</b><span>remaining from an 8.00 weekly cap</span><div class="budget-meter"><span></span></div></div><div class="row"><span class="muted">Active service</span><span id="heroService" class="value">AlphaBrief</span></div><div class="row"><span class="muted">Merchant</span><span id="heroMerchant" class="value">merchant:alphabrief</span></div><div class="row"><span class="muted">Next charge</span><span id="heroCharge" class="value">2 TEST</span></div><div class="row"><span class="muted">Period cap</span><span id="heroCap" class="value">8 TEST</span></div><div class="row"><span class="muted">Latest decision</span><span class="pill frozen">BAD OUTPUT CONTAINED</span></div></div>
     </section>
 
@@ -457,7 +457,7 @@
       <button style="margin:16px 0" onclick="verifyProgramMatrix()">Verify state + token settlement via Solana RPC</button>
       <div id="programProof" class="proof-state muted">Not checked yet. This reads five signatures, three transaction balance records, and the final allowance account.</div>
     </section>
-    <footer>Allowance OS v0.17.3 · Browser simulation is clearly separated from public Solana Devnet evidence · Project-created test mint, not canonical USDC.</footer>
+    <footer>Allowance OS v0.17.4 · Browser simulation is clearly separated from public Solana Devnet evidence · Project-created test mint, not canonical USDC.</footer>
   </main>
   <div class="mobile-dock" aria-label="Mobile navigation"><a href="#overview"><span class="dock-icon">⌂</span>Home</a><a href="#services"><span class="dock-icon">◆</span>Services</a><a href="#simulator"><span class="dock-icon">◎</span>Review</a><a href="#proof-center"><span class="dock-icon">✓</span>Evidence</a></div>
   <script>

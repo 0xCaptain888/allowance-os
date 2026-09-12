@@ -23,6 +23,9 @@ import kotlinx.coroutines.withTimeout
 import org.bitcoinj.base.Base58
 import java.security.MessageDigest
 
+internal const val MWA_IDENTITY_URI = "https://0xcaptain888.github.io/allowance-os/"
+internal const val MWA_ICON_RELATIVE_URI = "favicon-ao-v017.svg"
+
 data class AuditEvent(
     val createdAt: Long,
     val kind: String,
@@ -143,8 +146,10 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
     }
     private val walletAdapter = MobileWalletAdapter(
         connectionIdentity = ConnectionIdentity(
-            identityUri = Uri.parse("https://0xcaptain888.github.io/allowance-os/"),
-            iconUri = Uri.parse("https://0xcaptain888.github.io/allowance-os/favicon-ao-v017.svg?v=0.17.3"),
+            identityUri = Uri.parse(MWA_IDENTITY_URI),
+            // MWA requires iconRelativeUri to be relative to identityUri. An absolute
+            // icon URI makes compatible wallets reject authorization before opening.
+            iconUri = Uri.parse(MWA_ICON_RELATIVE_URI),
             identityName = "Allowance OS",
         ),
     ).apply {
