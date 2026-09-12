@@ -6,19 +6,19 @@
   "result": "BUILD_SUCCESSFUL",
   "testCount": 18,
   "testFailures": 0,
-  "versionCode": 19,
-  "versionName": "0.17.0",
-  "artifact": "mobile/android/app/build/outputs/apk/debug/allowance-os-0.17.0-debug.apk",
-  "artifactSize": "18883736 bytes",
-  "sha256": "8b107f4147213ba2261a8e7614ae43cf4edaac118ac0be99ff7631d9921f5188",
+  "versionCode": 20,
+  "versionName": "0.17.1",
+  "artifact": "mobile/android/app/build/outputs/apk/debug/allowance-os-0.17.1-debug.apk",
+  "artifactSize": "18867348 bytes",
+  "sha256": "25088bc5f39d345ddb512d22a97e138630a2ab5d642c3c88e23b95fe9b6819c5",
   "publicQaRelease": {
     "tag": "android-test-v0.17.0",
     "workflowRunId": null,
     "url": "https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.17.0",
     "artifact": "allowance-os-0.17.0-debug.apk",
-    "artifactSize": "18883736 bytes",
-    "sha256": "8b107f4147213ba2261a8e7614ae43cf4edaac118ac0be99ff7631d9921f5188",
+    "artifactSize": "18867348 bytes",
+    "sha256": "25088bc5f39d345ddb512d22a97e138630a2ab5d642c3c88e23b95fe9b6819c5",
     "note": "The public QA asset was uploaded from the clean local build; it is debug-signed and Devnet-only."
   },
-  "truthBoundary": "This records the clean local v0.17.0 Android build and the matching public GitHub QA release. The APK is not production-signed, a Solana transaction, or a deployed-program receipt."
+  "truthBoundary": "This records the clean local v0.17.1 Android build and the matching public GitHub QA release. The APK is not production-signed, a Solana transaction, or a deployed-program receipt."
 }
