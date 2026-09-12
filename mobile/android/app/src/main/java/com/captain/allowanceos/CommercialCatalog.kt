@@ -18,7 +18,7 @@ data class CommercialServiceTemplate(
     val summary: String,
     val summaryZh: String,
     val merchant: String,
-    val token: String = "USDC",
+    val token: String = "TEST",
     val perCharge: Double,
     val periodCap: Double,
     val billingPeriod: String,

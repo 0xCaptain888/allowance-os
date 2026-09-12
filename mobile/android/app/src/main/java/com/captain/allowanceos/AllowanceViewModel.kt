@@ -30,6 +30,7 @@ data class AuditEvent(
     val amount: Double = 0.0,
     val message: String,
     val signature: String = "",
+    val serviceId: String = "",
 )
 
 enum class WalletSessionState {
@@ -99,6 +100,7 @@ data class AllowanceUiState(
     val v2State: DelegatedAllowanceSnapshot? = null,
     val v2StateMessage: String = "",
     val v2ControlSignature: String = "",
+    val actionFeedback: String = "",
 )
 
 class AllowanceViewModel(application: Application) : AndroidViewModel(application) {
@@ -142,7 +144,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
     private val walletAdapter = MobileWalletAdapter(
         connectionIdentity = ConnectionIdentity(
             identityUri = Uri.parse("https://0xcaptain888.github.io/allowance-os/"),
-            iconUri = Uri.parse("favicon.svg"),
+            iconUri = Uri.parse("https://0xcaptain888.github.io/allowance-os/favicon-ao-v017.svg?v=0.17.3"),
             identityName = "Allowance OS",
         ),
     ).apply {
@@ -199,6 +201,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                                 solBalance = runCatching { rpc.balance(publicKey) }.getOrNull(),
                                 error = "",
                                 decisionReason = "MWA authorization succeeded on Solana Devnet.",
+                                actionFeedback = "Wallet authorized on Solana Devnet.",
                             )
                         }
                         logEvent("WALLET_CONNECTED", AllowanceState.IDLE, message = "MWA wallet authorization succeeded")
@@ -232,6 +235,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                 signature = "",
                 error = "",
                 decisionReason = "${template.name} template applied locally. Review the policy before wallet authorization.",
+                actionFeedback = "${template.name} policy loaded. Spend history is isolated to this service.",
             )
         }
         logEvent("TEMPLATE_APPLIED", AllowanceState.IDLE, message = "${template.name} commercial allowance template applied")
@@ -261,6 +265,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                 replayRejected = false,
                 locallyPaused = false,
                 error = "",
+                actionFeedback = "Interactive policy demo reset to a testable baseline.",
             )
         }
         logEvent("INTERACTIVE_DEMO_RESET", AllowanceState.IDLE, message = "Local pause cleared and policy demo restored to a testable baseline")
@@ -351,8 +356,11 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
         logEvent("REPLAY_REJECTED", decision.state, policy.perChargeCap, decision.reason)
     }
 
-    fun syncAlphaBriefLiveProof() {
-        if (_state.value.alphaBriefLiveProofSynced) return
+    fun syncAlphaBriefLiveProof(notificationsEnabled: Boolean = false) {
+        if (_state.value.alphaBriefLiveProofSynced) {
+            setActionFeedback("AlphaBrief public settlement and freeze proofs are already synced.")
+            return
+        }
         viewModelScope.launch {
             setLoading("Verifying AlphaBrief settlement and freeze on Solana Devnet…")
             runCatching {
@@ -372,6 +380,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                     AlphaBriefLiveEvidence.PRICE,
                     "RPC-confirmed Devnet proof: independently verified delivery settled through delegated v2.",
                     AlphaBriefLiveEvidence.SETTLEMENT_SIGNATURE,
+                    serviceId = CommercialCatalog.DEFAULT_ID,
                 )
                 logEvent(
                     "ALPHABRIEF_BAD_OUTPUT_FROZEN",
@@ -379,6 +388,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                     0.0,
                     "RPC-confirmed Devnet proof: bad output froze the allowance; published evidence records zero token movement.",
                     AlphaBriefLiveEvidence.FREEZE_SIGNATURE,
+                    serviceId = CommercialCatalog.DEFAULT_ID,
                 )
                 _state.update {
                     it.copy(
@@ -388,20 +398,27 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                         deliveryEvidenceHash = AlphaBriefLiveEvidence.ACCEPTED_EVIDENCE_HASH,
                         allowanceState = AllowanceState.FROZEN,
                         decisionReason = "RPC-confirmed AlphaBrief settlement and bad-output freeze proofs are linked to this device timeline.",
+                        actionFeedback = if (notificationsEnabled) {
+                            "AlphaBrief proofs synced and device notifications sent."
+                        } else {
+                            "AlphaBrief proofs synced. Notifications are off, but the in-app timeline is complete."
+                        },
                     )
                 }
-                AllowanceNotifications.notify(
-                    getApplication(),
-                    1501,
-                    "AlphaBrief delivered and settled",
-                    "Independent verification passed. The RPC-confirmed Devnet v2 settlement is now in your timeline.",
-                )
-                AllowanceNotifications.notify(
-                    getApplication(),
-                    1502,
-                    "Allowance frozen after bad output",
-                    "A later AlphaBrief result failed verification. The published freeze path moved zero tokens.",
-                )
+                if (notificationsEnabled) {
+                    AllowanceNotifications.notify(
+                        getApplication(),
+                        1501,
+                        "AlphaBrief delivered and settled",
+                        "Independent verification passed. The RPC-confirmed Devnet v2 settlement is now in your timeline.",
+                    )
+                    AllowanceNotifications.notify(
+                        getApplication(),
+                        1502,
+                        "Allowance frozen after bad output",
+                        "A later AlphaBrief result failed verification. The published freeze path moved zero tokens.",
+                    )
+                }
             }.onFailure { error ->
                 fail(error.message ?: "Unable to verify the AlphaBrief public proofs", "ALPHABRIEF_PROOF_SYNC_ERROR")
             }
@@ -418,6 +435,11 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                     "Local safety pause enabled. New app-side requests are stopped; this is not an onchain pause transaction."
                 } else {
                     "Local safety pause disabled. Onchain state remains unchanged."
+                },
+                actionFeedback = if (paused) {
+                    "Local safety pause is ON. New app-side requests will be blocked."
+                } else {
+                    "Local safety pause is OFF. App-side requests may run again."
                 },
             )
         }
@@ -558,29 +580,40 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun weeklySafetyReport(): String = DailyHabitsEngine.weeklyReport(dailyHabits(), _state.value.locallyPaused)
 
-    fun runDailySafetyCheck() {
+    fun runDailySafetyCheck(notificationsEnabled: Boolean = false) {
         val habits = dailyHabits()
         val next = habits.upcomingCharges.first()
-        AllowanceNotifications.notify(
-            getApplication(),
-            1510,
-            "Upcoming allowance request",
-            "${next.serviceName} may request ${next.amount} ${next.token}; delivery evidence is required before settlement.",
-        )
-        if (habits.budgetPressure) {
+        if (notificationsEnabled) {
             AllowanceNotifications.notify(
                 getApplication(),
-                1511,
-                "Allowance budget needs review",
-                "This week's spend plus the next request is approaching the active policy threshold.",
+                1510,
+                "Upcoming allowance request",
+                "${next.serviceName} may request ${next.amount} ${next.token}; delivery evidence is required before settlement.",
             )
+            if (habits.budgetPressure) {
+                AllowanceNotifications.notify(
+                    getApplication(),
+                    1511,
+                    "Allowance budget needs review",
+                    "This week's spend plus the next request is approaching the active policy threshold.",
+                )
+            }
+            if (habits.merchantAnomaly) {
+                AllowanceNotifications.notify(
+                    getApplication(),
+                    1512,
+                    "Merchant anomaly detected",
+                    "A recent FROZEN or identity-mismatch event needs review before the next payment.",
+                )
+            }
         }
-        if (habits.merchantAnomaly) {
-            AllowanceNotifications.notify(
-                getApplication(),
-                1512,
-                "Merchant anomaly detected",
-                "A recent FROZEN or identity-mismatch event needs review before the next payment.",
+        _state.update {
+            it.copy(
+                actionFeedback = if (notificationsEnabled) {
+                    "Daily safety check complete. The in-app report and Android notification were updated."
+                } else {
+                    "Daily safety check complete. Notifications are off; the in-app report is still updated."
+                },
             )
         }
         logEvent("DAILY_SAFETY_CHECK", AllowanceState.IDLE, message = "Upcoming charge, budget pressure, and merchant anomalies checked locally")
@@ -628,7 +661,14 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
             setLoading("Refreshing Devnet balance…")
             runCatching { rpc.balance(SolanaPublicKey(Base58.decode(address))) }
                 .onSuccess { balance ->
-                    _state.update { it.copy(loading = false, solBalance = balance, error = "") }
+                    _state.update {
+                        it.copy(
+                            loading = false,
+                            solBalance = balance,
+                            error = "",
+                            actionFeedback = "Devnet balance refreshed successfully.",
+                        )
+                    }
                 }
                 .onFailure { error -> fail(error.message ?: "Unable to refresh Devnet balance", "BALANCE_ERROR") }
         }
@@ -705,6 +745,7 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
                             decisionReason = "Policy passed and the wallet broadcast a real Devnet Memo authorization proof.",
                             signature = result.payload,
                             error = "",
+                            actionFeedback = "Devnet Memo broadcast succeeded. The signature is now available for independent verification.",
                         )
                     }
                     preferences.edit().putString(KEY_LAST_SIGNATURE, result.payload).apply()
@@ -766,6 +807,15 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
             locallyPaused = preferences.getBoolean(KEY_LOCAL_PAUSED, false),
         )
         logEvent("LOCAL_SESSION_CLEARED", AllowanceState.IDLE, message = "Local wallet session forgotten")
+        setActionFeedback("Local wallet session cleared. Onchain allowances and wallet funds were not changed.")
+    }
+
+    fun setActionFeedback(message: String) {
+        _state.update { it.copy(actionFeedback = message) }
+    }
+
+    fun clearActionFeedback() {
+        _state.update { it.copy(actionFeedback = "") }
     }
 
     private fun setLoading(reason: String? = null) {
@@ -829,15 +879,21 @@ class AllowanceViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun clearAuditEvents() {
         preferences.edit().remove(KEY_EVENTS).remove(KEY_ALPHABRIEF_SYNCED).apply()
-        _state.update { it.copy(auditEvents = emptyList(), alphaBriefLiveProofSynced = false) }
+        _state.update {
+            it.copy(
+                auditEvents = emptyList(),
+                alphaBriefLiveProofSynced = false,
+                actionFeedback = "Device-local audit history cleared. Public onchain evidence was not changed.",
+            )
+        }
     }
 
     fun auditExport(): String {
         val events = _state.value.auditEvents.joinToString(",\n") { event ->
-            """  {"createdAt":${event.createdAt},"kind":${jsonString(event.kind)},"state":${jsonString(event.state.name)},"amount":${event.amount},"message":${jsonString(event.message)},"signature":${jsonString(event.signature)}}"""
+            """  {"createdAt":${event.createdAt},"kind":${jsonString(event.kind)},"state":${jsonString(event.state.name)},"amount":${event.amount},"serviceId":${jsonString(event.serviceId)},"message":${jsonString(event.message)},"signature":${jsonString(event.signature)}}"""
         }
         return """{
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "evidenceLevel": "DEVICE_LOCAL_AUDIT",
   "events": [
 $events
@@ -972,8 +1028,23 @@ $events
         .digest(receiptSummary().encodeToByteArray())
         .joinToString("") { "%02x".format(it) }
 
-    private fun logEvent(kind: String, state: AllowanceState, amount: Double = 0.0, message: String, signature: String = "") {
-        val event = AuditEvent(System.currentTimeMillis(), kind, state, amount, message.replace("|", "/"), signature.replace("|", "/"))
+    private fun logEvent(
+        kind: String,
+        state: AllowanceState,
+        amount: Double = 0.0,
+        message: String,
+        signature: String = "",
+        serviceId: String? = null,
+    ) {
+        val event = AuditEvent(
+            createdAt = System.currentTimeMillis(),
+            kind = kind,
+            state = state,
+            amount = amount,
+            message = message.replace("|", "/"),
+            signature = signature.replace("|", "/"),
+            serviceId = serviceId ?: _state.value.selectedServiceId,
+        )
         val events = (listOf(event) + loadEvents()).distinctBy { Triple(it.createdAt, it.kind, it.message) }.take(50)
         preferences.edit().putStringSet(KEY_EVENTS, events.map { encode(it) }.toSet()).apply()
         _state.update { it.copy(auditEvents = events) }
@@ -983,12 +1054,33 @@ $events
         .orEmpty().mapNotNull(::decode).sortedByDescending { it.createdAt }.take(50)
 
     private fun encode(event: AuditEvent): String = listOf(
-        event.createdAt, event.kind, event.state.name, event.amount, event.signature, event.message,
+        event.createdAt, event.kind, event.state.name, event.amount, event.signature, event.serviceId, event.message,
     ).joinToString("|")
 
     private fun decode(value: String): AuditEvent? = runCatching {
-        val parts = value.split("|", limit = 6)
-        AuditEvent(parts[0].toLong(), parts[1], AllowanceState.valueOf(parts[2]), parts[3].toDouble(), parts[5], parts[4])
+        val parts = value.split("|", limit = 7)
+        if (parts.size >= 7) {
+            AuditEvent(
+                createdAt = parts[0].toLong(),
+                kind = parts[1],
+                state = AllowanceState.valueOf(parts[2]),
+                amount = parts[3].toDouble(),
+                message = parts[6],
+                signature = parts[4],
+                serviceId = parts[5],
+            )
+        } else {
+            val legacyKind = parts[1]
+            AuditEvent(
+                createdAt = parts[0].toLong(),
+                kind = legacyKind,
+                state = AllowanceState.valueOf(parts[2]),
+                amount = parts[3].toDouble(),
+                message = parts[5],
+                signature = parts[4],
+                serviceId = if (legacyKind.startsWith("ALPHABRIEF_")) CommercialCatalog.DEFAULT_ID else "",
+            )
+        }
     }.getOrNull()
 
     private fun jsonString(value: String): String = buildString {

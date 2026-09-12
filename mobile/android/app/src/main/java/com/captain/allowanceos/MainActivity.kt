@@ -7,8 +7,9 @@ import android.os.Bundle
 import androidx.activity.compose.BackHandler
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -45,6 +46,7 @@ import androidx.compose.material.darkColors
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -54,6 +56,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -68,13 +71,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AllowanceNotifications.createChannel(this)
-        if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.POST_NOTIFICATIONS,
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1500)
-        }
         val sender = ActivityResultSender(this)
         setContent {
             MaterialTheme(colors = darkColors(background = Ink, surface = Panel, primary = Mint)) {
@@ -92,6 +88,32 @@ private fun AllowanceApp(viewModel: AllowanceViewModel, sender: ActivityResultSe
     var page by rememberSaveable { mutableStateOf(AppPage.HOME) }
     var chinese by rememberSaveable { mutableStateOf(viewModel.preferredChinese) }
     var showOnboarding by rememberSaveable { mutableStateOf(!viewModel.hasCompletedOnboarding) }
+    var pendingNotificationAction by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        when (pendingNotificationAction) {
+            "DAILY_SAFETY" -> viewModel.runDailySafetyCheck(granted)
+            "SYNC_ALPHABRIEF" -> viewModel.syncAlphaBriefLiveProof(granted)
+        }
+        pendingNotificationAction = null
+    }
+    val runNotifyingAction: (String) -> Unit = { action ->
+        val canNotify = Build.VERSION.SDK_INT < 33 || ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.POST_NOTIFICATIONS,
+        ) == PackageManager.PERMISSION_GRANTED
+        if (canNotify) {
+            when (action) {
+                "DAILY_SAFETY" -> viewModel.runDailySafetyCheck(true)
+                "SYNC_ALPHABRIEF" -> viewModel.syncAlphaBriefLiveProof(true)
+            }
+        } else {
+            pendingNotificationAction = action
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
     BackHandler(enabled = page != AppPage.HOME && !state.loading) { page = AppPage.HOME }
 
     Box(
@@ -104,9 +126,12 @@ private fun AllowanceApp(viewModel: AllowanceViewModel, sender: ActivityResultSe
                 chinese = !chinese
                 viewModel.setPreferredChinese(chinese)
             })
+            if (state.actionFeedback.isNotBlank()) {
+                ActionFeedbackBanner(state.actionFeedback, chinese) { viewModel.clearActionFeedback() }
+            }
             Box(modifier = Modifier.weight(1f)) {
                 when (page) {
-                    AppPage.HOME -> OverviewPage(state, viewModel, sender, chinese) { page = it }
+                    AppPage.HOME -> OverviewPage(state, viewModel, sender, chinese, runNotifyingAction) { page = it }
                     AppPage.SERVICES -> ServicesPage(state, viewModel, chinese) { page = it }
                     AppPage.ALLOWANCES -> PolicyPage(state, viewModel, sender, chinese)
                     AppPage.ACTIVITY -> ActivityPage(state, viewModel, chinese)
@@ -188,6 +213,7 @@ private fun ControlCenterHero(
     activeTemplate: CommercialServiceTemplate,
     habits: DailyHabitsSnapshot,
     chinese: Boolean,
+    onTogglePause: () -> Unit,
 ) {
     val remaining = (activeTemplate.periodCap - habits.weekSpend).coerceAtLeast(0.0)
     Column(
@@ -218,6 +244,22 @@ private fun ControlCenterHero(
                 fontSize = 12.sp,
             )
         }
+        if (state.locallyPaused) {
+            Row(
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+                    .background(Rose.copy(alpha = 0.12f)).border(1.dp, Rose.copy(alpha = 0.55f), RoundedCornerShape(14.dp))
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("LOCAL PAUSE ON", color = Rose, fontSize = 11.sp, fontWeight = FontWeight.Black)
+                    Text(t("本 App 的新请求已停止", "New app-side requests are stopped", chinese), color = White, fontSize = 11.sp)
+                }
+                TextButton(onClick = onTogglePause) {
+                    Text(t("恢复", "RESUME", chinese), color = Mint, fontWeight = FontWeight.Black)
+                }
+            }
+        }
     }
 }
 
@@ -236,6 +278,7 @@ private fun OverviewPage(
     viewModel: AllowanceViewModel,
     sender: ActivityResultSender,
     chinese: Boolean,
+    runNotifyingAction: (String) -> Unit,
     navigate: (AppPage) -> Unit,
 ) {
     val clipboard = LocalClipboardManager.current
@@ -249,7 +292,7 @@ private fun OverviewPage(
             fontSize = 15.sp,
         )
 
-        ControlCenterHero(state, activeTemplate, habits, chinese)
+        ControlCenterHero(state, activeTemplate, habits, chinese) { viewModel.toggleLocalPause() }
 
         ProductCard {
             SectionTitle(t("即将扣款", "UPCOMING CHARGES", chinese), t("预计 · 需证据", "PROJECTED · EVIDENCE", chinese))
@@ -298,7 +341,7 @@ private fun OverviewPage(
                 fontSize = 10.sp,
             )
             SecondaryButton(Modifier.fillMaxWidth(), t("运行每日安全检查并发送提醒", "Run daily safety check & notify", chinese)) {
-                viewModel.runDailySafetyCheck()
+                runNotifyingAction("DAILY_SAFETY")
             }
         }
 
@@ -332,9 +375,9 @@ private fun OverviewPage(
             TimelineStep("03", t("独立验证与结算", "Independent verify + settle", chinese), t("8 项检查通过，Executor + Verifier 自动结算 2.0 测试币", "8 checks passed; executor + verifier settled 2.0 test tokens", chinese), true)
             TimelineStep("04", t("坏结果冻结", "Bad output frozen", chinese), t("3 项检查失败，FROZEN 且资金移动为 0", "3 checks failed; FROZEN with zero token movement", chinese), true)
             if (!state.alphaBriefLiveProofSynced) {
-                PrimaryButton(t("同步公开链上证据并通知", "Sync public proofs & notify", chinese)) { viewModel.syncAlphaBriefLiveProof() }
+                PrimaryButton(t("同步公开链上证据并通知", "Sync public proofs & notify", chinese)) { runNotifyingAction("SYNC_ALPHABRIEF") }
             } else {
-                Notice(t("公开交易已同步到本机时间线，并已触发交付/冻结通知。", "Public transactions are linked to the device timeline and delivery/freeze notifications were emitted.", chinese), Mint)
+                Notice(t("公开交易已同步到本机时间线。系统通知是否送达取决于 Android 通知权限。", "Public transactions are linked to the device timeline. Android notification delivery depends on notification permission.", chinese), Mint)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 SecondaryButton(Modifier.weight(1f), t("结算证据", "Settlement", chinese)) { navigate(AppPage.EVIDENCE) }
@@ -347,6 +390,7 @@ private fun OverviewPage(
             Text(viewModel.weeklySafetyReport(), color = Muted, fontSize = 11.sp)
             SecondaryButton(Modifier.fillMaxWidth(), t("复制周报", "Copy weekly report", chinese)) {
                 clipboard.setText(AnnotatedString(viewModel.weeklySafetyReport()))
+                viewModel.setActionFeedback("Weekly safety report copied to the clipboard.")
             }
         }
 
@@ -532,6 +576,8 @@ private fun ServicesPage(
 
 @Composable
 private fun PolicyPage(state: AllowanceUiState, viewModel: AllowanceViewModel, sender: ActivityResultSender, chinese: Boolean) {
+    val uriHandler = LocalUriHandler.current
+    val clipboard = LocalClipboardManager.current
     val template = CommercialCatalog.byId(state.selectedServiceId)
     val requestMax = maxOf(template.perCharge * 4.0, 5.0).toFloat()
     var amount by rememberSaveable(state.selectedServiceId) { mutableStateOf(template.perCharge.toFloat()) }
@@ -587,7 +633,7 @@ private fun PolicyPage(state: AllowanceUiState, viewModel: AllowanceViewModel, s
             )
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(t("请求金额", "Requested amount", chinese), modifier = Modifier.weight(1f), color = Muted)
-                Text("${"%.1f".format(amount)} USDC", color = White, fontSize = 23.sp, fontWeight = FontWeight.Black)
+                Text("${"%.1f".format(amount)} ${template.token}", color = White, fontSize = 23.sp, fontWeight = FontWeight.Black)
             }
             Slider(
                 value = amount,
@@ -686,13 +732,29 @@ private fun PolicyPage(state: AllowanceUiState, viewModel: AllowanceViewModel, s
             SectionTitle(t("真实钱包动作", "LIVE WALLET ACTION", chinese), "MWA")
             Notice(
                 t(
-                    "当前动作只发布一笔 Solana Devnet Memo 作为钱包授权证明：不会扣除 USDC，也不会创建可自动扣款的生产授权。只会产生极少量 Devnet 网络费。",
-                    "This action publishes only a Solana Devnet Memo as wallet-authorization proof. It does not transfer USDC or create a production recurring-charge allowance; only a tiny Devnet network fee may apply.",
+                    "当前动作只发布一笔 Solana Devnet Memo 作为钱包授权证明：不会转移 TEST 测试币或其他代币，也不会创建可自动扣款的生产授权。只会产生极少量 Devnet 网络费。",
+                    "This action publishes only a Solana Devnet Memo as wallet-authorization proof. It transfers no TEST token or other asset and creates no production recurring-charge allowance; only a tiny Devnet network fee may apply.",
                     chinese,
                 ),
                 Blue,
             )
             PrimaryButton(t("审查并发布 Devnet Memo", "Review and publish Devnet Memo", chinese)) { showPublishConfirmation = true }
+            if (state.signature.isNotBlank()) {
+                Notice(
+                    t("广播成功。签名已保存，可在钱包页通过 RPC 独立验证。", "Broadcast succeeded. The signature is saved and can be independently verified by RPC on the Wallet page.", chinese),
+                    Mint,
+                )
+                Text(state.signature, color = Muted, fontSize = 11.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SecondaryButton(Modifier.weight(1f), t("复制签名", "Copy signature", chinese)) {
+                        clipboard.setText(AnnotatedString(state.signature))
+                        viewModel.setActionFeedback("Devnet transaction signature copied to the clipboard.")
+                    }
+                    SecondaryButton(Modifier.weight(1f), t("打开交易", "Open transaction", chinese)) {
+                        uriHandler.openUri("https://explorer.solana.com/tx/${state.signature}?cluster=devnet")
+                    }
+                }
+            }
             if (state.error.isNotBlank()) Notice(state.error, Rose)
             SecondaryButton(Modifier.fillMaxWidth(), t("断开钱包并取消 MWA 会话", "Disconnect wallet and deauthorize MWA", chinese)) { showDisconnectConfirmation = true }
             Text(
@@ -711,7 +773,7 @@ private fun PolicyPage(state: AllowanceUiState, viewModel: AllowanceViewModel, s
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(t("网络：Solana Devnet", "Network: Solana Devnet", chinese), color = White)
-                    Text(t("资产转移：0 USDC", "Asset transfer: 0 USDC", chinese), color = Mint, fontWeight = FontWeight.Bold)
+                    Text(t("资产转移：0 TEST（仅 Memo）", "Asset transfer: 0 TEST (Memo only)", chinese), color = Mint, fontWeight = FontWeight.Bold)
                     Text(t("内容：策略哈希、商户和请求额度的 Memo 证明", "Payload: Memo proof containing policy hash, merchant, and requested allowance amount", chinese), color = Muted)
                 }
             },
@@ -751,6 +813,7 @@ private fun PolicyPage(state: AllowanceUiState, viewModel: AllowanceViewModel, s
 private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel, sender: ActivityResultSender, chinese: Boolean) {
     val uriHandler = LocalUriHandler.current
     val clipboard = LocalClipboardManager.current
+    var showAdvancedEvidence by rememberSaveable { mutableStateOf(false) }
     PageColumn {
         Text(t("钱包与验证", "Wallet & verification", chinese), color = White, fontSize = 30.sp, fontWeight = FontWeight.Black)
         Text(t("管理钱包会话，并独立验证策略、授权和链上证明。", "Manage the wallet session and independently verify policy, authorization, and onchain proof.", chinese), color = Muted)
@@ -775,7 +838,10 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
                 }
                 ValueRow(t("地址", "Address", chinese), short(state.walletAddress))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SecondaryButton(Modifier.weight(1f), t("复制", "Copy", chinese)) { clipboard.setText(AnnotatedString(state.walletAddress)) }
+                    SecondaryButton(Modifier.weight(1f), t("复制", "Copy", chinese)) {
+                        clipboard.setText(AnnotatedString(state.walletAddress))
+                        viewModel.setActionFeedback("Wallet address copied to the clipboard.")
+                    }
                     SecondaryButton(Modifier.weight(1f), t("刷新", "Refresh", chinese)) { viewModel.refreshBalance() }
                 }
                 TextButton(onClick = { viewModel.forgetLocalConnection() }, contentPadding = PaddingValues(0.dp)) {
@@ -793,7 +859,10 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
                 Text(t("真实 Devnet Memo 已广播", "Real Devnet Memo broadcast", chinese), color = White, fontSize = 20.sp, fontWeight = FontWeight.Black)
                 Text(state.signature, color = Muted, fontSize = 12.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SecondaryButton(Modifier.weight(1f), t("复制签名", "Copy signature", chinese)) { clipboard.setText(AnnotatedString(state.signature)) }
+                    SecondaryButton(Modifier.weight(1f), t("复制签名", "Copy signature", chinese)) {
+                        clipboard.setText(AnnotatedString(state.signature))
+                        viewModel.setActionFeedback("Devnet transaction signature copied to the clipboard.")
+                    }
                     SecondaryButton(Modifier.weight(1f), t("浏览器验证", "Verify in Explorer", chinese)) {
                         uriHandler.openUri("https://explorer.solana.com/tx/${state.signature}?cluster=devnet")
                     }
@@ -815,6 +884,14 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
             SecondaryButton(Modifier.fillMaxWidth(), t("打开 Devnet Program", "Open Devnet Program", chinese)) {
                 uriHandler.openUri("https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet")
             }
+            Notice(
+                t(
+                    "Solana Explorer 的 Program Verified / security.txt 属于外部元数据提示，不等于链上执行失败。优先使用下方 App 内 RPC 验证和仓库中的二进制 exact-match 证据。",
+                    "Solana Explorer's Program Verified / security.txt badges are external metadata, not an execution failure. Prefer the in-app RPC checks and repository binary exact-match evidence below.",
+                    chinese,
+                ),
+                Blue,
+            )
         }
 
         ProductCard {
@@ -863,10 +940,24 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
             Text(viewModel.receiptSummary(), color = Muted, fontSize = 10.sp, maxLines = 10, overflow = TextOverflow.Ellipsis)
             SecondaryButton(Modifier.fillMaxWidth(), t("复制完整收据", "Copy full receipt", chinese)) {
                 clipboard.setText(AnnotatedString(viewModel.receiptSummary()))
+                viewModel.setActionFeedback("Portable receipt copied to the clipboard.")
             }
         }
 
         ProductCard {
+            SectionTitle(t("高级链上证据", "ADVANCED ONCHAIN EVIDENCE", chinese), if (showAdvancedEvidence) t("已展开", "EXPANDED", chinese) else t("按需查看", "ON DEMAND", chinese))
+            Text(
+                t("为保持钱包页清晰，Program 矩阵、Delegated v2 控制和真实性边界默认折叠。评委需要深度复核时再展开。", "Program matrix, delegated v2 controls, and truth-boundary details are collapsed by default to keep this page usable. Expand them for judge-level verification.", chinese),
+                color = Muted,
+                fontSize = 13.sp,
+            )
+            SecondaryButton(
+                Modifier.fillMaxWidth(),
+                if (showAdvancedEvidence) t("收起高级证据", "Collapse advanced evidence", chinese) else t("展开高级证据", "Expand advanced evidence", chinese),
+            ) { showAdvancedEvidence = !showAdvancedEvidence }
+        }
+
+        if (showAdvancedEvidence) ProductCard {
             SectionTitle(t("链上三态矩阵", "ONCHAIN STATE MATRIX", chinese), "PROGRAM")
             Text(
                 t("直接读取五笔公开交易、最终 allowance 账户和两个 SPL 账户，验证真实结算与失败安全性。", "Read five public transactions, the final allowance account, and both SPL accounts to verify real settlement and failure safety.", chinese),
@@ -894,7 +985,7 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
             }
         }
 
-        ProductCard {
+        if (showAdvancedEvidence) ProductCard {
             SectionTitle(t("Delegated v2 公开证据", "DELEGATED V2 PUBLIC EVIDENCE", chinese), t("Devnet 已验证", "DEVNET VERIFIED", chinese))
             Text(
                 t("v2 Program 已部署，并完成无用户签名结算、拒绝、冻结、双签恢复、角色轮换和撤销矩阵。Android 现在支持读取真实 v2 状态，并在 authority 钱包下审查和广播 Pause、Unpause、Revoke，再回读执行后状态。", "The v2 Program is deployed with public authority-free settlement, block, freeze, recovery, role rotation, and revoke evidence. Android now inspects live v2 state and supports review, MWA broadcast, and post-state refresh for Pause, Unpause, and Revoke when the authority wallet is connected.", chinese),
@@ -919,9 +1010,9 @@ private fun EvidencePage(state: AllowanceUiState, viewModel: AllowanceViewModel,
             Notice(t("使用项目自建 Devnet 测试 mint，不是官方 USDC；未宣称 Mainnet 或生产就绪。", "Uses a project-created Devnet test mint, not canonical USDC; no Mainnet or production claim.", chinese), Blue)
         }
 
-        V2ControlsCard(state, viewModel, sender, chinese)
+        if (showAdvancedEvidence) V2ControlsCard(state, viewModel, sender, chinese)
 
-        ProductCard {
+        if (showAdvancedEvidence) ProductCard {
             SectionTitle(t("真实性边界", "TRUTH BOUNDARY", chinese), t("透明披露", "HONEST DISCLOSURE", chinese))
             BoundaryRow("SIMULATED", t("策略参数回放与三态矩阵", "Policy replay and three-state matrix", chinese), Blue)
             BoundaryRow("LIVE DEVNET PROOF", t("真实 MWA 钱包授权 + Memo 签名", "Real MWA wallet authorization + Memo signature", chinese), Mint)
@@ -942,8 +1033,14 @@ private fun V2ControlsCard(
 ) {
     var pendingAction by rememberSaveable { mutableStateOf<String?>(null) }
     val snapshot = state.v2State
+    val authorityConnected = state.walletAddress == DelegatedAllowanceV2.AUTHORITY
+    val terminallyRevoked = snapshot?.revoked == true
+    val controlsEnabled = snapshot != null && !terminallyRevoked && authorityConnected && !state.loading
     ProductCard {
-        SectionTitle(t("v2 链上控制", "LIVE V2 CONTROLS", chinese), "MWA · RPC")
+        SectionTitle(
+            t("v2 链上控制", "LIVE V2 CONTROLS", chinese),
+            if (terminallyRevoked) t("历史只读", "HISTORICAL · READ ONLY", chinese) else "MWA · RPC",
+        )
         Text(
             t(
                 "这是对已部署 v2 Allowance 的真实链上控制。只有 authority 钱包可以签名；当前连接的钱包不是 authority 时，按钮会在发送前拦截。",
@@ -975,20 +1072,19 @@ private fun V2ControlsCard(
             Modifier.fillMaxWidth(),
             if (state.v2StateLoading) t("正在读取 v2 状态…", "Reading v2 state…", chinese)
             else t("读取真实 v2 状态", "Inspect live v2 state", chinese),
+            enabled = !state.v2StateLoading,
         ) { if (!state.v2StateLoading) viewModel.inspectDelegatedV2() }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SecondaryButton(Modifier.weight(1f), t("链上暂停", "Onchain pause", chinese)) { pendingAction = "PAUSE" }
-            SecondaryButton(Modifier.weight(1f), t("恢复", "Unpause", chinese)) { pendingAction = "UNPAUSE" }
+            SecondaryButton(Modifier.weight(1f), t("链上暂停", "Onchain pause", chinese), enabled = controlsEnabled) { pendingAction = "PAUSE" }
+            SecondaryButton(Modifier.weight(1f), t("恢复", "Unpause", chinese), enabled = controlsEnabled) { pendingAction = "UNPAUSE" }
         }
-        SecondaryButton(Modifier.fillMaxWidth(), t("撤销并移除 Delegate", "Revoke and remove delegate", chinese)) { pendingAction = "REVOKE" }
-        Notice(
-            t(
-                "当前公开证据 Allowance 已被撤销；按钮只在你连接 authority 钱包后请求 MWA 签名，并会在发送后重新读取链上状态。",
-                "The public evidence allowance is already revoked. Buttons request an MWA signature only after the authority wallet is connected, then re-read onchain state.",
-                chinese,
-            ),
-            Amber,
-        )
+        SecondaryButton(Modifier.fillMaxWidth(), t("撤销并移除 Delegate", "Revoke and remove delegate", chinese), enabled = controlsEnabled) { pendingAction = "REVOKE" }
+        when {
+            snapshot == null -> Notice(t("请先读取链上状态；在状态确认前控制按钮保持禁用。", "Inspect the live state first. Controls remain disabled until the account state is confirmed.", chinese), Blue)
+            terminallyRevoked -> Notice(t("该公开 Allowance 已永久 REVOKED，Delegate 也已移除。它现在只用于历史证据复核，不能 Pause、Unpause 或再次 Revoke。", "This public allowance is terminally REVOKED and its delegate was removed. It is now inspect-only historical evidence and cannot be paused, unpaused, or revoked again.", chinese), Amber)
+            !authorityConnected -> Notice(t("状态可读取，但控制已禁用：当前钱包不是该 Allowance 的 authority。", "State is readable, but controls are disabled because the connected wallet is not this allowance's authority.", chinese), Amber)
+            else -> Notice(t("Authority 已匹配。每次操作仍会打开钱包并要求明确签名。", "Authority matched. Every control still opens the wallet and requires explicit signing.", chinese), Mint)
+        }
     }
     if (pendingAction != null) {
         val action = pendingAction!!
@@ -1100,7 +1196,7 @@ private fun AuditEventRow(event: AuditEvent, chinese: Boolean) {
             Text(eventTitle(event.kind, chinese), color = White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
             Text(event.message, color = Muted, fontSize = 11.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
             if (event.amount > 0.0) {
-                val tokenLabel = if (event.kind == "ALPHABRIEF_LIVE_SETTLED") "TEST" else "USDC"
+                val tokenLabel = CommercialCatalog.byId(event.serviceId.ifBlank { CommercialCatalog.DEFAULT_ID }).token
                 Text("${"%.1f".format(event.amount)} $tokenLabel", color = White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
             }
             if (event.signature.isNotBlank()) Text(short(event.signature), color = Mint, fontSize = 10.sp, maxLines = 1)

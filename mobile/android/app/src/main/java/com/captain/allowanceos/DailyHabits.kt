@@ -39,8 +39,9 @@ object DailyHabitsEngine {
             set(Calendar.MILLISECOND, 0)
         }.timeInMillis
         val weekStart = now - 7L * 24L * 60L * 60L * 1_000L
-        val paid = events.filter { it.kind in settlementKinds && it.state == AllowanceState.VERIFIED }
-        val weekEvents = events.filter { it.createdAt >= weekStart }
+        val serviceEvents = events.filter { eventBelongsToService(it, service.id) }
+        val paid = serviceEvents.filter { it.kind in settlementKinds && it.state == AllowanceState.VERIFIED }
+        val weekEvents = serviceEvents.filter { it.createdAt >= weekStart }
         val weekSpend = paid.filter { it.createdAt >= weekStart }.sumOf { it.amount }
         val ratio = if (service.periodCap <= 0.0) 0.0 else weekSpend / service.periodCap
         val nextWindow = dayStart + 24L * 60L * 60L * 1_000L + 9L * 60L * 60L * 1_000L
@@ -81,4 +82,10 @@ object DailyHabitsEngine {
         Local safety pause: ${if (locallyPaused) "ON" else "OFF"}
         Truth boundary: local dashboard calculations are not an onchain accounting oracle.
     """.trimIndent()
+
+    private fun eventBelongsToService(event: AuditEvent, serviceId: String): Boolean = when {
+        event.serviceId.isNotBlank() -> event.serviceId == serviceId
+        event.kind.startsWith("ALPHABRIEF_") -> serviceId == CommercialCatalog.DEFAULT_ID
+        else -> false
+    }
 }

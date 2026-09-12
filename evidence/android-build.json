@@ -4,21 +4,21 @@
   "date": "2026-09-12",
   "command": "./gradlew testDebugUnitTest assembleDebug",
   "result": "BUILD_SUCCESSFUL",
-  "testCount": 19,
+  "testCount": 20,
   "testFailures": 0,
-  "versionCode": 21,
-  "versionName": "0.17.2",
-  "artifact": "mobile/android/app/build/outputs/apk/debug/allowance-os-0.17.2-debug.apk",
-  "artifactSize": "19173846 bytes",
-  "sha256": "74f39f01795e19c6fa8ce8084d8481e3c29a5d0579cb06ef4e0bb498bfd3fdc1",
+  "versionCode": 22,
+  "versionName": "0.17.3",
+  "artifact": "mobile/android/app/build/outputs/apk/debug/allowance-os-0.17.3-debug.apk",
+  "artifactSize": "19206148 bytes",
+  "sha256": "58e2dd941a11aeeac77db99098e720defd29cd7597e18ebbba11b3c3f5cf123e",
   "publicQaRelease": {
-    "tag": "android-test-v0.17.2",
+    "tag": "android-test-v0.17.3",
     "workflowRunId": null,
-    "url": "https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.17.2",
-    "artifact": "allowance-os-0.17.2-debug.apk",
-    "artifactSize": "19173846 bytes",
-    "sha256": "74f39f01795e19c6fa8ce8084d8481e3c29a5d0579cb06ef4e0bb498bfd3fdc1",
-    "note": "The public QA asset was uploaded from the clean local build; it is debug-signed and Devnet-only."
+    "url": "https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.17.3",
+    "artifact": "allowance-os-0.17.3-debug.apk",
+    "artifactSize": "19206148 bytes",
+    "sha256": "58e2dd941a11aeeac77db99098e720defd29cd7597e18ebbba11b3c3f5cf123e",
+    "note": "Prepared from the clean local build for the matching public QA release; debug-signed and Devnet-only."
   },
-  "truthBoundary": "This records the clean local v0.17.2 Android build prepared for the matching public GitHub QA release. The APK is not production-signed, a Solana transaction, or a deployed-program receipt."
+  "truthBoundary": "This records the clean local v0.17.3 Android build prepared for the matching public GitHub QA release. The APK is not production-signed, a Solana transaction, or a deployed-program receipt."
 }

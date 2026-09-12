@@ -54,7 +54,7 @@ AlphaBrief now provides the strongest product proof: real delivery, independent 
 ## Language that must remain precise
 
 - `Disconnect wallet` means removing the MWA session; it does **not** revoke an onchain allowance.
-- `Devnet Memo proof` proves a wallet authorized a message; it does **not** move USDC.
+- `Devnet Memo proof` proves a wallet authorized a message; it moves **0 TEST** and does not move USDC or any other token.
 - `Program-enforced settlement` refers only to the public recorded Program transactions.
 - Browser and judge-mode receipts are `SIMULATED`.
 - The current deployment is not a production recurring-payment protocol.

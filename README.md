@@ -4,7 +4,7 @@
 
 > Approve once. Enforce every charge. Revoke anytime.
 
-**[Open the public Judge Demo](https://0xcaptain888.github.io/allowance-os/)** · **[Download Android v0.17.2](https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.17.2)** · **[Two-minute judge guide](docs/judge-guide.md)**
+**[Open the public Judge Demo](https://0xcaptain888.github.io/allowance-os/)** · **[Download Android v0.17.3](https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.17.3)** · **[Two-minute judge guide](docs/judge-guide.md)**
 
 **[Android MWA client](mobile/android)** · **[All versioned releases](https://github.com/0xCaptain888/allowance-os/releases)** · **[Product maturity audit](docs/product-maturity-audit.md)** · **[Changelog](CHANGELOG.md)** · **[Release process](docs/android-release-process.md)**
 
@@ -12,7 +12,7 @@ Allowance OS is a Solana Mobile payment-authorization layer for Web3 services. I
 
 **v0.17.0 rebuilds Android and the public Judge Demo as one English-first fintech control center:** both surfaces now share the AO Monogram, charcoal / ivory / lime / cobalt design system, protected-allowance hierarchy, and consequence-led VERIFIED / BLOCKED / FROZEN states. Android prioritizes protected spend, remaining budget, next charge, wallet status, anomaly state, and the latest payment decision; the responsive browser surface preserves its interactive policy simulator and direct Devnet verification tools. The underlying AlphaBrief commercial proof and Delegated Settlement v2 controls remain unchanged.
 
-**v0.17.2 is the current Android QA patch:** interactive policy replays remain testable after Pause, a one-tap reset restores safe inputs, small-cap templates have usable continuous controls, policy limits are explained separately from wallet balances, and cancelled MWA flows recover instead of leaving a permanent loading overlay. Solflare remains the lead wallet entry while generic MWA compatibility is retained.
+**v0.17.3 is the current Android QA patch:** service-scoped audit accounting prevents cross-service spend contamination; the Devnet project mint is labelled `TEST` consistently; notification permission is requested contextually instead of covering onboarding; daily safety checks, copy actions, wallet refresh, and Memo broadcasts provide visible in-app feedback; local pause is surfaced at the top of Home; terminally revoked v2 evidence is explicitly read-only; and advanced chain evidence is collapsible on the Wallet page. Solflare remains the lead wallet entry while generic MWA compatibility is retained.
 
 **Delegated Settlement v2 is Devnet deployed and matrix-verified:** a user approves an allowance-scoped SPL delegate PDA once; later `ChargeDelegated` settlement requires the configured executor and independent verifier, enforces sequential nonces plus per-charge/period/lifetime caps, and does not include the user authority as a signer. Every accepted charge or freeze creates an immutable evidence PDA keyed by the full evidence hash. Read the [v2 specification](docs/delegated-settlement-v2.md) and [machine-readable live evidence](evidence/live-devnet-v2.json).
 
@@ -28,13 +28,13 @@ v0.16.0 keeps the five-surface product—**Home → Services → Allowances → 
 
 | Ready template | Commercial use | Payment boundary | Required evidence |
 | --- | --- | --- | --- |
-| AgentCloud | AI Agent subscription | 0.50 USDC/run; 12 USDC/month | signed run receipt + output hash |
-| AlphaBrief | paid research reports | 2 USDC/report; 8 USDC/week | report URI + content hash |
-| SignalWire | trading signals | 0.25 USDC/signal; 5 USDC/day | signal hash + publisher signature |
-| AutoPilot | automated trading bot | 1 USDC/fee; 20 USDC/week | strategy ID + order receipt + verifier hash |
-| DataPipe | paid API | 0.05 USDC/batch; 10 USDC/month | usage root + metering receipt |
+| AgentCloud | AI Agent subscription | 0.50 TEST/run; 12 TEST/month | signed run receipt + output hash |
+| AlphaBrief | paid research reports | 2 TEST/report; 8 TEST/week | report URI + content hash |
+| SignalWire | trading signals | 0.25 TEST/signal; 5 TEST/day | signal hash + publisher signature |
+| AutoPilot | automated trading bot | 1 TEST/fee; 20 TEST/week | strategy ID + order receipt + verifier hash |
+| DataPipe | paid API | 0.05 TEST/batch; 10 TEST/month | usage root + metering receipt |
 
-The Android app can filter these services, apply any template, inspect its merchant/program/evidence boundaries, and replay `VERIFIED`, `BLOCKED`, and `FROZEN` requests against its own limits. Only AlphaBrief currently carries a full delivery → verification → settlement → bad-output freeze proof.
+The Android app can filter these services, apply any template, inspect its merchant/program/evidence boundaries, and replay `VERIFIED`, `BLOCKED`, and `FROZEN` requests against its own limits. `TEST` is the honest display symbol for the project-created Devnet mint used by the current app and public evidence; a production deployment may bind a reviewed canonical asset such as USDC instead. Only AlphaBrief currently carries a full delivery → verification → settlement → bad-output freeze proof.
 
 ### Live AlphaBrief commercial chain
 
@@ -66,7 +66,7 @@ The **Seeker Integration Lab** also maps Allowance OS to apps featured by Solana
 | Surface | What it proves | Status |
 | --- | --- | --- |
 | [Public Judge Demo](https://0xcaptain888.github.io/allowance-os/) | Instant `VERIFIED` / `BLOCKED` / `FROZEN` policy replay | GitHub Pages deployment |
-| `mobile/android` | English-first, bilingual Android control center with protected-spend overview, upcoming charges, budget/anomaly alerts, four-step allowance review, consequence-led payment states, MWA, public v2 evidence, and authority-bound live v2 control review/broadcast | v0.17.2; 19 Android tests |
+| `mobile/android` | English-first, bilingual Android control center with protected-spend overview, upcoming charges, budget/anomaly alerts, four-step allowance review, consequence-led payment states, MWA, public v2 evidence, and authority-bound live v2 control review/broadcast | v0.17.3; Android unit tests |
 | `program/` | Backward-compatible v1 plus deployed Delegated Settlement v2 with PDA authority, executor/verifier separation, immutable evidence records, governed role rotation, three-level caps, period rollover, recovery and SPL revoke | Devnet deployed; 20 Rust tests; full control matrix verified |
 | Solana Explorer | Connected Devnet wallet and wallet-broadcast authorization proof | Live signature captured |
 | [Deployed allowance program](https://explorer.solana.com/address/DJzPBS7FreCcWWGkApzznGcKq9T7Da38GpKFtpxWRcuE?cluster=devnet) | Program-enforced state transitions and settlement | Live `VERIFIED`, `BLOCKED`, `FROZEN`, and `REVOKED` evidence |
@@ -144,7 +144,7 @@ The Android app is not a mockup. It uses Solana Mobile's official `mobile-wallet
 
 - Chinese and English product interfaces with a persisted in-app language switch;
 - Android Keystore encryption for the MWA reconnect token, including migration from the legacy plaintext preference;
-- a pre-sign review that clearly shows network, payload, and `0 USDC` asset movement for the current Memo proof;
+- a pre-sign review that clearly shows network, payload, and `0 TEST` asset movement for the current Memo proof;
 - separate language and controls for disconnecting MWA versus revoking an onchain allowance;
 - five product surfaces: Home, Services, Allowances, Activity, and Evidence;
 - a Daily Habits dashboard with upcoming charge projections, today/week verified spend, budget pressure, merchant anomaly alerts, one-tap local Pause, and a delivered-service/payment timeline;
@@ -187,12 +187,12 @@ cd mobile/android
 The resulting APK is:
 
 ```text
-mobile/android/app/build/outputs/apk/debug/allowance-os-0.17.2-debug.apk
+mobile/android/app/build/outputs/apk/debug/allowance-os-0.17.3-debug.apk
 ```
 
-Latest clean local v0.17.2 debug build SHA-256 is recorded in [`evidence/android-build.json`](evidence/android-build.json).
+Latest clean local v0.17.3 debug build SHA-256 is recorded in [`evidence/android-build.json`](evidence/android-build.json).
 
-Latest public QA asset: [`android-test-v0.17.2`](https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.17.2). It contains the exact clean local APK recorded below and is explicitly labelled as a debug-signed Devnet QA build. `android-v*` remains reserved for protected production-signed releases.
+Latest public QA asset: [`android-test-v0.17.3`](https://github.com/0xCaptain888/allowance-os/releases/tag/android-test-v0.17.3). It contains the exact clean local APK recorded below and is explicitly labelled as a debug-signed Devnet QA build. `android-v*` remains reserved for protected production-signed releases.
 
 See [`mobile/README.md`](mobile/README.md) for phone setup and [`docs/judge-guide.md`](docs/judge-guide.md) for the two-minute evaluation path.
 

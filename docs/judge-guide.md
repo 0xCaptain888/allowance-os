@@ -1,5 +1,7 @@
 # Two-Minute Judge Guide
 
+> Current QA build: **v0.17.3**. The Android app uses `TEST` consistently for the project-created Devnet mint; canonical USDC references are production targets, not claims about the live proof.
+
 ## 1. Understand the product in 20 seconds
 
 Allowance OS is the missing control plane between a one-time wallet approval and repeated subscription or autonomous-agent charges.
@@ -28,16 +30,16 @@ Every browser replay is visibly labelled as simulated. Then scroll to **Program-
 Build or install the Android app from `mobile/android`:
 
 1. Use the header switch to inspect the complete Chinese or English interface.
-2. On **Overview**, tap **Connect Solflare Wallet / MWA Wallet** and approve Solana Devnet authorization.
+2. On **Overview**, tap **Connect Solflare Wallet / MWA Wallet** and approve Solana Devnet authorization. Notification permission is requested only when you first run a notification-producing action; denying it does not block the safety check.
 3. On **Daily Habits**, inspect upcoming charges, today/week spend, budget pressure, merchant anomaly status, and the weekly safety report.
 4. Tap **Sync public proofs & notify** to link the real AlphaBrief settlement and freeze signatures into the device timeline and trigger local delivery/freeze notifications.
-5. Use **One-tap Pause** and confirm the UI labels it as a local request stop—not an onchain pause transaction. Then tap **Resume** or **Reset interactive demo** before testing live requests.
+5. Use **One-tap Pause** and confirm `LOCAL PAUSE ON` appears at the top of the control-center card. It is a local request stop—not an onchain pause transaction. Then tap **Resume** or **Reset interactive demo** before testing live requests.
 6. On Home, tap `VERIFIED`, `BLOCKED`, and `FROZEN`; each local replay must update the decision card even while live requests are paused. `BLOCKED` deliberately exceeds the policy cap; it does not mean the wallet balance is insufficient.
 7. In **Allowance center**, change the requested amount, current-period spend, merchant identity, and evidence availability. Use **Use charge cap** and **Reset period spend** to restore a passing baseline.
 8. Run `BLOCKED` or `FROZEN` and confirm the wallet is not opened.
 9. Run `VERIFIED`, then publish the real Devnet authorization proof and approve it in Solflare Wallet or another compatible MWA wallet.
 10. On **Evidence**, run **Independent RPC Verification**, inspect the AlphaBrief live-commerce card, and open both settlement and freeze transactions.
-11. Copy the portable JSON receipt and Activity audit fingerprint; test reconnect and safe local-session reset without exposing a wallet key.
+11. Copy the portable JSON receipt and Activity audit fingerprint; test reconnect and safe local-session reset without exposing a wallet key. On Wallet, expand **Advanced onchain evidence** only when you need the Program matrix or v2 control details; a terminally revoked allowance is intentionally inspect-only.
 
 The Android v0.16 source contains a strict 332-byte Delegated Allowance v2 state decoder plus authority-bound Pause, Unpause, and Revoke review/broadcast controls. Its Evidence and Activity pages link directly to the AlphaBrief allowance, accepted/frozen evidence hashes, and public transactions. Create, rotation, freeze/unfreeze, and delegated settlement remain operator flows; the public evidence allowance is already revoked.
 

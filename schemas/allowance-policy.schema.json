@@ -10,7 +10,7 @@
     "subscriber": { "type": "string", "minLength": 1 },
     "merchant": { "type": "string", "minLength": 1 },
     "merchantName": { "type": "string" },
-    "token": { "enum": ["USDC", "SKR"] },
+    "token": { "enum": ["TEST", "USDC", "SKR"] },
     "perCharge": { "type": "number", "exclusiveMinimum": 0 },
     "period": { "enum": ["daily", "weekly", "monthly"] },
     "periodCap": { "type": "number", "exclusiveMinimum": 0 },

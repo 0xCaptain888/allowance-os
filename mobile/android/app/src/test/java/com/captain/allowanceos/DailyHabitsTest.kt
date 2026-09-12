@@ -40,4 +40,26 @@ class DailyHabitsTest {
         assertTrue(report.contains("not an onchain accounting oracle"))
         assertFalse(report.contains("Mainnet"))
     }
+
+    @Test
+    fun `settlement spend is isolated to its commercial service`() {
+        val now = 1_800_000_000_000L
+        val events = listOf(
+            AuditEvent(
+                createdAt = now,
+                kind = "ALPHABRIEF_LIVE_SETTLED",
+                state = AllowanceState.VERIFIED,
+                amount = 2.0,
+                message = "public proof",
+                serviceId = "alphabrief",
+            ),
+        )
+
+        val alphaBrief = DailyHabitsEngine.snapshot(events, CommercialCatalog.byId("alphabrief"), now)
+        val agentCloud = DailyHabitsEngine.snapshot(events, CommercialCatalog.byId("agentcloud"), now)
+
+        assertEquals(2.0, alphaBrief.weekSpend, 0.001)
+        assertEquals(0.0, agentCloud.weekSpend, 0.001)
+        assertEquals(0, agentCloud.verifiedDeliveries)
+    }
 }

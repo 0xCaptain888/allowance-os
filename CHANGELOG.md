@@ -1,5 +1,17 @@
 # Changelog
 
+## Android / SDK v0.17.3 — 2026-09-12
+
+- Isolated Daily Habits spend and anomaly calculations by selected service, with backward-compatible migration for old local audit records.
+- Standardized the project-created Solana Devnet mint as `TEST` throughout the current Android/browser proof; canonical USDC is described only as a production target.
+- Removed the launch-time notification permission prompt. Permission is requested only when the user explicitly runs a notification-producing action, and denial remains fully visible in-app.
+- Added persistent in-app action feedback for wallet authorization, template changes, safety checks, pause/resume, refresh, Memo broadcast, clipboard actions, and audit clearing.
+- Surfaced `LOCAL PAUSE ON` in the Home hero with a nearby Resume action.
+- Disabled Delegated v2 controls until live state is loaded, authority is connected, and the allowance is not terminally revoked; revoked evidence is now clearly read-only.
+- Added inline Memo broadcast success details and explorer access in Allowance center.
+- Collapsed advanced Program/v2/truth-boundary sections on Wallet by default.
+- Updated the public Judge Demo and release documentation to match v0.17.3.
+
 ## Android / SDK v0.17.2 — 2026-09-12
 
 - Fixed the persisted local Pause state preventing the Home `VERIFIED`, `BLOCKED`, and `FROZEN` policy-replay buttons from being tested.

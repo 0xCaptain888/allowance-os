@@ -10,7 +10,7 @@
     "nonce": { "type": "integer", "minimum": 0 },
     "allowanceId": { "type": "string", "minLength": 1 },
     "merchant": { "type": "string", "minLength": 1 },
-    "token": { "enum": ["USDC", "SKR"] },
+    "token": { "enum": ["TEST", "USDC", "SKR"] },
     "amount": { "type": "number", "exclusiveMinimum": 0 },
     "program": { "type": "string", "minLength": 1 },
     "requestedAt": { "type": "string", "format": "date-time" },

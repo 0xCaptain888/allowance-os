@@ -4,6 +4,8 @@ Allowance OS v0.16.0 includes a reference TypeScript SDK for bounded repeat paym
 
 Receipt schema v3 uses base-10 integer strings in the mint's smallest unit. A policy binds the display symbol, exact mint address, decimals, per-charge raw amount, period raw amount, and raw amount already spent. For a six-decimal token, `"2000000"` represents two tokens. Decimal strings, scientific notation, negative values, and values above Solana `u64` are rejected.
 
+The live Devnet AlphaBrief reference uses the display symbol `TEST` because its mint is project-created and is not canonical USDC. `USDC` below is a production-integration example only; the exact mint address and decimals remain the source of truth.
+
 Receipt v2 used display-unit numbers and must not be deserialized as v3. Consumers must branch on `receiptVersion` and reject unknown versions.
 
 ## AlphaBrief flow

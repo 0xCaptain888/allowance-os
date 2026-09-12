@@ -8,7 +8,7 @@ export type AllowancePolicy = {
   subscriber: string;
   merchant: string;
   merchantName: string;
-  token: 'USDC' | 'SKR';
+  token: 'TEST' | 'USDC' | 'SKR';
   tokenMint: string;
   tokenDecimals: number;
   perChargeRaw: RawAmount;

@@ -29,6 +29,7 @@ import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Icon
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -129,22 +130,29 @@ internal fun ValueRow(label: String, value: String) {
 }
 
 @Composable
-internal fun PrimaryButton(label: String, onClick: () -> Unit) {
+internal fun PrimaryButton(label: String, enabled: Boolean = true, onClick: () -> Unit) {
     Button(
         modifier = Modifier.fillMaxWidth().height(52.dp),
         shape = RoundedCornerShape(14.dp),
-        colors = ButtonDefaults.buttonColors(backgroundColor = Mint, contentColor = Ink),
+        colors = ButtonDefaults.buttonColors(
+            backgroundColor = Mint,
+            contentColor = Ink,
+            disabledBackgroundColor = Line,
+            disabledContentColor = Muted,
+        ),
+        enabled = enabled,
         onClick = onClick,
     ) { Text(label, fontWeight = FontWeight.Black) }
 }
 
 @Composable
-internal fun SecondaryButton(modifier: Modifier, label: String, onClick: () -> Unit) {
+internal fun SecondaryButton(modifier: Modifier, label: String, enabled: Boolean = true, onClick: () -> Unit) {
     OutlinedButton(
         modifier = modifier.height(50.dp),
         shape = RoundedCornerShape(13.dp),
         border = BorderStroke(1.dp, Line),
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = White),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = White, disabledContentColor = Muted),
+        enabled = enabled,
         onClick = onClick,
     ) { Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
 }
@@ -185,7 +193,8 @@ internal fun DecisionCard(state: AllowanceUiState, chinese: Boolean) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             StatusPill(state.allowanceState)
             Spacer(Modifier.weight(1f))
-            Text("${"%.1f".format(state.requestedAmount)} USDC", color = White, fontWeight = FontWeight.Bold)
+            val token = CommercialCatalog.byId(state.selectedServiceId).token
+            Text("${"%.1f".format(state.requestedAmount)} $token", color = White, fontWeight = FontWeight.Bold)
         }
         Text(title, color = White, fontSize = 22.sp, fontWeight = FontWeight.Black)
         Text(consequence, color = accent, fontSize = 13.sp, fontWeight = FontWeight.Bold)
@@ -327,6 +336,23 @@ internal fun Notice(message: String, color: Color) {
         color = color,
         fontSize = 12.sp,
     )
+}
+
+@Composable
+internal fun ActionFeedbackBanner(message: String, chinese: Boolean, onDismiss: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(14.dp)).background(Color(0xFF17392F))
+            .border(1.dp, Mint.copy(alpha = 0.48f), RoundedCornerShape(14.dp)).padding(start = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.size(8.dp).background(Mint, CircleShape))
+        Spacer(Modifier.width(9.dp))
+        Text(message, modifier = Modifier.weight(1f), color = White, fontSize = 11.sp, maxLines = 2)
+        TextButton(onClick = onDismiss) {
+            Text(t("关闭", "DISMISS", chinese), color = Mint, fontSize = 10.sp, fontWeight = FontWeight.Black)
+        }
+    }
 }
 
 @Composable

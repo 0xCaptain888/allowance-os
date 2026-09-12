@@ -12,7 +12,7 @@ const sdk = new AllowanceOS(webhookSecret);
 
 const policy: AllowancePolicy = {
   allowanceId: 'allowance-alphabrief-reference', subscriber: 'wallet:demo-subscriber',
-  merchant: 'merchant:alphabrief', merchantName: 'AlphaBrief', token: 'USDC',
+  merchant: 'merchant:alphabrief', merchantName: 'AlphaBrief', token: 'TEST',
   tokenMint: '3KVq4nkUnb7GS7DjYCaGR7JJGAhDG1YPsz84xxThn5de', tokenDecimals: 6,
   perChargeRaw: '2000000', period: 'weekly', periodCapRaw: '8000000', spentInPeriodRaw: '0',
   periodStartedAt: now.toISOString(), expiresAt: '2026-10-10T00:00:00.000Z',

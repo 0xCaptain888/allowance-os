@@ -13,7 +13,7 @@ enum class AllowanceState {
 data class AllowancePolicy(
     val allowanceId: String = "allowance-alphabrief-001",
     val merchant: String = "merchant:alphabrief",
-    val token: String = "USDC",
+    val token: String = "TEST",
     val perChargeCap: Double = 2.0,
     val periodCap: Double = 8.0,
     val program: String = "Memo111111111111111111111111111111111111111",
